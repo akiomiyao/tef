@@ -171,17 +171,23 @@ sub junctionMethod{
     &junctionSecondMap($a);
     report("secondmap : $b");
     &junctionSecondMap($b);
+    &waitChild;
     report("sort : $a");
     &junctionSort($a);
     report("sort : $b");
     &junctionSort($b);
     report("select candidate : $a");
+    &waitChild;
     &junctionSelectCandidate($a);
     report("select candidate : $b");
     &junctionSelectCandidate($b);
 ##    &junctionSelectCommon();
+    &waitChild;
     &junctionMapSelection($a);
     &junctionMapSelection($b);
+    &waitChild;
+    &junctionTsdSelection($a);
+    &junctionTsdSelection($b);
 }
 
 sub tsdMethod{
@@ -235,6 +241,70 @@ sub tsdMethod{
     }
     &mkQuery;
     &map;
+}
+
+sub junctionTsdSelection{
+    my $target = shift;
+    my $file;
+    opendir(DIR, "$wd/$target");
+    foreach $file (sort readdir(DIR)){
+	if($file =~ /junction_method_map.$target/){
+	    &canFork;
+	    chomp;
+	    report("tsd selection : $target : $file");
+	    system("perl $0 a=$a,b=$b,sub=junctionTsdSelectionFunc,target=$target,file=$file,wd=$wd &");
+	    
+	}
+    }
+    closedir(DIR);
+}
+
+sub junctionTsdSelectionFunc{
+    $s = {};
+    open(IN, "$wd/$target/$file");
+    while(<IN>){
+	@row = split;
+	if ($row[5] eq "head"){
+	    $s->{head}{$row[1]}{$row[2]} = substr($row[7], 0, 20);
+	    $head = $row[6];
+	}else{
+	    $s->{tail}{$row[1]}{$row[2]} = substr($row[7], 20);
+	    $tail = $row[6];
+	}	
+    }
+    close(IN);
+    foreach $chr (sort bynumber keys %{$s->{head}}){
+	foreach $pos (sort bynumber keys %{$s->{head}{$chr}}){
+	    $hf = $s->{head}{$chr}{$pos};
+	    for ($i = 1; $i <= 38; $i++){
+		$tf = $s->{tail}{$chr}{$pos - 20 + $i};
+		if ($tf ne ""){
+		    if ($i < 20){
+			$size = 20 - $i + 1;
+			
+		    }else{
+			$size = $i - 20 + 1;
+		    }
+		    $htsd = substr($hf, 20 - $size, $size);
+		    $ttsd = substr($tf, 0, $size);
+		    if ($htsd eq $ttsd){
+			$s->{tsd}{$chr}{$pos} = $htsd;
+			$s->{tsd}{$chr}{$pos - 20 + $i} = $ttsd;
+		    }
+		}
+	    }
+	}
+    }
+    open(IN, "$wd/$target/$file");
+    open(OUT, ">$wd/$target/junction_method.$target.$head.$tail");
+    while(<IN>){
+	@row = split;
+	if ($s->{tsd}{$row[1]}{$row[2]}){
+	    print OUT "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[7]\n";
+	}
+    }
+    close(IN);
+    close(OUT);
 }
 
 sub junctionMapSelectionFunc{
@@ -313,7 +383,7 @@ sub junctionMapSelection{
 	}
 	close(DAT);
 	open(DAT, "cat $wd/$target/tmp/map_selected.$head.$tail.* | sort | uniq |");
-	open(OUT, "> $wd/$target/junction_method.$target.$head.$tail");
+	open(OUT, "> $wd/$target/junction_method_map.$target.$head.$tail");
 	while(<DAT>){
 	    chomp;
 	    @row = split;
@@ -1275,7 +1345,7 @@ sub sortPair{
 	   }
        }
    }
-#   system("rm $wd/$a/tmp/p.* $wd/$b/tmp/p.*");
+   system("rm $wd/$a/tmp/p.* $wd/$b/tmp/p.*");
 }
 
 sub sortPairFunc{
@@ -1355,7 +1425,7 @@ sub selectPair{
     }
     close(IN);
     close(OUT);
-#    system("rm $wd/$a/tmp/pair.$tag $wd/$b/tmp/pair.$tag");
+    system("rm $wd/$a/tmp/pair.$tag $wd/$b/tmp/pair.$tag");
 }
 
 sub join{
