@@ -83,6 +83,7 @@ if ($sub eq ""){
 	print LOG "$name : $val\n";
     }
     close(LOG);
+    &report("job start");
     &commonMethod;
     if ($method eq "" or $method =~ /jun/){
 	print LOG "method : junction\n" if $method eq "";;
@@ -176,9 +177,10 @@ sub junctionMethod{
     &junctionSort($a);
     report("sort : $b");
     &junctionSort($b);
-    report("select candidate : $a");
     &waitChild;
+    report("select candidate : $a");
     &junctionSelectCandidate($a);
+    &waitChild;
     report("select candidate : $b");
     &junctionSelectCandidate($b);
 ##    &junctionSelectCommon();
