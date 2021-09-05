@@ -70,11 +70,11 @@ $tsd_size = 5 if $tsd_size eq "";
 $th = 0.7 if $th eq "";
 
 if ($sub eq ""){
-    system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp";
-    system("rm -rf $wd/$b/tmp") if -e "$wd/$b/tmp";
+#    system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp";
+#    system("rm -rf $wd/$b/tmp") if -e "$wd/$b/tmp";
     system("rm -rf $wd/$a/child") if -e "$wd/$a/child";
-    system("mkdir $wd/$a/tmp");
-    system("mkdir $wd/$b/tmp");
+#    system("mkdir $wd/$a/tmp");
+#    system("mkdir $wd/$b/tmp");
     system("mkdir $wd/$a/child");
     system("rm $wd/$a/log") if -e "$wd/$a/log";
     open(LOG, "> $wd/$a/log");
@@ -84,7 +84,7 @@ if ($sub eq ""){
     }
     close(LOG);
     &report("job start");
-    &commonMethod;
+#    &commonMethod;
     if ($method eq "" or $method =~ /jun/){
 	print LOG "method : junction\n" if $method eq "";;
 	$method = "junctionMethod";
@@ -95,8 +95,8 @@ if ($sub eq ""){
 	&tsdMethod;
     }
     &waitChild;
-    system("rm -rf $wd/$a/tmp");
-    system("rm -rf $wd/$b/tmp");
+#    system("rm -rf $wd/$a/tmp");
+#    system("rm -rf $wd/$b/tmp");
     system("rm -rf $wd/$a/child");
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
@@ -141,22 +141,24 @@ $etime ($elapsed_time seconds) elapsed.");
 
 sub commonMethod{
     if ($ref ne ""){
-	&mkref;
+#	&mkref;
     }
     report("split to subfiles : $a");
-    system("perl $0 target=$a,sub=split,a=$a,wd=$wd &");
+#    system("perl $0 target=$a,sub=split,a=$a,wd=$wd &");
     &canFork;
     report("split to subfiles : $b");
-    system("perl $0 target=$b,sub=split,a=$a,wd=$wd &");
+#    system("perl $0 target=$b,sub=split,a=$a,wd=$wd &");
     &waitChild;
 }
 
 sub junctionMethod{
+=pod
     report("count subfiles : $a");
     &count($a);
     report("count subfiles : $b");
     &count($b);
     report("merge subfiles : $a");
+    &waitChild;
     &merge($a);
     report("merge subfiles : $b");
     &merge($b);
@@ -173,6 +175,7 @@ sub junctionMethod{
     report("secondmap : $b");
     &junctionSecondMap($b);
     &waitChild;
+
     report("sort : $a");
     &junctionSort($a);
     report("sort : $b");
@@ -180,16 +183,18 @@ sub junctionMethod{
     &waitChild;
     report("select candidate : $a");
     &junctionSelectCandidate($a);
-    &waitChild;
     report("select candidate : $b");
     &junctionSelectCandidate($b);
-##    &junctionSelectCommon();
     &waitChild;
+##    &junctionSelectCommon();
+=cut
     &junctionMapSelection($a);
     &junctionMapSelection($b);
     &waitChild;
     &junctionTsdSelection($a);
     &junctionTsdSelection($b);
+    report("exit");
+    exit;
 }
 
 sub tsdMethod{
@@ -266,12 +271,12 @@ sub junctionTsdSelectionFunc{
     open(IN, "$wd/$target/$file");
     while(<IN>){
 	@row = split;
-	if ($row[5] eq "head"){
-	    $s->{head}{$row[1]}{$row[2]} = substr($row[7], 0, 20);
-	    $head = $row[6];
+	if ($row[3] eq "head"){
+	    $s->{head}{$row[1]}{$row[2]} = substr($row[5], 0, 20);
+	    $head = $row[4];
 	}else{
-	    $s->{tail}{$row[1]}{$row[2]} = substr($row[7], 20);
-	    $tail = $row[6];
+	    $s->{tail}{$row[1]}{$row[2]} = substr($row[5], 20);
+	    $tail = $row[4];
 	}	
     }
     close(IN);
@@ -302,7 +307,7 @@ sub junctionTsdSelectionFunc{
     while(<IN>){
 	@row = split;
 	if ($s->{tsd}{$row[1]}{$row[2]}){
-	    print OUT "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[7]\n";
+	    print OUT "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[5]\n";
 	}
     }
     close(IN);
@@ -312,6 +317,7 @@ sub junctionTsdSelectionFunc{
 sub junctionMapSelectionFunc{
     open(DAT, "grep $head $wd/$target/tmp/sorted.$chr |");
     open(OUT, "> $wd/$target/tmp/map_selected.$head.$tail.$chr");
+    open(HEAD, "|sort | uniq > $wd/$target/tmp/pos.head.$head.$chr");
     while(<DAT>){
 	chomp;
 	@row = split;
@@ -329,10 +335,13 @@ sub junctionMapSelectionFunc{
 	    $row[6] = substr($row[6], length($row[6]) - 3, 3);
 	    $row[7] = "00000000000$row[7]";
 	    $row[7] = substr($row[7], length($row[7]) - 11, 11);
-	    print OUT "$target\t$row[3]\t$pos\t$row[6]\t$row[7]\thead\t$head\t$row[2]\n";
+	    print OUT "$target\t$row[3]\t$pos\thead\t$head\t$row[2]\n";
+	    print HEAD "$target\t$head\t$row[6]\t$row[7]\n";
 	}
     }
+    close(HEAD);
     open(DAT, "grep $tail $wd/$target/tmp/sorted.$chr |");
+    open(TAIL, "|sort |uniq > $wd/$target/tmp/pos.tail.$tail.$chr");
     while(<DAT>){
 	chomp;
 	@row = split;
@@ -345,11 +354,13 @@ sub junctionMapSelectionFunc{
 	    $row[6] = substr($row[6], length($row[6]) - 3, 3);
 	    $row[7] = "00000000000$row[7]";
 	    $row[7] = substr($row[7], length($row[7]) - 11, 11);
-	    print OUT "$target\t$row[6]\t$row[7]\t$row[3]\t$row[4]\ttail\t$tail\t$row[2]\n";
+	    print OUT "$target\t$row[6]\t$row[7]\ttail\t$tail\t$row[2]\n";
+	    print TAIL "$target\t$tail\t$row[3]\t$row[4]\n";
 	}
     }
     close(DAT);
     close(OUT);
+    close(TAIL);
 }
 
 sub junctionMapSelection{
@@ -370,6 +381,7 @@ sub junctionMapSelection{
 	}
     }
     closedir(REF);
+    &waitChild;
 #    open(IN, "$wd/$a/pair.$a.$b.junction_method");
     open(IN, "$wd/$target/tmp/te.candidate");
     while(<IN>){
@@ -405,8 +417,36 @@ sub junctionMapSelection{
 	}
 	close(DAT);
 	close(OUT);
+	open(DAT, "cat $wd/$target/tmp/pos.head.$head.* |");
+	open(OUT, "|sort |uniq > $wd/$target/pos.$head.$tail");
+	while(<DAT>){
+	    chomp;
+	    @row = split;
+	    print OUT "$target\t$row[2]\t$row[3]\thead\t$row[1]\n";
+	}
+	open(DAT, "cat $wd/$target/tmp/pos.tail.$tail* |");
+	while(<DAT>){
+	    chomp;
+	    @row = split;
+	    print OUT "$target\t$row[2]\t$row[3]\ttail\t$row[1]\n";
+	}
+	close(DAT);
+	close(OUT);
+	open(DAT, "$wd/$target/pos.$head.$tail");
+	open(OUT, ">$wd/$target/junction_method.tepos.$head.$tail");
+	while(<DAT>){
+	    chomp;
+	    @row = split;
+	    $row[1] =~ s/^0+//g;
+	    $row[2] =~ s/^0+//g;
+	    print OUT "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\n";
+	}
+	close(DAT);
+	close(OUT);
+	system("rm $wd/$target/pos.$head.$tail");
     }
     close(IN);
+    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.* $wd/$target/junction_method_map.*");
 }
 
 sub junctionSelectCommon{
@@ -693,8 +733,8 @@ sub junctionFirstMap{
 }
 
 sub junctionSpecificFunc{
-    system("bash -c 'join -v 1 <(zcat $wd/$a/tmp/$tag) <(zcat $wd/$b/tmp/$tag) > $wd/$a/tmp/specific.$tag'");
-    system("bash -c 'join -v 2 <(zcat $wd/$a/tmp/$tag) <(zcat $wd/$b/tmp/$tag) > $wd/$b/tmp/specific.$tag'");
+    system("bash -c 'join -v 1 <(zcat $wd/$a/tmp/$tag.gz) <(zcat $wd/$b/tmp/$tag.gz) > $wd/$a/tmp/specific.$tag'");
+    system("bash -c 'join -v 2 <(zcat $wd/$a/tmp/$tag.gz) <(zcat $wd/$b/tmp/$tag.gz) > $wd/$b/tmp/specific.$tag'");
 }
 
 sub junctionSpecific{
