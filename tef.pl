@@ -70,11 +70,11 @@ $tsd_size = 5 if $tsd_size eq "";
 $th = 0.7 if $th eq "";
 
 if ($sub eq ""){
-#    system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp";
-#    system("rm -rf $wd/$b/tmp") if -e "$wd/$b/tmp";
+    system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp";
+    system("rm -rf $wd/$b/tmp") if -e "$wd/$b/tmp";
     system("rm -rf $wd/$a/child") if -e "$wd/$a/child";
-#    system("mkdir $wd/$a/tmp");
-#    system("mkdir $wd/$b/tmp");
+    system("mkdir $wd/$a/tmp");
+    system("mkdir $wd/$b/tmp");
     system("mkdir $wd/$a/child");
     system("rm $wd/$a/log") if -e "$wd/$a/log";
     open(LOG, "> $wd/$a/log");
@@ -84,7 +84,7 @@ if ($sub eq ""){
     }
     close(LOG);
     &report("job start");
-#    &commonMethod;
+    &commonMethod;
     if ($method eq "" or $method =~ /jun/){
 	print LOG "method : junction\n" if $method eq "";;
 	$method = "junctionMethod";
@@ -95,8 +95,8 @@ if ($sub eq ""){
 	&tsdMethod;
     }
     &waitChild;
-#    system("rm -rf $wd/$a/tmp");
-#    system("rm -rf $wd/$b/tmp");
+    system("rm -rf $wd/$a/tmp");
+    system("rm -rf $wd/$b/tmp");
     system("rm -rf $wd/$a/child");
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
@@ -141,18 +141,17 @@ $etime ($elapsed_time seconds) elapsed.");
 
 sub commonMethod{
     if ($ref ne ""){
-#	&mkref;
+	&mkref;
     }
     report("split to subfiles : $a");
-#    system("perl $0 target=$a,sub=split,a=$a,wd=$wd &");
+    system("perl $0 target=$a,sub=split,a=$a,wd=$wd &");
     &canFork;
     report("split to subfiles : $b");
-#    system("perl $0 target=$b,sub=split,a=$a,wd=$wd &");
+    system("perl $0 target=$b,sub=split,a=$a,wd=$wd &");
     &waitChild;
 }
 
 sub junctionMethod{
-=pod
     report("count subfiles : $a");
     &count($a);
     report("count subfiles : $b");
@@ -175,7 +174,6 @@ sub junctionMethod{
     report("secondmap : $b");
     &junctionSecondMap($b);
     &waitChild;
-
     report("sort : $a");
     &junctionSort($a);
     report("sort : $b");
@@ -186,15 +184,11 @@ sub junctionMethod{
     report("select candidate : $b");
     &junctionSelectCandidate($b);
     &waitChild;
-##    &junctionSelectCommon();
-=cut
     &junctionMapSelection($a);
     &junctionMapSelection($b);
     &waitChild;
     &junctionTsdSelection($a);
     &junctionTsdSelection($b);
-    report("exit");
-    exit;
 }
 
 sub tsdMethod{
