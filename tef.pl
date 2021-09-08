@@ -249,7 +249,7 @@ sub junctionTsdSelection{
     my $file;
     opendir(DIR, "$wd/$target");
     foreach $file (sort readdir(DIR)){
-	if($file =~ /junction_method_map.$target/){
+	if($file =~ /junction_method.map.$target/){
 	    &canFork;
 	    chomp;
 	    report("tsd selection : $target : $file");
@@ -391,7 +391,7 @@ sub junctionMapSelection{
 	}
 	close(DAT);
 	open(DAT, "cat $wd/$target/tmp/map_selected.$head.$tail.* | sort | uniq |");
-	open(OUT, "> $wd/$target/junction_method_map.$target.$head.$tail");
+	open(OUT, "> $wd/$target/junction_method.map.$target.$head.$tail");
 	while(<DAT>){
 	    chomp;
 	    @row = split;
@@ -427,7 +427,7 @@ sub junctionMapSelection{
 	close(DAT);
 	close(OUT);
 	open(DAT, "$wd/$target/pos.$head.$tail");
-	open(OUT, ">$wd/$target/junction_method.tepos.$head.$tail");
+	open(OUT, ">$wd/$target/junction_method.tepos.$target.$head.$tail");
 	while(<DAT>){
 	    chomp;
 	    @row = split;
@@ -440,7 +440,7 @@ sub junctionMapSelection{
 	system("rm $wd/$target/pos.$head.$tail");
     }
     close(IN);
-    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.* $wd/$target/junction_method_map.*");
+#    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.* $wd/$target/tmp/junction_method.map.*");
 }
 
 sub junctionSelectCommon{
@@ -592,14 +592,19 @@ sub junctionSort{
     close(IN);
     foreach $file (@chr){
 	close($file);
+    }
+    $org_processor = $processor;
+    $processor = 2 if -s $chr[0] > 10000000000;
+    foreach $file (@chr){
 	&canFork;
 	&report("Sorting $file");
 	system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file,wd=$wd &");
     }
+    $processor = $org_processor;
 }
 
 sub junctionSortFunc{
-    system("sort -k 1 -n -S 1M -T $wd/$target/tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr");
+    system("sort -k 1 -n -S 1M -T $wd/$target/tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr && rm $wd/$target/tmp/$chr");
 }
 
 sub junctionSecondMapFunc{
