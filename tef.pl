@@ -295,6 +295,7 @@ sub junctionTsdSelectionFunc{
     }
     close(IN);
     close(OUT);
+    system("rm $wd/$target/$file");
 }
 
 sub junctionMapSelectionFunc{
@@ -427,7 +428,7 @@ sub junctionMapSelection{
 	system("rm $wd/$target/pos.$head.$tail");
     }
     close(IN);
-#    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.* $wd/$target/tmp/junction_method.map.*");
+    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.* $wd/$target/tmp/junction_method.map.*");
 }
 
 sub junctionSelectCommon{
