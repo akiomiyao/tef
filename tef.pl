@@ -262,18 +262,7 @@ sub junctionTsdSelection{
 
 sub junctionTsdSelectionFunc{
     $s = {};
-    open(IN, "$wd/$target/$file");
-    while(<IN>){
-	@row = split;
-	if ($row[3] eq "head"){
-	    $s->{head}{$row[1]}{$row[2]} = substr($row[5], 0, 20);
-	    $head = $row[4];
-	}else{
-	    $s->{tail}{$row[1]}{$row[2]} = substr($row[5], 20);
-	    $tail = $row[4];
-	}	
-    }
-    close(IN);
+    ($head, $tail) = (split('\.', $file))[3,4];
     foreach $chr (sort bynumber keys %{$s->{head}}){
 	foreach $pos (sort bynumber keys %{$s->{head}{$chr}}){
 	    $hf = $s->{head}{$chr}{$pos};
@@ -362,7 +351,6 @@ sub junctionMapSelection{
     opendir(REF, "$wd/$ref");
     foreach $chr (sort readdir(REF)){
 	if ($chr =~ /^chr/){
-#	    open(IN, "$wd/$a/pair.$a.$b.junction_method");
 	    open(IN, "$wd/$target/tmp/te.candidate");
 	    while(<IN>){
 		&canFork;
@@ -376,7 +364,6 @@ sub junctionMapSelection{
     }
     closedir(REF);
     &waitChild;
-#    open(IN, "$wd/$a/pair.$a.$b.junction_method");
     open(IN, "$wd/$target/tmp/te.candidate");
     while(<IN>){
 	chomp;
@@ -527,7 +514,6 @@ sub junctionSelectCandidate{
     close(OUT);
 }
 
-
 sub junctionSelectCandidateFunc{
     open(IN, "$wd/$target/tmp/sorted.$chr");
     open(OUT, "> $wd/$target/tmp/candidate.$chr");
@@ -594,7 +580,7 @@ sub junctionSort{
 	close($file);
     }
     $org_processor = $processor;
-    $processor = 2 if -s $chr[0] > 10000000000;
+    $processor = 2 if -s "$wd/$target/tmp/$chr[0]" > 10000000000;
     foreach $file (@chr){
 	&canFork;
 	&report("Sorting $file");
