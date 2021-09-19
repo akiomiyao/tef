@@ -806,7 +806,7 @@ sub map{
             }
         }
     }
-
+    &waitChild;
     open(IN, "cat $wd/$a/tmp/tsd_method.mapped.$a.$b.$tsd_size.* |sort |");
     while(<IN>){
 	chomp;
