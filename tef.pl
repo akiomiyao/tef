@@ -196,6 +196,7 @@ sub tsdMethod{
     &count($a);
     report("count subfiles : $b");
     &count($b);
+    &waitChild;
     report("merge subfiles : $a");
     &merge($a);
     report("merge subfiles : $b");
@@ -233,8 +234,7 @@ sub tsdMethod{
 	}
     }
     &waitChild;
-    system("cat $wd/$a/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/pair.$a.$b.$tsd_size.*");
-    
+    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
     if($ref eq ""){
 	&verify;
 	report("Job end. $a $b");
@@ -444,7 +444,7 @@ sub junctionSelectCommon{
     }
     close(IN);
     open(IN,"$wd/$b/tmp/te.candidate");
-    open(OUT, "> $wd/$a/pair.$a.$b.junction_method");
+    open(OUT, "> $wd/$a/tmp/pair.$a.$b.junction_method");
     while(<IN>){
 	chomp;
 	@row = split;
@@ -740,81 +740,125 @@ sub junctionSpecific{
     }
 }
 
-sub map{
-    report("map");
-    system("sort $wd/$a/tmp/mapquery.tmp | uniq > $wd/$a/tmp/mapquery");
-    open(IN, "zcat $ref/ref20.* | join $a/tmp/mapquery -|");
-    open(OUT, "|sort -k 2 -k 3 -n -k 4 -n -k 1 > $wd/$a/tsd_method.mapped.$a.$b.$tsd_size");
+sub mapFunc{
+    open(IN, "zcat $ref/ref20.$tag | join $a/tmp/mapquery.$tag -|");
+    open(OUT, "> $wd/$a/tmp/tsd_method.mapped.$a.$b.$tsd_size.$tag");
     while(<IN>){
 	chomp;
 	@row = split;
 	if ($row[2] eq "head"){
-	    $row[5] += 19;
+	    if ($row[6] eq "f"){
+		$row[5] += 19;
+	    }else{
+		$row[5] -= 19;
+	    }
 	}
 	print OUT "$row[1]\t$row[6]\t$row[4]\t$row[5]\t$row[2]\t$row[3]\t$row[0]\n";
     }
     close(IN);
     close(OUT);
-    report("output result.$a.$b.$tsd_size");
-    open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+
+}
+
+sub map{
+    report("map");
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		open($tag, "> $wd/$a/tmp/mapquery.$tag")
+	    }
+	}
+    }
+
+    open(IN, "sort $wd/$a/tmp/mapquery.tmp | uniq |");
     while(<IN>){
-	@row = split;
-	$pair{"$row[0] $row[1]"} = 1;
+	$tag = substr($_, 0, 3);
+	print $tag $_;
     }
     close(IN);
-    open(IN, "$wd/$a/tsd_method.mapped.$a.$b.$tsd_size");
-    open(OUT, "> $wd/$a/tsd_method.result.$a.$b.$tsd_size");
+
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		close($tag)
+	    }
+	}
+    }
+    
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+                &canFork;
+                &report("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tag=$tag,wd=$wd");
+                system("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tag=$tag,wd=$wd &");
+            }
+        }
+    }
+
+    open(IN, "cat $wd/$a/tmp/tsd_method.mapped.$a.$b.$tsd_size.* |sort |");
     while(<IN>){
 	chomp;
 	@row = split;
-	if (abs($row[3] - $prev) == $tsd_size - 1){
-		@prev = split('\t', $pline);
-	    if (($_ =~ /head/ and $pline =~ /tail/) and $pair{"$row[5] $prev[5]"}){
-		if (substr($row[6], 20 - $tsd_size) eq substr($prev[6], 0, $tsd_size)){
-		    $tsd = substr($row[6], 20 - $tsd_size);
-		    $output = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$prev[3]\t$row[5]\t$prev[5]\t$tsd\t$row[6]\t$prev[6]\n";
-		    print $output;
-		    print OUT $output;
+	if ($row[3] - $prev == $tsd_size - 1){
+	    @prev = split('\t', $pline);
+	    if ($row[1] eq "f"){
+		$tsd = substr($row[6], 20 - $tsd_size, $tsd_size);
+		$ttsd = substr($prev[6], 0, $tsd_size);
+		if ($tsd eq $ttsd){
+		    $s->{$row[0]}{$row[2]}{$row[3]}{$row[1]} = "$row[0]\t$row[2]\t$row[3]\t$prev[3]\t$row[1]\t$row[5]\t$prev[5]\t$tsd\t$row[6]\t$prev[6]";
+		    $flanking{"$row[6] $prev[6]"} ++;
+		}
+	    }else{
+		$tsd = substr($prev[6], 20 - $tsd_size, $tsd_size);
+		$ttsd = substr($row[6], 0, $tsd_size);
+		if ($tsd eq $ttsd){
+		    $s->{$row[0]}{$row[2]}{$row[3]}{$row[1]} = "$row[0]\t$row[2]\t$prev[3]\t$row[3]\t$row[1]\t$prev[5]\t$row[5]\t$tsd\t$prev[6]\t$row[6]";
+		    $flanking{"$prev[6] $row[6]"} ++;
 		}
 	    }
 	}
 	$pline = $_;
 	$prev = $row[3];
     }
-    close(OUT);
-    open(IN, "$wd/$a/tsd_method.result.$a.$b.$tsd_size");
-    while(<IN>){
-	@row = split;
-	$count{"$row[2]} $row[3]"} ++;
-	$flanking{"$row[8] $row[9]"} ++;
-	$acount{"$row[5] $row[6]}"} ++ if $row[0] eq $a;
-	$bcount{"$row[5] $row[6]}"} ++ if $row[0] eq $b;
-    }
-
-    open(IN, "$wd/$a/tsd_method.result.$a.$b.$tsd_size");
-    open(OUT, "> $wd/$a/tsd_method.specific.$a.$b.$tsd_size");
-    while(<IN>){
-	chomp;
-        @row = split;
-        if($count{"$row[2]} $row[3]"} == 1){
-	    if ($acount{"$row[5] $row[6]}"} and $bcount{"$row[5] $row[6]}"}){
-		if ($flanking{"$row[8] $row[9]"} == 1){
-		    print OUT "$_\tunique\n";
-		}else{
-		    print OUT "$_\t\n";
+    close(IN);
+    
+    open(OUT, "> $wd/$a/tsd_method.result.$a.$b.$tsd_size");
+    foreach $line (sort keys %$s){
+        foreach $chr (sort bynumber keys %{$s->{$line}}){
+            foreach $pos (sort bynumber keys %{$s->{$line}{$chr}}){
+		foreach $direction (sort bynumber keys %{$s->{$line}{$chr}{$pos}}){
+	   	    @row = split('\t', $s->{$line}{$chr}{$pos}{$direction});
+		    if ($flanking{"$row[8] $row[9]"} == 1){
+		        print $s->{$line}{$chr}{$pos}{$direction} . "\tuniq\n";
+		        print OUT $s->{$line}{$chr}{$pos}{$direction} . "\tunique\n";
+		    }else{
+		        print $s->{$line}{$chr}{$pos}{$direction} . "\n";
+		        print OUT $s->{$line}{$chr}{$pos}{$direction} . "\n";
+		    }
 		}
-	    }
+            }
 	}
     }
-    close(IN);
     close(OUT);
 }
 
 sub searchQuery{
     if ($b eq ""){
-	$cmd = "grep $seq $wd/$a/tmp/$number > $wd/$a/tmp/selected.$type.$seq.$number";
+	$cmd = "grep $seq $wd/$a/tmp/split.$number > $wd/$a/tmp/selected.$type.$seq.$number";
     }else{
-	$cmd = "grep $seq $wd/$b/tmp/$number > $wd/$b/tmp/selected.$type.$seq.$number";
+	$cmd = "grep $seq $wd/$b/tmp/split.$number > $wd/$b/tmp/selected.$type.$seq.$number";
     }
     system($cmd);
 }
@@ -831,9 +875,10 @@ sub mkQuery{
 
     opendir(DIR, "$wd/$a/tmp");
     foreach (readdir(DIR)){
-	if (/^[0-9]+$/){
-	    if ($last < $_){
-		$last = $_;
+	if (/^split.[0-9]+$/){
+	    $num = (split('\.', $_))[1];
+	    if ($last < $num){
+		$last = $num;
 	    }
 	}
     }
@@ -879,9 +924,10 @@ sub mkQuery{
     $last = 0;
     opendir(DIR, "$wd/$b/tmp");
     foreach (readdir(DIR)){
-	if (/^[0-9]+$/){
-	    if ($last < $_){
-		$last = $_;
+	if (/^split.[0-9]+$/){
+	    $num = (split('\.', $_))[1];
+	    if ($last < $num){
+		$last = $num;
 	    }
 	}
     }
@@ -1382,7 +1428,7 @@ sub sortPairFunc{
 
 sub selectPair{
     open(IN, "join $wd/$a/tmp/pair.$tag $wd/$b/tmp/pair.$tag |");
-    open(OUT, "> $wd/$a/pair.$a.$b.$tsd_size.$tag");
+    open(OUT, "> $wd/$a/tmp/pair.$a.$b.$tsd_size.$tag");
     while(<IN>){
 	chomp;
 	@row = split;
@@ -1620,7 +1666,7 @@ sub merge{
 sub countFunc{
     my ($taga, $tagb, $tagc, $tag, $count, $nuc);
     chdir "$wd/$target/tmp";
-    open(IN, $number);
+    open(IN, "split.$number");
     open(SEQ, "|sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' > count.$number");
     while(<IN>){
 	$count++;
@@ -1654,7 +1700,7 @@ sub countFunc{
 	print $fout "$_";
     }
     close(IN);
-
+    sleep 10;
     foreach $nuc (@nuc){
 	$taga = $nuc;
 	foreach $nuc (@nuc){
@@ -1688,9 +1734,10 @@ sub count{
     $tsd_size = 20 if $method eq "junctionMethod";
     opendir(DIR, "$wd/$target/tmp");
     foreach (readdir(DIR)){
-	if (/^[0-9]+$/){
-	    if ($last < $_){
-		$last = $_;
+	if (/^split/){
+	    $number = (split('\.', $_))[1];
+	    if ($last < $number){
+		$last = $number;
 	    }
 	}
     }
@@ -1724,7 +1771,7 @@ sub split{
     }
     close(DIR);
     open(IN, "$command $wd/$target/read/* |");
-    open(OUT, "> $wd/$target/tmp/$number");
+    open(OUT, "> $wd/$target/tmp/split.$number");
     while(<IN>){
 	$count++;
 	if($count == 2){
@@ -1736,7 +1783,7 @@ sub split{
 	if ($lines == 1000000){
 	    close(OUT);
 	    $number++;
-	    open(OUT, "> $target/tmp/$number");
+	    open(OUT, "> $target/tmp/split.$number");
 	    $lines = 0;
 	}
     }
