@@ -1683,14 +1683,9 @@ sub countFunc{
     open(IN, "split.$number");
     open(SEQ, "|sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' > count.$number");
     while(<IN>){
-	$count++;
-	if($count == 2){
 	    chomp;
 	    &mkKmer($_);
 	    &mkKmer(&complement($_));
-	}elsif($count == 4){
-	    $count = 0;
-	}
     }
     close(IN);
     close(SEQ);
@@ -1739,6 +1734,7 @@ sub mkKmer{
         last if length($seq) != 20 + $tsd_size;
         next if $seq =~ /N/;
         print SEQ "$seq\n";
+	print "!!! hit CTACATGTCATTGATATACCTGTTAAATATATATACAAGC\n\n" if $seq eq "CTACATGTCATTGATATACCTGTTAAATATATATACAAGC"; 
     }
 }
 
