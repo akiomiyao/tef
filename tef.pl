@@ -261,8 +261,19 @@ sub junctionTsdSelection{
 }
 
 sub junctionTsdSelectionFunc{
-    $s = {};
-    ($head, $tail) = (split('\.', $file))[3,4];
+    my $s = {};
+    open(IN, "$wd/$target/$file");
+    while(<IN>){
+	chomp;
+	@row = split;
+	if ($row[3] eq "head"){
+	    $fl = substr($row[5], 0, 20);
+	}else{
+	    $fl = substr($row[5], 20);
+	}
+	$s->{$row[3]}{$row[1]}{$row[2]} = $fl;
+    }
+    close(IN);
     foreach $chr (sort bynumber keys %{$s->{head}}){
 	foreach $pos (sort bynumber keys %{$s->{head}{$chr}}){
 	    $hf = $s->{head}{$chr}{$pos};
@@ -286,16 +297,19 @@ sub junctionTsdSelectionFunc{
 	}
     }
     open(IN, "$wd/$target/$file");
+    ($head, $tail) = (split('\.', $file))[3,4];
     open(OUT, ">$wd/$target/junction_method.$target.$head.$tail");
     while(<IN>){
 	@row = split;
 	if ($s->{tsd}{$row[1]}{$row[2]}){
-	    print OUT "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[5]\n";
+	    $output =  "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[5]\n";
+	    print $output;
+	    print OUT $output;
 	}
     }
     close(IN);
     close(OUT);
-    system("rm $wd/$target/$file");
+#    system("rm $wd/$target/$file");
 }
 
 sub junctionMapSelectionFunc{
@@ -425,10 +439,10 @@ sub junctionMapSelection{
 	}
 	close(DAT);
 	close(OUT);
-	system("rm $wd/$target/pos.$head.$tail");
+#	system("rm $wd/$target/pos.$head.$tail");
     }
     close(IN);
-    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.* $wd/$target/tmp/junction_method.map.*");
+#    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.*");
 }
 
 sub junctionSelectCommon{
