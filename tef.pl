@@ -19,6 +19,7 @@ if ($ARGV[0] eq ""){
  e.g. perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,method=tsd
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
+      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,option=clear
 
  tef.pl requires a set of NGS reads from different conditions.
  For example, ttm2 and ttm5 are from regenerated rice individuals from callus.
@@ -39,6 +40,10 @@ if ($ARGV[0] eq ""){
 
  If th is not specified, default value 0.7 will be used.
  If no TE is detected, try again with lowere value e.g. th=0.3  
+
+ tmp directory in target is not deleted and can be reused.
+ If you want to use another method or other tsd_size, option=clear
+ shold be specified to completely remove temporary data.
 
  Author: Akio Miyao
 
@@ -84,7 +89,7 @@ if ($sub eq ""){
     }
     close(LOG);
     &report("job start");
-#    &commonMethod;
+    &commonMethod;
     if ($method eq "" or $method =~ /jun/){
 	print LOG "method : junction\n" if $method eq "";;
 	$method = "junctionMethod";
@@ -152,26 +157,24 @@ sub commonMethod{
 }
 
 sub junctionMethod{
-    if (-e "$target/tmp/TTT.gz"){
-	open(IN, "zcat $target/tmp/TTT.gz |");
-	while(<IN>){
-	    @row = split;
-	    $kmer_length =length($row[0]); 
-	}
-	close(IN);
-    }
-    if ($kmer_length != 40){
+    if (&fragmentLength($a) != 40){
 	report("count subfiles : $a");
-#	&count($a);
-	report("count subfiles : $b");
-#	&count($b);
-	&waitChild;
-	report("merge subfiles : $a");
-#	&merge($a);
-	report("merge subfiles : $b");
-#	&merge($b);
-	&waitChild;
+	&count($a);
     }
+    if (&fragmentLength($b) != 40){
+	report("count subfiles : $b");
+	&count($b);
+    }
+    &waitChild;
+    if (&fragmentLength($a) != 40){
+	report("merge subfiles : $a");
+	&merge($a);
+    }
+    if (&fragmentLength($b) != 40){
+	report("merge subfiles : $b");
+	&merge($b);
+    }
+    &waitChild;
     report("specific");
     &junctionSpecific;
     report("firstmap : $a");
@@ -202,26 +205,25 @@ sub junctionMethod{
 }
 
 sub tsdMethod{
-=pod    if (-e "$target/tmp/TTT.gz"){
-	open(IN, "zcat $target/tmp/TTT.gz |");
-	while(<IN>){
-	    @row = split;
-	    $kmer_length =length($row[0]); 
-	}
-	close(IN);
-    }
-    if ($kmer_length != 20 + $tsd_size){
+    if (&flagmentLength($a) != 20 + $tsd_size){
 	report("count subfiles : $a");
 	&count($a);
+    }
+    if (&flagmentLength($b) != 20 + $tsd_size){
 	report("count subfiles : $b");
 	&count($b);
-	&waitChild;
+    }
+    &waitChild;
+    if (&flagmentLength($a) != 20 + $tsd_size){
 	report("merge subfiles : $a");
 	&merge($a);
+    }
+    if (&flagmentLength($b) != 20 + $tsd_size){
 	report("merge subfiles : $b");
 	&merge($b);
-	&waitChild;
     }
+    &waitChild;
+
     report("comm");
     &comm;
     &waitChild;
@@ -261,8 +263,22 @@ sub tsdMethod{
 	exit;
     }
     &mkQuery;
-=cut
     &map;
+}
+
+sub fragmentLength{
+    my $target = shift;
+    my $fragment_length = 0;
+    if (-e "$target/tmp/TTT.gz"){
+	open(IN, "zcat $target/tmp/TTT.gz |");
+	while(<IN>){
+	    chomp;
+	    $fragment_length =length($_);
+	    last;
+	}
+	close(IN);
+    }
+    return $fragment_length;
 }
 
 sub junctionTsdSelection{
@@ -882,8 +898,10 @@ sub map{
 	foreach (sort keys %tsd){
 	    $uniq_tsd ++;
 	}
-	if ($uniq_tsd / $total_tsd > 0.5){
+	if ($uniq_tsd / $total_tsd > 0.5 and $total_tsd > 1){
 	    $passed{$ht} = 1;
+	    print "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
+	    print LOG "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
 	}
     }
     open(OUT, "> $wd/$a/tsd_method.result.$a.$b.$tsd_size");
