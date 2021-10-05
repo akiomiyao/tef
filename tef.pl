@@ -403,7 +403,7 @@ sub junctionMapSelection{
     opendir(REF, "$wd/$ref");
     foreach $chr (sort readdir(REF)){
 	if ($chr =~ /^chr/){
-	    open(IN, "$wd/$target/tmp/te.candidate");
+	    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
 	    while(<IN>){
 		&canFork;
 		chomp;
@@ -416,7 +416,7 @@ sub junctionMapSelection{
     }
     closedir(REF);
     &waitChild;
-    open(IN, "$wd/$target/tmp/te.candidate");
+    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
     while(<IN>){
 	chomp;
 	($head, $tail) = (split)[0, 1];
@@ -476,10 +476,10 @@ sub junctionMapSelection{
 	}
 	close(DAT);
 	close(OUT);
-#	system("rm $wd/$target/pos.$head.$tail");
+	system("rm $wd/$target/pos.$head.$tail");
     }
     close(IN);
-#    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.*");
+    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.*");
 }
 
 sub junctionSelectCommon{
