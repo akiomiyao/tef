@@ -77,6 +77,8 @@ if ($sub eq ""){
     system("rm -rf $wd/$a/child") if -e "$wd/$a/child";
     system("mkdir $wd/$a/tmp") if ! -e "$wd/$a/tmp";
     system("mkdir $wd/$b/tmp") if ! -e "$wd/$b/tmp";
+    system("mkdir $wd/$a/split") if ! -e "$wd/$a/split";
+    system("mkdir $wd/$b/split") if ! -e "$wd/$b/split";
     system("mkdir $wd/$a/child");
     system("rm $wd/$a/log") if -e "$wd/$a/log";
     open(LOG, "> $wd/$a/log");
@@ -94,6 +96,7 @@ if ($sub eq ""){
     }else{
 	print LOG "method : junction\n" if $method eq "";;
 	$method = "junctionMethod";
+	$tsd_size = 20;
 	&junctionMethod;
     }
     &waitChild;
@@ -158,6 +161,8 @@ sub commonMethod{
 }
 
 sub junctionMethod{
+    system("mkdir $wd/$a/count.20") if ! -e "$wd/$a/count.20";
+    system("mkdir $wd/$b/count.20") if ! -e "$wd/$b/count.20";
     if (&fragmentLength($a) != 40){
 	report("count subfiles : $a");
 	&count($a);
@@ -772,8 +777,8 @@ sub junctionFirstMap{
 }
 
 sub junctionSpecificFunc{
-    system("bash -c 'join -v 1 <(zcat $wd/$a/tmp/$tag.gz) <(zcat $wd/$b/tmp/$tag.gz) > $wd/$a/tmp/specific.$tag'");
-    system("bash -c 'join -v 2 <(zcat $wd/$a/tmp/$tag.gz) <(zcat $wd/$b/tmp/$tag.gz) > $wd/$b/tmp/specific.$tag'");
+    system("bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/count.$tsd_size/specific.$tag'");
+    system("bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/count.$tsd_size/specific.$tag'");
 }
 
 sub junctionSpecific{
@@ -900,11 +905,10 @@ sub map{
 	foreach (sort keys %tsd){
 	    $uniq_tsd ++;
 	}
-#	if ($uniq_tsd / $total_tsd > 0.01 and $total_tsd > 1){
 	if ($uniq_tsd / $total_tsd > 0.5 and $total_tsd > 1){
 	    $passed{$ht} = 1;
 	    print "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
-	    print LOG "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
+	    &report("## $ht $uniq_tsd / $total_tsd (unique/total TSD)");
 	}
     }
     open(OUT, "> $wd/$a/tsd_method.result.$a.$b.$tsd_size");
@@ -948,7 +952,7 @@ sub mkQuery{
     }
     close(IN);
 
-    opendir(DIR, "$wd/$a/tmp");
+    opendir(DIR, "$wd/$a/split");
     foreach (readdir(DIR)){
 	if (/^split.[0-9]+$/){
 	    $num = (split('\.', $_))[1];
@@ -997,7 +1001,7 @@ sub mkQuery{
 	closedir(DIR);
     }
     $last = 0;
-    opendir(DIR, "$wd/$b/tmp");
+    opendir(DIR, "$wd/$b/split");
     foreach (readdir(DIR)){
 	if (/^split.[0-9]+$/){
 	    $num = (split('\.', $_))[1];
@@ -1678,9 +1682,7 @@ sub comm{
 sub mergeFunc{
     my ($num, @num, @sorted, $a, $b, $c, $filea, $fileb, $filec, @row);
 
-    chdir "$wd/$target/tmp";
-    
-    opendir(DIR, "$wd/$target/tmp/");
+    opendir(DIR, "$wd/$target/count.$tsd_size/");
     foreach (readdir(DIR)){
 	if (/^$tag.[0-9]+/){
 	    ($num = $_) =~ y/0-9//cd;
@@ -1701,14 +1703,14 @@ sub mergeFunc{
 	$filec = "$tag.$c.gz";
 	$now = `date`;
 	chomp($now);
-	system("bash -c 'join -a 1 -a 2 <(zcat $filea) <(zcat $fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $filec && rm $filea $fileb");
+	system("bash -c 'join -a 1 -a 2 <(zcat $$wd/$target/count.$tsd_size/filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
 	$a += 2;
 	$b += 2;
 	$c ++;
     }
 
-    open(IN, "zcat $filec |");
-    open(OUT, "|gzip -c > $tag.gz");
+    open(IN, "zcat $wd/$target/count.$tsd_size/$filec |");
+    open(OUT, "|gzip -c > $wd/$target/count.$tsd_size/$tag.gz");
     while(<IN>){
 	@row = split;
 	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
@@ -1741,9 +1743,8 @@ sub merge{
 
 sub countFunc{
     my ($taga, $tagb, $tagc, $tag, $count, $nuc);
-    chdir "$wd/$target/tmp";
-    open(IN, "split.$number");
-    open(SEQ, "|sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' > count.$number");
+    open(IN, "$wd/$target/split/split.$number");
+    open(SEQ, "|sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' > $wd/$target/count.$tsd_size/count.$number");
     while(<IN>){
 	    chomp;
 	    &mkKmer($_);
@@ -1759,12 +1760,12 @@ sub countFunc{
 		$tagc = $nuc;
 		$tag = $taga . $tagb . $tagc;
 		$fout = $tag . ".out";
-		open($fout, "|gzip -c > $tag.$number.gz");
+		open($fout, "|gzip -c > $wd/$target/count.$tsd_size/$tag.$number.gz");
 	    }
 	}
     }
     
-    open(IN, "count.$number");
+    open(IN, "$wd/$target/count.$tsd_size/count.$number");
     while(<IN>){
 	$tag = substr($_, 0, 3);
 	$fout = $tag . ".out";
@@ -1784,7 +1785,7 @@ sub countFunc{
 	    }
 	}
     }
-    system("rm count.$number");
+    system("rm $wd/$target/count.$tsd_size/count.$number");
 }
 
 sub mkKmer{
@@ -1802,8 +1803,7 @@ sub mkKmer{
 sub count{
     my $target = shift;
     my ($last, $i, $cmd);
-    $tsd_size = 20 if $method eq "junctionMethod";
-    opendir(DIR, "$wd/$target/tmp");
+    opendir(DIR, "$wd/$target/split");
     foreach (readdir(DIR)){
 	if (/^split/){
 	    $number = (split('\.', $_))[1];
@@ -1821,7 +1821,6 @@ sub count{
 }
 
 sub split{
-    system("mkdir $wd/$target/tmp") if ! -e "$wd/$target/tmp";
     $number = 1;
     
     $command = "cat";
