@@ -17,7 +17,6 @@ if ($ARGV[0] eq ""){
           A program for detection of active transposable elements from NGS reads.
 
  e.g. perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
-      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,method=tsd
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,option=clear
 
@@ -35,8 +34,7 @@ if ($ARGV[0] eq ""){
  If ref is not specified, a or b specific transpositions will be detected.
  This function works only by tsd method.
 
- If tsd_size is not specified, detection will be progressed with
- default tsd_size 5.
+ If tsd_size is not specified, detection will be progressed by junction_method.
 
  If th is not specified, default value 0.7 will be used.
  If no TE is detected, try again with lowere value e.g. th=0.3  
@@ -71,7 +69,6 @@ while(<IN>){
 close(IN);
 
 $processor = 32 if $processor > 32;
-$tsd_size = 5 if $tsd_size eq "";
 $th = 0.7 if $th eq "";
 
 if ($sub eq ""){
@@ -90,18 +87,18 @@ if ($sub eq ""){
     close(LOG);
     &report("job start");
     &commonMethod;
-    if ($method eq "" or $method =~ /jun/){
-	print LOG "method : junction\n" if $method eq "";;
-	$method = "junctionMethod";
-	&junctionMethod;
-    }else{
+    if ($tsd_size ne ""){
 	print LOG "method : tsd\n";
 	$method = "tsdMethod";
 	&tsdMethod;
+    }else{
+	print LOG "method : junction\n" if $method eq "";;
+	$method = "junctionMethod";
+	&junctionMethod;
     }
     &waitChild;
-    system("rm -rf $wd/$a/tmp") if $option =~ /clear/;
-    system("rm -rf $wd/$b/tmp") if $option =~ /clear/;
+#    system("rm -rf $wd/$a/tmp") if $option =~ /clear/;
+#    system("rm -rf $wd/$b/tmp") if $option =~ /clear/;
     system("rm -rf $wd/$a/child");
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
@@ -148,11 +145,15 @@ sub commonMethod{
     if ($ref ne ""){
 	&mkref;
     }
-    report("split to subfiles : $a");
-    system("perl $0 target=$a,sub=split,a=$a &");
+    if (! -e "$wd/$a/split/split.1"){
+	report("split to subfiles : $a");
+	system("perl $0 target=$a,sub=split,a=$a &");
+    }
     &canFork;
-    report("split to subfiles : $b");
-    system("perl $0 target=$b,sub=split,a=$a &");
+    if (! -e "$wd/$b/split/split.1"){
+	report("split to subfiles : $b");
+	system("perl $0 target=$b,sub=split,a=$a &");
+    }
     &waitChild;
 }
 
@@ -205,20 +206,20 @@ sub junctionMethod{
 }
 
 sub tsdMethod{
-    if (&flagmentLength($a) != 20 + $tsd_size){
+    if (&fragmentLength($a) != 20 + $tsd_size){
 	report("count subfiles : $a");
 	&count($a);
     }
-    if (&flagmentLength($b) != 20 + $tsd_size){
+    if (&fragmentLength($b) != 20 + $tsd_size){
 	report("count subfiles : $b");
 	&count($b);
     }
     &waitChild;
-    if (&flagmentLength($a) != 20 + $tsd_size){
+    if (&fragmentLength($a) != 20 + $tsd_size){
 	report("merge subfiles : $a");
 	&merge($a);
     }
-    if (&flagmentLength($b) != 20 + $tsd_size){
+    if (&fragmentLength($b) != 20 + $tsd_size){
 	report("merge subfiles : $b");
 	&merge($b);
     }
@@ -256,7 +257,8 @@ sub tsdMethod{
 	}
     }
     &waitChild;
-    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
+#    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
+    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
     if($ref eq ""){
 	&verify;
 	report("Job end. $a $b");
@@ -264,7 +266,7 @@ sub tsdMethod{
     }
     &mkQuery;
     &map;
-}
+} 
 
 sub fragmentLength{
     my $target = shift;
@@ -852,8 +854,8 @@ sub map{
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
                 &canFork;
-                &report("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tag=$tag");
-                system("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tag=$tag &");
+                &report("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag");
+                system("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag &");
             }
         }
     }
@@ -898,6 +900,7 @@ sub map{
 	foreach (sort keys %tsd){
 	    $uniq_tsd ++;
 	}
+#	if ($uniq_tsd / $total_tsd > 0.01 and $total_tsd > 1){
 	if ($uniq_tsd / $total_tsd > 0.5 and $total_tsd > 1){
 	    $passed{$ht} = 1;
 	    print "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
@@ -928,9 +931,9 @@ sub map{
 
 sub searchQuery{
     if ($b eq ""){
-	$cmd = "grep $seq $wd/$a/tmp/split.$number > $wd/$a/tmp/selected.$type.$seq.$number";
+	$cmd = "grep $seq $wd/$a/split/split.$number > $wd/$a/tmp/selected.$type.$seq.$number";
     }else{
-	$cmd = "grep $seq $wd/$b/tmp/split.$number > $wd/$b/tmp/selected.$type.$seq.$number";
+	$cmd = "grep $seq $wd/$b/split/split.$number > $wd/$b/tmp/selected.$type.$seq.$number";
     }
     system($cmd);
 }
@@ -1486,6 +1489,7 @@ sub sortPair{
 	   foreach $tagc (@nuc){
 	       $tag = $taga . $tagb . $tagc;
 	       close($tag);
+	       &canFork;
 	       &report("sort pair.$tag in $b");
                system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$b &");
 	   }
@@ -1818,7 +1822,6 @@ sub count{
 
 sub split{
     system("mkdir $wd/$target/tmp") if ! -e "$wd/$target/tmp";
-    return if -e "$wd/$target/tmp/split.1";
     $number = 1;
     
     $command = "cat";
@@ -1839,7 +1842,7 @@ sub split{
     }
     close(DIR);
     open(IN, "$command $wd/$target/read/* |");
-    open(OUT, "> $wd/$target/tmp/split.$number");
+    open(OUT, "> $wd/$target/split/split.$number");
     while(<IN>){
 	$count++;
 	if($count == 2){
@@ -1851,7 +1854,7 @@ sub split{
 	if ($lines == 1000000){
 	    close(OUT);
 	    $number++;
-	    open(OUT, "> $target/tmp/split.$number");
+	    open(OUT, "> $target/split/split.$number");
 	    $lines = 0;
 	}
     }
