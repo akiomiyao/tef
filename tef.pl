@@ -14,34 +14,43 @@
 if ($ARGV[0] eq ""){
     print "
  tef.pl - transposable element finder
-          A program for detection of active transposable elements from NGS reads.
+      A program for detection of active transposable elements from NGS reads.
 
  e.g. perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,option=clear
 
- tef.pl requires a set of NGS reads from different conditions.
+ tef.pl requires a pair of NGS reads from different conditions.
  For example, ttm2 and ttm5 are from regenerated rice individuals from callus.
  Save fastq files into ttm2/read and ttm5/read directory.
 
- Options shold be specified with 'name=value' separated by a comma without space.
+ Options shold be specified with 'name=value' separated by a comma WITHOUT space.
  Default method is the junction method.
- For the tsd method, option 'method=tsd' is required.
+ If tsd_size is specified, tef.pl will run with TSD method.
 
- If ref is specified, fasta file of reference genome sequence compressed
- by gzip should be saved into the directory specified with ref. 
+ If ref is specified, gziped fasta file of reference genome should be saved
+ into the directory specified with ref. 
  
- If ref is not specified, a or b specific transpositions will be detected.
- This function works only by tsd method.
+ At the first time of run, config file for reference will be made in the
+ ref directory. The config has a list of sequence name. If you do not want to
+ include unassaigned contig, change the name to NOP and save the contig file,
+ and run tef.pl again.
 
- If tsd_size is not specified, detection will be progressed by junction_method.
+ If ref is not specified, a or b specific transpositions without insertion 
+ position on the genome will be detected.
+ This function works only by TSD method.
 
- If th is not specified, default value 0.7 will be used.
- If no TE is detected, try again with lowere value e.g. th=0.3  
+ If tsd_size is not specified, detection will be progressed by junction method.
+
+ If th (threthold) on the TSD method is not specified, default value 0.2 will be used.
+ If a lot of noize are detected, try again with higher value e.g. th=0.7  
 
  tmp directory in target is not deleted and can be reused.
- If you want to use another method or other tsd_size, option=clear
- shold be specified to completely remove temporary data.
+ If option=clear is specified, data in tmp will be cleared at 
+ the begining of analysis. 
+
+ if data in split and count.tsd_size are truncated, remove the directory in
+ the target and then run again.
 
  Author: Akio Miyao
 
@@ -69,7 +78,7 @@ while(<IN>){
 close(IN);
 
 $processor = 32 if $processor > 32;
-$th = 0.7 if $th eq "";
+$th = 0.2 if $th eq "";
 
 if ($sub eq ""){
     system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp" and $option =~ /clear/;
@@ -80,29 +89,24 @@ if ($sub eq ""){
     system("mkdir $wd/$a/split") if ! -e "$wd/$a/split";
     system("mkdir $wd/$b/split") if ! -e "$wd/$b/split";
     system("mkdir $wd/$a/child");
-    system("rm $wd/$a/log") if -e "$wd/$a/log";
-    open(LOG, "> $wd/$a/log");
-    foreach (split(',', $ARGV[0])){
-	my ($name, $val) = split('=', $_);
-	print LOG "$name : $val\n";
-    }
-    close(LOG);
+    $tsd_size = 20 if $tsd_size eq "";
     &report("job start");
-    &commonMethod;
-    if ($tsd_size ne ""){
-	print LOG "method : tsd\n";
-	$method = "tsdMethod";
-	&tsdMethod;
+    &report("Argument : $ARGV[0]");
+    if ($tsd_size == 20){
+	$method = "Junction";
     }else{
-	print LOG "method : junction\n" if $method eq "";;
-	$method = "junctionMethod";
-	$tsd_size = 20;
+	$method = "TSD";
+    }
+    &report("Method : $method");
+    &commonMethod;
+    if ($tsd_size == 20){
 	&junctionMethod;
+    }else{
+	&tsdMethod;
     }
     &waitChild;
-#    system("rm -rf $wd/$a/tmp") if $option =~ /clear/;
-#    system("rm -rf $wd/$b/tmp") if $option =~ /clear/;
-    system("rm -rf $wd/$a/child");
+    system("rm -rf $wd/$a/tmp") if $option =~ /clear/;
+    system("rm -rf $wd/$b/tmp") if $option =~ /clear/;
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
     $hour = int($elapsed_time / 3600);
@@ -276,8 +280,8 @@ sub tsdMethod{
 sub fragmentLength{
     my $target = shift;
     my $fragment_length = 0;
-    if (-e "$target/tmp/TTT.gz"){
-	open(IN, "zcat $target/tmp/TTT.gz |");
+    if (-e "$target/count.$tsd_size/TTT.gz"){
+	open(IN, "zcat $target/count.$tsd_size/TTT.gz |");
 	while(<IN>){
 	    chomp;
 	    $fragment_length =length($_);
@@ -777,8 +781,8 @@ sub junctionFirstMap{
 }
 
 sub junctionSpecificFunc{
-    system("bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/count.$tsd_size/specific.$tag'");
-    system("bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/count.$tsd_size/specific.$tag'");
+    system("bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag'");
+    system("bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/tmp/specific.$tag'");
 }
 
 sub junctionSpecific{
@@ -791,8 +795,8 @@ sub junctionSpecific{
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
                 &canFork;
-                &report("perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tag=$tag");
-                system("perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tag=$tag &");
+                &report("perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag");
+                system("perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag &");
             }
         }
     }
@@ -905,7 +909,7 @@ sub map{
 	foreach (sort keys %tsd){
 	    $uniq_tsd ++;
 	}
-	if ($uniq_tsd / $total_tsd > 0.5 and $total_tsd > 1){
+	if ($uniq_tsd >= 3 or ($uniq_tsd / $total_tsd > 0.5 and $total_tsd > 1)){
 	    $passed{$ht} = 1;
 	    print "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
 	    &report("## $ht $uniq_tsd / $total_tsd (unique/total TSD)");
@@ -1703,7 +1707,7 @@ sub mergeFunc{
 	$filec = "$tag.$c.gz";
 	$now = `date`;
 	chomp($now);
-	system("bash -c 'join -a 1 -a 2 <(zcat $$wd/$target/count.$tsd_size/filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
+	system("bash -c 'join -a 1 -a 2 <(zcat $wd/$target/count.$tsd_size/$filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
 	$a += 2;
 	$b += 2;
 	$c ++;
@@ -1720,7 +1724,7 @@ sub mergeFunc{
     }
     close(IN);
     close(OUT);
-    system("rm $tag.*.gz");
+    system("rm $wd/$target/count.$tsd_size/$tag.*.gz");
 }
 
 sub merge{
@@ -1733,8 +1737,8 @@ sub merge{
 		$tagc = $nuc;
 		$tag = $taga . $tagb . $tagc;
 		&canFork;
-		$cmd = "perl $0 target=$target,sub=mergeFunc,tag=$tag,a=$a &";
-		&report("perl $0 target=$target,sub=mergeFunc,tag=$tag,a=$a");
+		$cmd = "perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a &";
+		&report("perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a");
 		system($cmd);
 	    }
 	}
@@ -1928,11 +1932,12 @@ sub report{
     my $now = `date`;
     chomp($now);
     $message = "$now : $message\n";
-    open(REPORT, ">> $wd/$a/log");
-    flock(REPORT,2);
+    $| = 1;
+    open(LOG, ">> $wd/$a/log.$tsd_size");
+    flock(LOG,2);
     print $message;
-    print REPORT $message;
-    close(REPORT);
+    print LOG $message;
+    close(LOG);
 }
 
 sub bynumber{
