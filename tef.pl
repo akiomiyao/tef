@@ -310,6 +310,9 @@ sub junctionTsdSelection{
 
 sub junctionTsdSelectionFunc{
     my $s = {};
+    my %tsd;
+    my $count = 0;
+    my $total = 0;
     open(IN, "$wd/$target/$file");
     while(<IN>){
 	chomp;
@@ -339,24 +342,56 @@ sub junctionTsdSelectionFunc{
 		    if ($htsd eq $ttsd){
 			$s->{tsd}{$chr}{$pos} = $htsd;
 			$s->{tsd}{$chr}{$pos - 20 + $i} = $ttsd;
+			$tsd{$htsd} = 1;
+			$total++;
 		    }
 		}
 	    }
 	}
     }
-    open(IN, "$wd/$target/$file");
-    ($head, $tail) = (split('\.', $file))[3,4];
-    open(OUT, ">$wd/$target/junction_method.$target.$head.$tail");
-    while(<IN>){
-	@row = split;
-	if ($s->{tsd}{$row[1]}{$row[2]}){
-	    $output =  "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[5]\n";
-	    print $output;
-	    print OUT $output;
-	}
+    foreach (sort keys %tsd){
+	next if /^A+$/;
+	next if /^C+$/;
+	next if /^G+$/;
+	next if /^T+$/;
+	next if /^(AT)+$/;
+	next if /^(TA)+$/;
+	next if /^(TA)+T$/;
+	next if /^A(TA)+$/;
+	next if /^(AC)+$/;
+	next if /^(CA)+$/;
+	next if /^(CA)+C$/;
+	next if /^A(CA)+$/;
+	next if /^(AG)+$/;
+	next if /^(GA)+$/;
+	next if /^(GA)+G$/;
+	next if /^A(GA)+$/;
+	next if /^(TG)+$/;
+	next if /^(GT)+$/;
+	next if /^(GT)+G$/;
+	next if /^T(GT)+$/;
+	next if /^(TC)+$/;
+	next if /^(CT)+$/;
+	next if /^(CT)+C$/;
+	next if /^T(CT)+$/;
+	$count ++;
     }
-    close(IN);
-    close(OUT);
+#    print "## $count / $total $head $tail\n";
+    if ($count > 1){
+	open(IN, "$wd/$target/$file");
+	($head, $tail) = (split('\.', $file))[3,4];
+	open(OUT, ">$wd/$target/junction_method.$target.$head.$tail");
+	while(<IN>){
+	    @row = split;
+	    if ($s->{tsd}{$row[1]}{$row[2]}){
+		$output =  "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[5]\n";
+		print $output;
+		print OUT $output;
+	    }
+	}
+	close(IN);
+	close(OUT);
+    }
 #    system("rm $wd/$target/$file");
 }
 
@@ -567,6 +602,30 @@ sub junctionSelectCandidate{
 	    $dat =  "$head\t$tail\t";
 	    $count = 0;
 	    foreach $tsd (sort keys %{$s->{$head}{$tail}}){
+		next if $tsd =~ /^A+$/;
+		next if $tsd =~ /^C+$/;
+		next if $tsd =~ /^G+$/;
+		next if $tsd =~ /^T+$/;
+		next if $tsd =~ /^(AT)+$/;
+		next if $tsd =~ /^(TA)+$/;
+		next if $tsd =~ /^(TA)+T$/;
+		next if $tsd =~ /^A(TA)+$/;
+		next if $tsd =~ /^(AC)+$/;
+		next if $tsd =~ /^(CA)+$/;
+		next if $tsd =~ /^(CA)+C$/;
+		next if $tsd =~ /^A(CA)+$/;
+		next if $tsd =~ /^(AG)+$/;
+		next if $tsd =~ /^(GA)+$/;
+		next if $tsd =~ /^(GA)+G$/;
+		next if $tsd =~ /^A(GA)+$/;
+		next if $tsd =~ /^(TG)+$/;
+		next if $tsd =~ /^(GT)+$/;
+		next if $tsd =~ /^(GT)+G$/;
+		next if $tsd =~ /^T(GT)+$/;
+		next if $tsd =~ /^(TC)+$/;
+		next if $tsd =~ /^(CT)+$/;
+		next if $tsd =~ /^(CT)+C$/;
+		next if $tsd =~ /^T(CT)+$/;
 		$dat .= "$tsd\t";
 		$count++;
 	    }
@@ -583,10 +642,10 @@ sub junctionSelectCandidateFunc{
     while(<IN>){
 	chomp;
 	@row = split;
-	$tsd_size = $row[0] - $prev[0] - 10;
-	if ($tsd_size <= 10 and $tsd_size > 3){
+	$tsd_size = 20 - ($row[0] - $prev[0]);
+	if ($tsd_size <= 16 and $tsd_size >= 3){
 	    if ($row[1] eq "h" and $prev[1] eq "t"){
-		$htsd = substr($row[2], 15, $tsd_size);
+		$htsd = substr($row[2], 20 - $tsd_size, $tsd_size);
 		$ttsd = substr($prev[2], 20, $tsd_size);
 		if ($htsd eq $ttsd){
 		    $hflanking = substr($row[2], 0, 20);
@@ -598,7 +657,7 @@ sub junctionSelectCandidateFunc{
 		    print OUT "$head\t$tail\t$htsd\n";
 		}
 	    }elsif ($row[1] eq "t" and $prev[1] eq "h"){
-		$htsd = substr($prev[2], 15, $tsd_size);
+		$htsd = substr($prev[2], 20 - $tsd_size, $tsd_size);
 		$ttsd = substr($row[2], 20, $tsd_size);
 		if ($htsd eq $ttsd){
 		    $hflanking = substr($pref[2], 0, 20);
@@ -773,8 +832,9 @@ sub junctionFirstMap{
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
 		&canFork;
-		&report("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag");
-		system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag &");
+		$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag &";
+		&report($cmd);
+		system($cmd);
             }
         }
     }
@@ -795,8 +855,9 @@ sub junctionSpecific{
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
                 &canFork;
-                &report("perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag");
-                system("perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag &");
+		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag &";
+                &report($cmd);
+                system($cmd);
             }
         }
     }
@@ -863,8 +924,9 @@ sub map{
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
                 &canFork;
-                &report("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag");
-                system("perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag &");
+		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag &";
+                &report($cmd);
+                system($cmd);
             }
         }
     }
@@ -911,7 +973,6 @@ sub map{
 	}
 	if ($uniq_tsd >= 3 or ($uniq_tsd / $total_tsd > 0.5 and $total_tsd > 1)){
 	    $passed{$ht} = 1;
-	    print "## $ht $uniq_tsd / $total_tsd (unique/total TSD)\n";
 	    &report("## $ht $uniq_tsd / $total_tsd (unique/total TSD)");
 	}
     }
@@ -1110,7 +1171,7 @@ After saving the gz file, run $0 again with same options.
 		$chr_name = $chr[$chr -1];
 		close(CHR);
 		if ($chr_name ne "NOP" and $chr_name ne ""){
-		    print "mkref. processing $chr_name\n";
+		    &report("Making chr$chr_name file");
 		    $chr_name =~ s/^chr//i;
 		    open(CHR, "> chr$chr_name");
 		}
@@ -1738,7 +1799,7 @@ sub merge{
 		$tag = $taga . $tagb . $tagc;
 		&canFork;
 		$cmd = "perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a &";
-		&report("perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a");
+		&report($cmd);
 		system($cmd);
 	    }
 	}
@@ -1816,6 +1877,7 @@ sub count{
 	    }
 	}
     }
+    system("mkdir $wd/$target/count.$tsd_size") if ! -d "$wd/$target/count.$tsd_size";
     foreach ($i = 1; $i <= $last; $i++){
 	&canFork;
 	$cmd = "perl $0 target=$target,sub=countFunc,number=$i,a=$a,tsd_size=$tsd_size &";
@@ -1825,9 +1887,8 @@ sub count{
 }
 
 sub split{
-    $number = 1;
-    
-    $command = "cat";
+    my $number = 1;
+    my $command = "cat";
     opendir(DIR, "$wd/$target/read");
     foreach (sort readdir(DIR)){
 	if (/gz$/){
@@ -1931,6 +1992,7 @@ sub report{
     my $message = shift;
     my $now = `date`;
     chomp($now);
+    $message =~ s/\&$//;
     $message = "$now : $message\n";
     $| = 1;
     open(LOG, ">> $wd/$a/log.$tsd_size");
