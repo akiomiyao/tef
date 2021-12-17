@@ -49,7 +49,7 @@ if ($ARGV[0] eq ""){
  If option=clear is specified, data in tmp will be cleared at 
  the begining of analysis. 
 
- if data in split and count.tsd_size are truncated, remove the directory in
+ If data in split and count.tsd_size are truncated, remove the directory in
  the target and then run again.
 
  Author: Akio Miyao
@@ -1700,7 +1700,7 @@ sub commFunc{
     open(BH, "> $wd/$b/tmp/$tag.head");
     open(AT, "> $wd/$a/tmp/$tag.tail");
     open(BT, "> $wd/$b/tmp/$tag.tail");
-    open(IN, "bash -c 'comm -3 <(zcat $wd/$a/tmp/$tag.gz) <(zcat $wd/$b/tmp/$tag.gz) '|");
+    open(IN, "bash -c 'comm -3 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) '|");
     while(<IN>){
 	chomp;
 	@row = split('\t', $_);
