@@ -138,7 +138,7 @@ if ($sub eq ""){
     }elsif($sec == 1){
 	$etime .= "$sec second ";
     }
-    report("Job completed: Analysis has been done. $a $b $ref $method
+    report("Job completed: Analysis has been done. a=$a, b=$b, ref=$ref, method=$method
 $etime ($elapsed_time seconds) elapsed.");
 }else{
     my $file = "$wd/$a/child/child.$$";
@@ -245,34 +245,26 @@ sub summary{
 	    if ($total > 0){
 		($head, $tail) = (split('\.', $file))[2,3];
 		$file{"$head $tail"} = 1;
-		$chead = complement($head);
-		$ctail = complement($tail);
-		$ht{"$head $tail"} = 1;
-		$ht{"$ctail $chead"} = 1;
 		$uniq{"$head $tail"} = $uniq;
 		$TSD{"$head $tail"} = $tsd;
 		$total{"$head $tail"} = $total;
 	    }
 	}
     }
-    
+    closedir(DIR);
     foreach (sort keys %file){
 	($head, $tail) = split;
 	$pair = "$head $tail";
-	$chead = complement($head);
-	$ctail = complement($tail);
-	next if $done{"$ctail $chead"};
 	print "$head\t$tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
 	print $target "$head\t$tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
-	$done{"$head $tail"} = 1;
     }
     
     $count = 0;
-    foreach (sort keys %ht){
+    foreach (sort keys %file){
 	$count++;
     }
     
-    $count = $count /2;
+    $count = int($count / 2 + 0.5);
     
     print "Number of TE candidates: $count\n";
     print $target "Number of TE candidates: $count\n";
