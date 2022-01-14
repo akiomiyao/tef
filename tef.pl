@@ -212,6 +212,71 @@ sub junctionMethod{
     &waitChild;
     &junctionTsdSelection($a);
     &junctionTsdSelection($b);
+    &waitChild;
+    &summary($a);
+    &summary($b);
+}
+
+sub summary{
+    my $target = shift;
+    my ($head, $tail, $chead, $ctail, %file, %ht, %uniq, %TSD, %total, $count, $pair, %done);
+    open($target, "> $target/junction_method.report");
+    print "Target: $target\n";
+    print $target "Target: $target\n";
+    opendir(DIR, $target);
+    foreach (sort readdir(DIR)){
+	if (/junction_method.$target.[ACGT]/){
+	    my $file = $_;
+	    my %tsd = ();
+	    my $total = 0;
+	    my $uniq = 0;
+	    my $tsd = "";
+	    open(IN, "$target/$file");
+	    while(<IN>){
+		@row = split;
+		$tsd{$row[7]} ++;
+		$total ++
+	    }
+	    close(IN);
+	    foreach (sort keys %tsd){
+		$uniq ++;
+		$tsd .= "$_ ";
+	    }
+	    if ($total > 0){
+		($head, $tail) = (split('\.', $file))[2,3];
+		$file{"$head $tail"} = 1;
+		$chead = complement($head);
+		$ctail = complement($tail);
+		$ht{"$head $tail"} = 1;
+		$ht{"$ctail $chead"} = 1;
+		$uniq{"$head $tail"} = $uniq;
+		$TSD{"$head $tail"} = $tsd;
+		$total{"$head $tail"} = $total;
+	    }
+	}
+    }
+    
+    foreach (sort keys %file){
+	($head, $tail) = split;
+	$pair = "$head $tail";
+	$chead = complement($head);
+	$ctail = complement($tail);
+	next if $done{"$ctail $chead"};
+	print "$head\t$tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
+	print $target "$head\t$tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
+	$done{"$head $tail"} = 1;
+    }
+    
+    $count = 0;
+    foreach (sort keys %ht){
+	$count++;
+    }
+    
+    $count = $count /2;
+    
+    print "Number of TE candidates: $count\n";
+    print $target "Number of TE candidates: $count\n";
+
 }
 
 sub tsdMethod{
@@ -310,9 +375,7 @@ sub junctionTsdSelection{
 
 sub junctionTsdSelectionFunc{
     my $s = {};
-    my %tsd;
-    my $count = 0;
-    my $total = 0;
+    ($head, $tail) = (split('\.', $file))[3,4];
     open(IN, "$wd/$target/$file");
     while(<IN>){
 	chomp;
@@ -325,11 +388,13 @@ sub junctionTsdSelectionFunc{
 	$s->{$row[3]}{$row[1]}{$row[2]} = $fl;
     }
     close(IN);
+    open(OUT, ">$wd/$target/junction_method.$target.$head.$tail");
     foreach $chr (sort bynumber keys %{$s->{head}}){
 	foreach $pos (sort bynumber keys %{$s->{head}{$chr}}){
 	    $hf = $s->{head}{$chr}{$pos};
 	    for ($i = 1; $i <= 38; $i++){
-		$tf = $s->{tail}{$chr}{$pos - 20 + $i};
+		$tpos = $pos - 20 + $i;
+		$tf = $s->{tail}{$chr}{$tpos};
 		if ($tf ne ""){
 		    if ($i < 20){
 			$size = 20 - $i + 1;
@@ -340,58 +405,44 @@ sub junctionTsdSelectionFunc{
 		    $htsd = substr($hf, 20 - $size, $size);
 		    $ttsd = substr($tf, 0, $size);
 		    if ($htsd eq $ttsd){
-			$s->{tsd}{$chr}{$pos} = $htsd;
-			$s->{tsd}{$chr}{$pos - 20 + $i} = $ttsd;
-			$tsd{$htsd} = 1;
-			$total++;
+			next if $htsd =~ /^A+$/;
+			next if $htsd =~ /^C+$/;
+			next if $htsd =~ /^G+$/;
+			next if $htsd =~ /^T+$/;
+			next if $htsd =~ /^(AT)+$/;
+			next if $htsd =~ /^(TA)+$/;
+			next if $htsd =~ /^(TA)+T$/;
+			next if $htsd =~ /^A(TA)+$/;
+			next if $htsd =~ /^(AC)+$/;
+			next if $htsd =~ /^(CA)+$/;
+			next if $htsd =~ /^(CA)+C$/;
+			next if $htsd =~ /^A(CA)+$/;
+			next if $htsd =~ /^(AG)+$/;
+			next if $htsd =~ /^(GA)+$/;
+			next if $htsd =~ /^(GA)+G$/;
+			next if $htsd =~ /^A(GA)+$/;
+			next if $htsd =~ /^(TG)+$/;
+			next if $htsd =~ /^(GT)+$/;
+			next if $htsd =~ /^(GT)+G$/;
+			next if $htsd =~ /^T(GT)+$/;
+			next if $htsd =~ /^(TC)+$/;
+			next if $htsd =~ /^(CT)+$/;
+			next if $htsd =~ /^(CT)+C$/;
+			next if $htsd =~ /^T(CT)+$/;
+			if ($pos > $tpos){
+			    $direction = "f";
+			}else{
+			    $direction = "r";
+			}
+			$s->{res}{$chr}{$pos} = "$target\t$chr\t$pos\t$tpos\t$direction\t$head\t$tail\t$htsd\t$hf\t$tf\n";
+			print $s->{res}{$chr}{$pos};
+			print OUT $s->{res}{$chr}{$pos};
 		    }
 		}
 	    }
 	}
     }
-    foreach (sort keys %tsd){
-	next if /^A+$/;
-	next if /^C+$/;
-	next if /^G+$/;
-	next if /^T+$/;
-	next if /^(AT)+$/;
-	next if /^(TA)+$/;
-	next if /^(TA)+T$/;
-	next if /^A(TA)+$/;
-	next if /^(AC)+$/;
-	next if /^(CA)+$/;
-	next if /^(CA)+C$/;
-	next if /^A(CA)+$/;
-	next if /^(AG)+$/;
-	next if /^(GA)+$/;
-	next if /^(GA)+G$/;
-	next if /^A(GA)+$/;
-	next if /^(TG)+$/;
-	next if /^(GT)+$/;
-	next if /^(GT)+G$/;
-	next if /^T(GT)+$/;
-	next if /^(TC)+$/;
-	next if /^(CT)+$/;
-	next if /^(CT)+C$/;
-	next if /^T(CT)+$/;
-	$count ++;
-    }
-#    print "## $count / $total $head $tail\n";
-    if ($count > 1){
-	open(IN, "$wd/$target/$file");
-	($head, $tail) = (split('\.', $file))[3,4];
-	open(OUT, ">$wd/$target/junction_method.$target.$head.$tail");
-	while(<IN>){
-	    @row = split;
-	    if ($s->{tsd}{$row[1]}{$row[2]}){
-		$output =  "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$s->{tsd}{$row[1]}{$row[2]}\t$row[5]\n";
-		print $output;
-		print OUT $output;
-	    }
-	}
-	close(IN);
-	close(OUT);
-    }
+    close(OUT);
 #    system("rm $wd/$target/$file");
 }
 
