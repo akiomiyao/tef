@@ -138,7 +138,7 @@ if ($sub eq ""){
     }elsif($sec == 1){
 	$etime .= "$sec second ";
     }
-    report("Job completed: Analysis has been done. a=$a, b=$b, ref=$ref, method=$method
+    report("Job completed: a=$a, b=$b, ref=$ref, method=$method
 $etime ($elapsed_time seconds) elapsed.");
 }else{
     my $file = "$wd/$a/child/child.$$";
@@ -221,8 +221,11 @@ sub summary{
     my $target = shift;
     my ($head, $tail, $chead, $ctail, %file, %ht, %uniq, %TSD, %total, $count, $pair, %done);
     open($target, "> $target/junction_method.report");
-    print "Target: $target\n";
-    print $target "Target: $target\n";
+    print "
+Target: $target
+Head                  Tail                  Kinds/Total\tTSDs\n";
+    print $target "Target: $target
+Head                  Tail                  Kinds/Total\tTSDs\n";
     opendir(DIR, $target);
     foreach (sort readdir(DIR)){
 	if (/junction_method.$target.[ACGT]/){
@@ -255,8 +258,8 @@ sub summary{
     foreach (sort keys %file){
 	($head, $tail) = split;
 	$pair = "$head $tail";
-	print "$head\t$tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
-	print $target "$head\t$tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
+	print "$head  $tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
+	print $target "$head  $tail\t$uniq{$pair}/$total{$pair}\t$TSD{$_}\n";
     }
     
     $count = 0;
