@@ -215,12 +215,101 @@ sub junctionMethod{
     &waitChild;
     &summary($a);
     &summary($b);
+    &genotype($a);
+    &genotype($b);
+    &waitChild;
+}
+
+sub genotype{
+    my $target = shift;
+    &canFork;
+    chomp;
+    report("output genotype data : $target");
+    system("perl $0 a=$a,b=$b,ref=$ref,sub=genotypeFunc,target=$target &");
+}
+
+sub genotypeFunc{
+    my (@row, $seq, $pos, %count, %pos);
+    opendir(DIR, $target);
+    foreach (sort readdir(DIR)){
+	if (/junction_method.$target.[ACGT]/){
+	    next if -z "$target/$_";
+	    open(IN, "$target/$_");
+	    while(<IN>){
+		chomp;
+		@row = split;
+		open(CHR, "$ref/chr$row[1]");
+		binmode(CHR);
+		if ($row[4] eq "f"){
+		    seek(CHR, $row[2] - 20, 0);
+		}else{
+		    seek(CHR, $row[2] - 21, 0);
+		}
+		read(CHR, $seq, 40);
+		close(CHR);
+		$count{$seq} = 0;
+		$pos{"$row[0] $row[1] $row[2] $row[3] wt"} = $seq;
+		$seq = $row[8] . $row[5];
+		$count{$seq} = 0;
+		$pos{"$row[0] $row[1] $row[2] $row[3] head"} = $seq;
+		$seq = $row[6] . $row[9];
+		$count{$seq} = 0;
+		$pos{"$row[0] $row[1] $row[2] $row[3] tail"} = $seq;
+	    }
+	    close(IN);
+	}
+    }
+    closedir(DIR);
+    open(IN, "zcat $target/count.20/*.gz |");
+    while(<IN>){
+	chomp;
+	@row = split;
+	if (defined $count{$row[0]}){
+	    if ($row[1] eq ""){
+		$count{$row[0]} ++;
+	    }else{
+		$count{$row[0]} += $row[1];
+	    }
+	}
+    }
+    close(IN);
+    opendir(DIR, $target);
+    foreach (sort readdir(DIR)){
+	if (/junction_method.$target.[ACGT]/){
+	    next if -z "$target/$_";
+	    @row = split('\.', $_);
+	    print "\njunction_method.genotype.$target.$row[2].$row[3]\n";
+	    open(OUT, "> $target/junction_method.genotype.$target.$row[2].$row[3]");
+	    open(IN, "$target/$_");
+	    while(<IN>){
+		my (@row, $hpos, $tpos, $wpos, $hcount, $tcount, $wcount, $genotype);
+		chomp;
+		@row = split;
+		$hpos = "$row[0] $row[1] $row[2] $row[3] head";
+		$tpos = "$row[0] $row[1] $row[2] $row[3] tail";
+		$wpos = "$row[0] $row[1] $row[2] $row[3] wt";
+		$hcount = $count{$pos{$hpos}};
+		$tcount = $count{$pos{$tpos}};
+		$wcount = $count{$pos{$wpos}};
+		if ($wcount){
+		    $genotype = "H";
+		}else{
+		    $genotype = "M";
+		}
+$output = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$hcount\t$tcount\t$wcount\t$genotype\n";
+		print $output;
+		print OUT $output;
+	    }
+	    close(IN);
+	}
+    }
+    closedir(DIR);	
 }
 
 sub summary{
     my $target = shift;
     my ($head, $tail, $chead, $ctail, %file, %ht, %uniq, %TSD, %total, $count, $pair, %done);
-    open($target, "> $target/junction_method.report");
+    open($target, "> $target/junction_method.pair.$target");
     print "
 Target: $target
 Head                  Tail                  Kinds/Total\tTSDs\n";
@@ -1826,7 +1915,7 @@ sub mergeFunc{
 	@row = split;
 	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
 	if ($row[1] >= 5){
-	    print OUT "$row[0]\n";
+	    print OUT "$row[0]\t$row[1]\n";
 	}
     }
     close(IN);
