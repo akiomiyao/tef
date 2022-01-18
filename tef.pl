@@ -104,7 +104,7 @@ if ($sub eq ""){
     }else{
 	&tsdMethod;
     }
-    &waitChild;
+    &join;
     system("rm -rf $wd/$a/tmp") if $option =~ /clear/;
     system("rm -rf $wd/$b/tmp") if $option =~ /clear/;
     $end_time = time;
@@ -156,12 +156,12 @@ sub commonMethod{
 	report("split to subfiles : $a");
 	system("perl $0 target=$a,sub=split,a=$a &");
     }
-    &canFork;
+    &monitorWait;
     if (! -e "$wd/$b/split/split.1"){
 	report("split to subfiles : $b");
 	system("perl $0 target=$b,sub=split,a=$a &");
     }
-    &waitChild;
+    &join;
 }
 
 sub junctionMethod{
@@ -175,7 +175,7 @@ sub junctionMethod{
 	report("count subfiles : $b");
 	&count($b);
     }
-    &waitChild;
+    &join;
     if (&fragmentLength($a) != 40){
 	report("merge subfiles : $a");
 	&merge($a);
@@ -184,45 +184,44 @@ sub junctionMethod{
 	report("merge subfiles : $b");
 	&merge($b);
     }
-    &waitChild;
+    &join;
     report("specific");
     &junctionSpecific;
     report("firstmap : $a");
     &junctionFirstMap($a);
     report("firstmap : $b");
     &junctionFirstMap($b);
-    &waitChild;
+    &join;
     report("secondmap : $a");
     &junctionSecondMap($a);
     report("secondmap : $b");
     &junctionSecondMap($b);
-    &waitChild;
+    &join;
     report("sort : $a");
     &junctionSort($a);
     report("sort : $b");
     &junctionSort($b);
-    &waitChild;
+    &join;
     report("select candidate : $a");
     &junctionSelectCandidate($a);
     report("select candidate : $b");
     &junctionSelectCandidate($b);
-    &waitChild;
+    &join;
     &junctionMapSelection($a);
     &junctionMapSelection($b);
-    &waitChild;
+    &join;
     &junctionTsdSelection($a);
     &junctionTsdSelection($b);
-    &waitChild;
+    &join;
     &summary($a);
     &summary($b);
     &genotype($a);
     &genotype($b);
-    &waitChild;
 }
 
 sub genotype{
     my $target = shift;
-    &canFork;
+    &monitorWait;
     chomp;
     report("output genotype data : $target");
     system("perl $0 a=$a,b=$b,ref=$ref,sub=genotypeFunc,target=$target &");
@@ -372,7 +371,7 @@ sub tsdMethod{
 	report("count subfiles : $b");
 	&count($b);
     }
-    &waitChild;
+    &join;
     if (&fragmentLength($a) != 20 + $tsd_size){
 	report("merge subfiles : $a");
 	&merge($a);
@@ -381,49 +380,48 @@ sub tsdMethod{
 	report("merge subfiles : $b");
 	&merge($b);
     }
-    &waitChild;
+    &join;
 
     report("comm");
     &comm;
-    &waitChild;
-    report("join");
     &join;
-    &waitChild;
+    report("join");
+    &tsdJoin;
+    &join;
     report("tsd");
     &tsd;
     foreach $taga (@nuc){
 	foreach $tagb (@nuc){
 	    foreach $tagc (@nuc){
 		$tag = $taga . $tagb . $tagc;
-	       &canFork;
+	       &monitorWait;
 		report("pair $tag");
 		system("perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size &");
 	    }
 	}
     }
-    &waitChild;
+    &join;
     report("sortPair");
     &sortPair;
     foreach $taga (@nuc){
 	foreach $tagb (@nuc){
 	    foreach $tagc (@nuc){
 		$tag = $taga . $tagb . $tagc;
-		&canFork;
+		&monitorWait;
 		report("selectPair $tag");
 		system("perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th &");
 	    }
 	}
     }
-    &waitChild;
+    &join;
 #    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
     system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
     if($ref eq ""){
 	&verify;
-	report("Job end. $a $b");
-	exit;
+    }else{
+	&mkQuery;
+	&map;
     }
-    &mkQuery;
-    &map;
 } 
 
 sub fragmentLength{
@@ -447,7 +445,7 @@ sub junctionTsdSelection{
     opendir(DIR, "$wd/$target");
     foreach $file (sort readdir(DIR)){
 	if($file =~ /junction_method.map.$target/){
-	    &canFork;
+	    &monitorWait;
 	    chomp;
 	    report("tsd selection : $target : $file");
 	    system("perl $0 a=$a,b=$b,sub=junctionTsdSelectionFunc,target=$target,file=$file &");
@@ -586,7 +584,7 @@ sub junctionMapSelection{
 	if ($chr =~ /^chr/){
 	    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
 	    while(<IN>){
-		&canFork;
+		&monitorWait;
 		chomp;
 		($head, $tail) = (split)[0, 1];
 		report("map selection : $target : $chr $head $tail");
@@ -596,7 +594,7 @@ sub junctionMapSelection{
 	}
     }
     closedir(REF);
-    &waitChild;
+    &join;
     open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
     while(<IN>){
 	chomp;
@@ -718,12 +716,12 @@ sub junctionSelectCandidate{
     opendir(REF, "$wd/$ref");
     foreach $file (sort readdir(REF)){
 	if ($file =~ /^chr/){
-	    &canFork;
+	    &monitorWait;
 	    &report("select candidate : $target : $file");
 	    system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSelectCandidateFunc,chr=$file &");
 	}
     }
-    &waitChild;
+    &join;
     open(IN, "cat $wd/$target/tmp/candidate.* |");
     while(<IN>){
 	chomp;
@@ -839,7 +837,7 @@ sub junctionSort{
     $org_processor = $processor;
     $processor = 2 if -s "$wd/$target/tmp/$chr[0]" > 10000000000;
     foreach $file (@chr){
-	&canFork;
+	&monitorWait;
 	&report("Sorting $file");
 	system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file &");
     }
@@ -949,7 +947,7 @@ sub junctionSecondMap{
             foreach $nuc (@nuc){
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
-		&canFork;
+		&monitorWait;
 		&report("Mapping $target : $tag");
 		system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag &");
             }
@@ -966,7 +964,7 @@ sub junctionFirstMap{
             foreach $nuc (@nuc){
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
-		&canFork;
+		&monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag &";
 		&report($cmd);
 		system($cmd);
@@ -989,7 +987,7 @@ sub junctionSpecific{
             foreach $nuc (@nuc){
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
-                &canFork;
+                &monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag &";
                 &report($cmd);
                 system($cmd);
@@ -1058,14 +1056,14 @@ sub map{
             foreach $nuc (@nuc){
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
-                &canFork;
+                &monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag &";
                 &report($cmd);
                 system($cmd);
             }
         }
     }
-    &waitChild;
+    &join;
     open(IN, "cat $wd/$a/tmp/tsd_method.mapped.$a.$b.$tsd_size.* |sort |");
     while(<IN>){
 	chomp;
@@ -1163,18 +1161,18 @@ sub mkQuery{
     }
     foreach ($i = 1; $i <= $last; $i++){
 	foreach $head (sort keys %head){
-	    &canFork;
+	    &monitorWait;
 	    $cmd = "perl $0 a=$a,sub=searchQuery,number=$i,type=head,seq=$head &";
 	    &report($cmd);
 	    system($cmd);
 	}
         foreach $tail (sort keys %tail){
-            &canFork;
+            &monitorWait;
             $cmd = "perl $0 a=$a,sub=searchQuery,number=$i,type=tail,seq=$tail &";
             &report($cmd);
             system($cmd);
         }
-	&waitChild;
+	&join;
 	opendir(DIR, "$wd/$a/tmp");
 	foreach $file (readdir(DIR)){
 	    if ($file =~ /^sele/){
@@ -1212,18 +1210,18 @@ sub mkQuery{
     }
     foreach ($i = 1; $i <= $last; $i++){
 	foreach $head (sort keys %head){
-	    &canFork;
+	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,sub=searchQuery,number=$i,type=head,seq=$head &";
 	    &report($cmd);
 	    system($cmd);
 	}
 	foreach $tail (sort keys %tail){
-	    &canFork;
+	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,sub=searchQuery,number=$i,type=tail,seq=$tail &";
 	    &report($cmd);
 	    system($cmd);
 	}
-	&waitChild;
+	&join;
 	opendir(DIR, "$wd/$b/tmp");
 	foreach $file (readdir(DIR)){
 	    if ($file =~ /^sele/){
@@ -1387,11 +1385,11 @@ sub mk20{
 	&report("Making 20mer position file.");
 	foreach $i (@chr){
 	    next if $i eq "NOP";
-	    &canFork;
+	    &monitorWait;
 	    &report("Processing chr$i");
 	    system("perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i &");
 	}
-	&waitChild;
+	&join;
     }
     my (@row, %tag);
     opendir(DIR, "$wd/$ref/tmp/");
@@ -1410,14 +1408,14 @@ sub mk20{
 		$tag[2] = $nuc;
 		$tag = join('', @tag);
 		if ($tag{$tag}){
-		    &canFork;
+		    &monitorWait;
 		    &report("making ref20.$tag.gz");
 		    system("perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag &");
 		}
 	    }
 	}
     }    
-    &waitChild;
+    &join;
     system("rm -r $wd/$ref/tmp")
 }
 
@@ -1667,7 +1665,7 @@ sub sortPair{
        foreach $tagb (@nuc){
            foreach $tagc (@nuc){
                $tag = $taga . $tagb . $tagc;
-	       &canFork;
+	       &monitorWait;
 	       &report("making ref20.$tag.gz");
 	       system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$a &");
 	   }
@@ -1693,7 +1691,7 @@ sub sortPair{
 	   foreach $tagc (@nuc){
 	       $tag = $taga . $tagb . $tagc;
 	       close($tag);
-	       &canFork;
+	       &monitorWait;
 	       &report("sort pair.$tag in $b");
                system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$b &");
 	   }
@@ -1782,20 +1780,20 @@ sub selectPair{
     system("rm $wd/$a/tmp/pair.$tag $wd/$b/tmp/pair.$tag");
 }
 
-sub join{
-    &canFork;
+sub tsdJoin{
+    &monitorWait;
     $cmd = "perl $0 target=$a,sub=countHeadTail,type=head,a=$a &";
     &report($cmd);
     system($cmd);
-    &canFork;
+    &monitorWait;
     $cmd = "perl $0 target=$a,sub=countHeadTail,type=tail,a=$a &";
     &report($cmd);
     system($cmd);
-    &canFork;
+    &monitorWait;
     $cmd = "perl $0 target=$b,sub=countHeadTail,type=head,a=$a &";
     &report($cmd);
     system($cmd);
-    &canFork;
+    &monitorWait;
     $cmd = "perl $0 target=$b,sub=countHeadTail,type=tail,a=$a &";
     &report($cmd);
     system($cmd);
@@ -1870,7 +1868,7 @@ sub comm{
 	    foreach $nuc (@nuc){
 		$tagc = $nuc;
 		$tag = $taga . $tagb . $tagc;
-		&canFork;
+		&monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,sub=commFunc,tag=$tag,tsd_size=$tsd_size &";
 		&report("common : $tag : $tsd_size");
 		system($cmd);
@@ -1901,8 +1899,6 @@ sub mergeFunc{
 	$filea = "$tag.$a.gz";
 	$fileb = "$tag.$b.gz";
 	$filec = "$tag.$c.gz";
-	$now = `date`;
-	chomp($now);
 	system("bash -c 'join -a 1 -a 2 <(zcat $wd/$target/count.$tsd_size/$filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
 	$a += 2;
 	$b += 2;
@@ -1932,7 +1928,7 @@ sub merge{
 	    foreach $nuc (@nuc){
 		$tagc = $nuc;
 		$tag = $taga . $tagb . $tagc;
-		&canFork;
+		&monitorWait;
 		$cmd = "perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a &";
 		&report($cmd);
 		system($cmd);
@@ -2014,7 +2010,7 @@ sub count{
     }
     system("mkdir $wd/$target/count.$tsd_size") if ! -d "$wd/$target/count.$tsd_size";
     foreach ($i = 1; $i <= $last; $i++){
-	&canFork;
+	&monitorWait;
 	$cmd = "perl $0 target=$target,sub=countFunc,number=$i,a=$a,tsd_size=$tsd_size &";
 	&report($cmd);
 	system($cmd);
@@ -2083,7 +2079,7 @@ sub complement{
     return $out;
 }
 
-sub canFork{
+sub monitorWait{
     while(1){
         my $count = 0;
         $wait_time = 0.1 if $wait_time eq "";
@@ -2106,7 +2102,7 @@ sub canFork{
     }
 }
 
-sub waitChild{
+sub join{
     while(1){
         my $count = 0;
         sleep 1;
@@ -2125,12 +2121,16 @@ sub waitChild{
 
 sub report{
     my $message = shift;
-    my $now = `date`;
+    my $now = `date "+%Y-%m-%d %H:%M:%S"`;
     chomp($now);
     $message =~ s/\&$//;
     $message = "$now : $message\n";
     $| = 1;
-    open(LOG, ">> $wd/$a/log.$tsd_size");
+    if ($tsd_size == 20){
+	open(LOG, ">> $wd/$a/tsd_method.log.$tsd_size");
+    }else{
+	open(LOG, ">> $wd/$a/junction_method.log");
+    }
     flock(LOG,2);
     print $message;
     print LOG $message;
