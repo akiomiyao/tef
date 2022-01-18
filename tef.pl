@@ -159,12 +159,20 @@ sub commonMethod{
     }
     if (! -e "$wd/$a/split/split.1"){
 	&log("split to subfiles : $a");
-	system("perl $0 target=$a,sub=split,a=$a &");
+	$rc = system("perl $0 target=$a,sub=split,a=$a &");
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : perl $0 target=$a,sub=split,a=$a");
+	}
     }
     &monitorWait;
     if (! -e "$wd/$b/split/split.1"){
 	&log("split to subfiles : $b");
-	system("perl $0 target=$b,sub=split,a=$a &");
+	$rc = system("perl $0 target=$b,sub=split,a=$a &");
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : perl $0 target=$a,sub=split,a=$a");
+	}
     }
     &join;
 }
@@ -229,7 +237,11 @@ sub genotype{
     &monitorWait;
     chomp;
     &log("output genotype data : $target");
-    system("perl $0 a=$a,b=$b,ref=$ref,sub=genotypeFunc,target=$target &");
+    $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=genotypeFunc,target=$target &");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=genotypeFunc,target=$target");
+    }
 }
 
 sub genotypeFunc{
@@ -401,7 +413,11 @@ sub tsdMethod{
 		$tag = $taga . $tagb . $tagc;
 	       &monitorWait;
 		&log("pair $tag");
-		system("perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size &");
+		$rc = system("perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size &");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size");
+		}
 	    }
 	}
     }
@@ -414,13 +430,21 @@ sub tsdMethod{
 		$tag = $taga . $tagb . $tagc;
 		&monitorWait;
 		&log("selectPair $tag");
-		system("perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th &");
+		$rc = system("perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th &");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th");
+		}
 	    }
 	}
     }
     &join;
 #    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
-    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    $rc = system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    }
     if($ref eq ""){
 	&verify;
     }else{
@@ -453,8 +477,11 @@ sub junctionTsdSelection{
 	    &monitorWait;
 	    chomp;
 	    &log("tsd selection : $target : $file");
-	    system("perl $0 a=$a,b=$b,sub=junctionTsdSelectionFunc,target=$target,file=$file &");
-	    
+	    $rc = system("perl $0 a=$a,b=$b,sub=junctionTsdSelectionFunc,target=$target,file=$file &");
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : perl $0 a=$a,b=$b,sub=junctionTsdSelectionFunc,target=$target,file=$file");
+	    }	    
 	}
     }
     closedir(DIR);
@@ -593,7 +620,11 @@ sub junctionMapSelection{
 		chomp;
 		($head, $tail) = (split)[0, 1];
 		&log("map selection : $target : $chr $head $tail");
-		system("perl $0 a=$a,b=$b,sub=junctionMapSelectionFunc,target=$target,chr=$chr,head=$head,tail=$tail &");
+		$rc = system("perl $0 a=$a,b=$b,sub=junctionMapSelectionFunc,target=$target,chr=$chr,head=$head,tail=$tail &");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : perl $0 a=$a,b=$b,sub=junctionMapSelectionFunc,target=$target,chr=$chr,head=$head,tail=$tail");
+		}
 	    }
 	    close(IN);
 	}
@@ -723,7 +754,11 @@ sub junctionSelectCandidate{
 	if ($file =~ /^chr/){
 	    &monitorWait;
 	    &log("select candidate : $target : $file");
-	    system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSelectCandidateFunc,chr=$file &");
+	    $rc = system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSelectCandidateFunc,chr=$file &");
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSelectCandidateFunc,chr=$file");
+	    }
 	}
     }
     &join;
@@ -844,19 +879,31 @@ sub junctionSort{
     foreach $file (@chr){
 	&monitorWait;
 	&log("Sorting $file");
-	system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file &");
+	$rc = system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file &");
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file");
+	}
     }
     $processor = $org_processor;
 }
 
 sub junctionSortFunc{
-    system("sort -k 1 -n -S 1M -T $wd/$target/tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr && rm $wd/$target/tmp/$chr");
+    $rc = system("sort -k 1 -n -S 1M -T $wd/$target/tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr && rm $wd/$target/tmp/$chr");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : sort -k 1 -n -S 1M -T $wd/$target/tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr && rm $wd/$target/tmp/$chr");
+    }
 }
 
 sub junctionSecondMapFunc{
     system("rm $wd/$target/tmp/map.$tag") if -e "$wd/$target/tmp/map.$tag";
     system("rm $wd/$target/tmp/tmp.$tag") if -e "$wd/$target/tmp/tmp.$tag";
-    system("cat $wd/$target/tmp/first.$tag.* | sort -S 1M -T $wd/$target/tmp > $wd/$target/tmp/second.$tag");
+    $rc = system("cat $wd/$target/tmp/first.$tag.* | sort -S 1M -T $wd/$target/tmp > $wd/$target/tmp/second.$tag");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : cat $wd/$target/tmp/first.$tag.* | sort -S 1M -T $wd/$target/tmp > $wd/$target/tmp/second.$tag");
+    }
     open(IN, "zcat $wd/$ref/ref20.$tag.gz |join $wd/$target/tmp/second.$tag - |");
     while(<IN>){
 	chomp;
@@ -864,7 +911,11 @@ sub junctionSecondMapFunc{
 	if ($prev ne $row[1]){
 	    close($tag);
 	    if (! $flag and -e "$wd/$target/tmp/tmp.$tag"){
-		system("cat $wd/$target/tmp/tmp.$tag >> $wd/$target/tmp/map.$tag");
+		$rc = system("cat $wd/$target/tmp/tmp.$tag >> $wd/$target/tmp/map.$tag");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : cat $wd/$target/tmp/tmp.$tag >> $wd/$target/tmp/map.$tag");
+		}
 	    }
 	    $flag = 0;
 	    open($tag, "> $wd/$target/tmp/tmp.$tag");
@@ -877,7 +928,11 @@ sub junctionSecondMapFunc{
     }
     close(IN);
     if (! $flag and -e "$wd/$target/tmp/tmp.$tag"){
-	system("cat $wd/$target/tmp/tmp.$tag >> $wd/$target/tmp/map.$tag");
+	$rc = system("cat $wd/$target/tmp/tmp.$tag >> $wd/$target/tmp/map.$tag");
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : cat $wd/$target/tmp/tmp.$tag >> $wd/$target/tmp/map.$tag");
+	}
     }
     system("rm $wd/$target/tmp/tmp.$tag");
     system("rm $wd/$target/tmp/first.$tag");
@@ -954,7 +1009,11 @@ sub junctionSecondMap{
                 $tag = join('', @tag);
 		&monitorWait;
 		&log("Mapping $target : $tag");
-		system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag &");
+		$rc = system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag &");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag");
+		}
             }
         }
     }
@@ -972,15 +1031,27 @@ sub junctionFirstMap{
 		&monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag &";
 		&log($cmd);
-		system($cmd);
+		$rc = system($cmd);
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : $cmd");
+		}
             }
         }
     }
 }
 
 sub junctionSpecificFunc{
-    system("bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag'");
-    system("bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/tmp/specific.$tag'");
+    $rc = system("bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag'");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag'");
+    }
+    $rc = system("bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/tmp/specific.$tag'");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/tmp/specific.$tag'");
+    }
 }
 
 sub junctionSpecific{
@@ -995,7 +1066,11 @@ sub junctionSpecific{
                 &monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag &";
                 &log($cmd);
-                system($cmd);
+                $rc = system($cmd);
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : $cmd");
+		}
             }
         }
     }
@@ -1064,7 +1139,11 @@ sub map{
                 &monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mapFunc,tsd_size=$tsd_size,tag=$tag &";
                 &log($cmd);
-                system($cmd);
+                $rc = system($cmd);
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : $cmd");
+		}
             }
         }
     }
@@ -1142,7 +1221,11 @@ sub searchQuery{
     }else{
 	$cmd = "grep $seq $wd/$b/split/split.$number > $wd/$b/tmp/selected.$type.$seq.$number";
     }
-    system($cmd);
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : $cmd");
+    }
 }
 
 sub mkQuery{
@@ -1169,13 +1252,21 @@ sub mkQuery{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,sub=searchQuery,number=$i,type=head,seq=$head &";
 	    &log($cmd);
-	    system($cmd);
+	    $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : $cmd");
+	    }
 	}
         foreach $tail (sort keys %tail){
             &monitorWait;
             $cmd = "perl $0 a=$a,sub=searchQuery,number=$i,type=tail,seq=$tail &";
             &log($cmd);
-            system($cmd);
+            $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : $cmd");
+	    }
         }
 	&join;
 	opendir(DIR, "$wd/$a/tmp");
@@ -1218,13 +1309,21 @@ sub mkQuery{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,sub=searchQuery,number=$i,type=head,seq=$head &";
 	    &log($cmd);
-	    system($cmd);
+	    $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : $cmd");
+	    }
 	}
 	foreach $tail (sort keys %tail){
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,sub=searchQuery,number=$i,type=tail,seq=$tail &";
 	    &log($cmd);
-	    system($cmd);
+	    $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : $cmd");
+	    }
 	}
 	&join;
 	opendir(DIR, "$wd/$b/tmp");
@@ -1271,7 +1370,11 @@ After saving the gz file, run $0 again with same options.
     chdir "$wd/$ref";
     if (! -e "config"){
 	&log("making config file of in $ref directory.");
-	system("zcat *.gz|grep '>' | sed  -e 's/^>//' > config.tmp");
+	$rc = system("zcat *.gz|grep '>' | sed  -e 's/^>//' > config.tmp");
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : zcat *.gz|grep '>' | sed  -e 's/^>//' > config.tmp");
+	}
 	open(IN, "config.tmp");
 	open(OUT, "> config");
 	while(<IN>){
@@ -1329,7 +1432,11 @@ After saving the gz file, run $0 again with same options.
 }
 
 sub sort20mer{
-    system("sort -S 1M -T $wd/$ref/tmp $wd/$ref/tmp/ref20.$tag.* |gzip -c > $wd/$ref/ref20.$tag.gz");
+    $rc = system("sort -S 1M -T $wd/$ref/tmp $wd/$ref/tmp/ref20.$tag.* |gzip -c > $wd/$ref/ref20.$tag.gz");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : sort -S 1M -T $wd/$ref/tmp $wd/$ref/tmp/ref20.$tag.* |gzip -c > $wd/$ref/ref20.$tag.gz");
+    }
     system("rm $wd/$ref/tmp/ref20.$tag.*");
 }
 
@@ -1392,7 +1499,11 @@ sub mk20{
 	    next if $i eq "NOP";
 	    &monitorWait;
 	    &log("Processing chr$i");
-	    system("perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i &");
+	    $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i &");
+	    $rc = $rc >> 8;
+	    if ($rc){
+		&log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i");
+	    }
 	}
 	&join;
     }
@@ -1415,7 +1526,11 @@ sub mk20{
 		if ($tag{$tag}){
 		    &monitorWait;
 		    &log("making ref20.$tag.gz");
-		    system("perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag &");
+		    $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag &");
+		    $rc = $rc >> 8;
+		    if ($rc){
+			&log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag");
+		    }
 		}
 	    }
 	}
@@ -1519,16 +1634,17 @@ sub verify{
     close(DIR);
     $count = 0;
     &log("Verify. output transposon.$a.$b.$tsd_size");
-    open(OUT, "> $wd/$a/transposon.$a.$b.$tsd_size");
+    open(OUT, "> $wd/$a/tsd_method.transposon.$a.$b.$tsd_size");
     open(IN, "$command $wd/$b/read/* |");
     while(<IN>){
 	$count++;
 	if ($count % 4 == 2){
 	    next if /N/;
-	    foreach $target (keys %target){
-		if (/$target/){
-		    print "$target{$target}\t$target\t$_";
-		    print OUT "$target{$target}\t$target\t$_";
+	    for($i = 0; $i < length($_) - 40 + $tsd_size; $i++){
+		my $seq = substr($_, $i, 40 - $tsd_size);
+		if (length($seq) == 40 -$tsd_size and defined $target{$seq}){
+		    print "$target{$seq}\t$seq\t$_";
+		    print OUT "$target{$seq}\t$seq\t$_";
 		}
 	    }
 	}
@@ -1672,7 +1788,11 @@ sub sortPair{
                $tag = $taga . $tagb . $tagc;
 	       &monitorWait;
 	       &log("making ref20.$tag.gz");
-	       system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$a &");
+	       $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$a &");
+	       $rc = $rc >> 8;
+	       if ($rc){
+		   &log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$a");
+	       }
 	   }
        }
    }
@@ -1698,7 +1818,11 @@ sub sortPair{
 	       close($tag);
 	       &monitorWait;
 	       &log("sort pair.$tag in $b");
-               system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$b &");
+               $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$b &");
+	       $rc = $rc >> 8;
+	       if ($rc){
+		   &log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=sortPairFunc,tag=$tag,target=$b");
+	       }
 	   }
        }
    }
@@ -1706,7 +1830,11 @@ sub sortPair{
 }
 
 sub sortPairFunc{
-    system("sort -S 1M -T $wd/$target/tmp $wd/$target/tmp/pair.$tag.tmp > $wd/$target/tmp/pair.$tag && rm $wd/$target/tmp/pair.$tag.tmp");
+    $rc = system("sort -S 1M -T $wd/$target/tmp $wd/$target/tmp/pair.$tag.tmp > $wd/$target/tmp/pair.$tag && rm $wd/$target/tmp/pair.$tag.tmp");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : sort -S 1M -T $wd/$target/tmp $wd/$target/tmp/pair.$tag.tmp > $wd/$target/tmp/pair.$tag && rm $wd/$target/tmp/pair.$tag.tmp");
+    }
 }
 
 sub selectPair{
@@ -1789,24 +1917,44 @@ sub tsdJoin{
     &monitorWait;
     $cmd = "perl $0 target=$a,sub=countHeadTail,type=head,a=$a &";
     &log($cmd);
-    system($cmd);
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : $cmd");
+    }
     &monitorWait;
     $cmd = "perl $0 target=$a,sub=countHeadTail,type=tail,a=$a &";
     &log($cmd);
-    system($cmd);
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : $cmd");
+    }
     &monitorWait;
     $cmd = "perl $0 target=$b,sub=countHeadTail,type=head,a=$a &";
     &log($cmd);
-    system($cmd);
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : $cmd");
+    }
     &monitorWait;
     $cmd = "perl $0 target=$b,sub=countHeadTail,type=tail,a=$a &";
     &log($cmd);
-    system($cmd);
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : $cmd");
+    }
 }
 
 sub countHeadTail{
     my (@row, $prev, $count);
-    system("cat $wd/$target/tmp/*.$type | sort -S 1M -T $wd/$target/tmp > $wd/$target/tmp/$type");
+    $rc = system("cat $wd/$target/tmp/*.$type | sort -S 1M -T $wd/$target/tmp > $wd/$target/tmp/$type");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : cat $wd/$target/tmp/*.$type | sort -S 1M -T $wd/$target/tmp > $wd/$target/tmp/$type");
+    }
     open(OUT, "> $wd/$target/tmp/$type.count");
     open(IN, "$wd/$target/tmp/$type");
     while(<IN>){
@@ -1876,7 +2024,11 @@ sub comm{
 		&monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,sub=commFunc,tag=$tag,tsd_size=$tsd_size &";
 		&log("common : $tag : $tsd_size");
-		system($cmd);
+		$rc = system($cmd);
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : $cmd");
+		}
 	    }
 	}
     }
@@ -1904,7 +2056,11 @@ sub mergeFunc{
 	$filea = "$tag.$a.gz";
 	$fileb = "$tag.$b.gz";
 	$filec = "$tag.$c.gz";
-	system("bash -c 'join -a 1 -a 2 <(zcat $wd/$target/count.$tsd_size/$filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
+	$rc = system("bash -c 'join -a 1 -a 2 <(zcat $wd/$target/count.$tsd_size/$filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : bash -c 'join -a 1 -a 2 <(zcat $wd/$target/count.$tsd_size/$filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb");
+	}
 	$a += 2;
 	$b += 2;
 	$c ++;
@@ -1936,7 +2092,11 @@ sub merge{
 		&monitorWait;
 		$cmd = "perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a &";
 		&log($cmd);
-		system($cmd);
+		$rc = system($cmd);
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : $cmd");
+		}
 	    }
 	}
     }
@@ -2018,7 +2178,11 @@ sub count{
 	&monitorWait;
 	$cmd = "perl $0 target=$target,sub=countFunc,number=$i,a=$a,tsd_size=$tsd_size &";
 	&log($cmd);
-	system($cmd);
+	$rc = system($cmd);
+	$rc = $rc >> 8;
+	if ($rc){
+	    &log("ERROR : $cmd");
+	}
     }
 }
 
