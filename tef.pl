@@ -178,6 +178,7 @@ sub commonMethod{
 }
 
 sub junctionMethod{
+=pod
     system("mkdir $wd/$a/count.20") if ! -e "$wd/$a/count.20";
     system("mkdir $wd/$b/count.20") if ! -e "$wd/$b/count.20";
     if (&fragmentLength($a) != 40){
@@ -230,7 +231,83 @@ sub junctionMethod{
     &summary($b);
     &genotype($a);
     &genotype($b);
+=cut
+    &verify2;
 }
+
+sub tsdMethod{
+	if (&fragmentLength($a) != 20 + $tsd_size){
+	&log("count subfiles : $a");
+	&count($a);
+    }
+    if (&fragmentLength($b) != 20 + $tsd_size){
+	&log("count subfiles : $b");
+	&count($b);
+    }
+    &join;
+    if (&fragmentLength($a) != 20 + $tsd_size){
+	&log("merge subfiles : $a");
+	&merge($a);
+    }
+    if (&fragmentLength($b) != 20 + $tsd_size){
+	&log("merge subfiles : $b");
+	&merge($b);
+    }
+    &join;
+    &log("comm");
+    &comm;
+    &join;
+    &log("tsdJoin");
+    &tsdJoin;
+    &join;
+    &log("tsd");
+    &tsd;
+    foreach $taga (@nuc){
+	foreach $tagb (@nuc){
+	    foreach $tagc (@nuc){
+		$tag = $taga . $tagb . $tagc;
+	       &monitorWait;
+		&log("pair $tag");
+		$rc = system("perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size &");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size");
+		}
+	    }
+	}
+    }
+    &join;
+    &log("sortPair");
+    &sortPair;
+    foreach $taga (@nuc){
+	foreach $tagb (@nuc){
+	    foreach $tagc (@nuc){
+		$tag = $taga . $tagb . $tagc;
+		&monitorWait;
+		&log("selectPair $tag");
+		$rc = system("perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th &");
+		$rc = $rc >> 8;
+		if ($rc){
+		    &log("ERROR : perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th");
+		}
+	    }
+	}
+    }
+    &join;
+#    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
+    $rc = system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    $rc = $rc >> 8;
+    if ($rc){
+	&log("ERROR : cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    }
+    if($ref eq ""){
+	&verify;
+    }else{
+	&mkQuery;
+	&map;
+    }
+	&verify2;
+} 
 
 sub genotype{
     my $target = shift;
@@ -379,80 +456,6 @@ Head                  Tail                  Kinds/Total\tTSDs\n";
 
 }
 
-sub tsdMethod{
-    if (&fragmentLength($a) != 20 + $tsd_size){
-	&log("count subfiles : $a");
-	&count($a);
-    }
-    if (&fragmentLength($b) != 20 + $tsd_size){
-	&log("count subfiles : $b");
-	&count($b);
-    }
-    &join;
-    if (&fragmentLength($a) != 20 + $tsd_size){
-	&log("merge subfiles : $a");
-	&merge($a);
-    }
-    if (&fragmentLength($b) != 20 + $tsd_size){
-	&log("merge subfiles : $b");
-	&merge($b);
-    }
-    &join;
-
-    &log("comm");
-    &comm;
-    &join;
-    &log("join");
-    &tsdJoin;
-    &join;
-    &log("tsd");
-    &tsd;
-    foreach $taga (@nuc){
-	foreach $tagb (@nuc){
-	    foreach $tagc (@nuc){
-		$tag = $taga . $tagb . $tagc;
-	       &monitorWait;
-		&log("pair $tag");
-		$rc = system("perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size &");
-		$rc = $rc >> 8;
-		if ($rc){
-		    &log("ERROR : perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size");
-		}
-	    }
-	}
-    }
-    &join;
-    &log("sortPair");
-    &sortPair;
-    foreach $taga (@nuc){
-	foreach $tagb (@nuc){
-	    foreach $tagc (@nuc){
-		$tag = $taga . $tagb . $tagc;
-		&monitorWait;
-		&log("selectPair $tag");
-		$rc = system("perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th &");
-		$rc = $rc >> 8;
-		if ($rc){
-		    &log("ERROR : perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th");
-		}
-	    }
-	}
-    }
-    &join;
-#    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
-    $rc = system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
-    $rc = $rc >> 8;
-    if ($rc){
-	&log("ERROR : cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
-    }
-    if($ref eq ""){
-	&verify;
-    }else{
-	&mkQuery;
-	&map;
-    }
-} 
-
 sub fragmentLength{
     my $target = shift;
     my $fragment_length = 0;
@@ -460,7 +463,8 @@ sub fragmentLength{
 	open(IN, "zcat $target/count.$tsd_size/TTT.gz |");
 	while(<IN>){
 	    chomp;
-	    $fragment_length =length($_);
+	    @row = split;
+	    $fragment_length =length($row[0]);
 	    last;
 	}
 	close(IN);
@@ -1009,11 +1013,10 @@ sub junctionSecondMap{
                 $tag = join('', @tag);
 		&monitorWait;
 		&log("Mapping $target : $tag");
-		$rc = system("perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag &");
+		$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag &";
+		$rc = system($cmd);
 		$rc = $rc >> 8;
-		if ($rc){
-		    &log("ERROR : perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag");
-		}
+		&log("ERROR : junctionSecondMap : $cmd") if $rc;
             }
         }
     }
@@ -1033,25 +1036,46 @@ sub junctionFirstMap{
 		&log($cmd);
 		$rc = system($cmd);
 		$rc = $rc >> 8;
-		if ($rc){
-		    &log("ERROR : $cmd");
-		}
+		&log("ERROR : junctionFirstMap : $cmd") if $rc;
             }
         }
     }
 }
 
 sub junctionSpecificFunc{
-    $rc = system("bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag'");
+    $cmd = "bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag.tmp'";
+    $rc = system($cmd);
     $rc = $rc >> 8;
-    if ($rc){
-	&log("ERROR : bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag'");
+    &log("ERROR : $sub : $cmd") if $rc;
+    open(IN, "$wd/$a/tmp/specific.$tag.tmp");
+    open(OUT, "> $wd/$a/tmp/specific.$tag");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
+	if ($row[1] > 1){
+	    print OUT "$row[0]\n";
+	}
     }
-    $rc = system("bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/tmp/specific.$tag'");
+    close(IN);
+    close(OUT);
+    $cmd = "bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz)  > $wd/$b/tmp/specific.$tag.tmp'";
+    $rc = system($cmd);
     $rc = $rc >> 8;
-    if ($rc){
-	&log("ERROR : bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$b/tmp/specific.$tag'");
+    &log("ERROR : $sub : $cmd") if $rc;
+    open(IN, "$wd/$b/tmp/specific.$tag.tmp");
+    open(OUT, "> $wd/$b/tmp/specific.$tag");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
+	if ($row[1] > 1){
+	    print OUT "$row[0]\n";
+	}
     }
+    close(IN);
+    close(OUT);
+    system("rm wd/$a/tmp/specific.$tag.tmp wd/$b/tmp/specific.$tag.tmp");
 }
 
 sub junctionSpecific{
@@ -1068,9 +1092,7 @@ sub junctionSpecific{
                 &log($cmd);
                 $rc = system($cmd);
 		$rc = $rc >> 8;
-		if ($rc){
-		    &log("ERROR : $cmd");
-		}
+		&log("ERROR : junctionSpecific : $cmd") if $rc;
             }
         }
     }
@@ -1499,11 +1521,10 @@ sub mk20{
 	    next if $i eq "NOP";
 	    &monitorWait;
 	    &log("Processing chr$i");
-	    $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i &");
+	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i &";
+	    $rc = system($cmd);
 	    $rc = $rc >> 8;
-	    if ($rc){
-		&log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i");
-	    }
+	    &log("ERROR : mk20 : $cmd") if $rc;
 	}
 	&join;
     }
@@ -1525,18 +1546,198 @@ sub mk20{
 		$tag = join('', @tag);
 		if ($tag{$tag}){
 		    &monitorWait;
-		    &log("making ref20.$tag.gz");
-		    $rc = system("perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag &");
+		    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag &";
+		    &log($cmd);
+		    $rc = system($cmd);
 		    $rc = $rc >> 8;
-		    if ($rc){
-			&log("ERROR : perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag");
-		    }
+		    &log("ERROR : verify : $cmd") if $rc;
 		}
 	    }
 	}
     }    
     &join;
     system("rm -r $wd/$ref/tmp")
+}
+
+sub verify2{
+    opendir(DIR, "$a/split");
+    foreach (sort readdir(DIR)){
+	if (/^split/){
+	    &monitorWait;
+	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$a,sub=verifyFunc,tsd_size=$tsd_size,file=$_ &";
+	    &log("$cmd");
+	    $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    &log("ERROR : verify :$cmd") if $rc;
+	}
+    }
+    closedir(DIR);
+    opendir(DIR, "$b/split");
+    foreach (sort readdir(DIR)){
+	if (/^split/){
+	    &monitorWait;
+	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$b,sub=verifyFunc,tsd_size=$tsd_size,file=$_ &";
+	    &log($cmd);
+	    $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    &log("ERROR : verify : $cmd") if $rc;
+	}
+    }
+    closedir(DIR);
+    &join;
+    opendir(DIR, "$a/tmp");
+    foreach (sort readdir(DIR)){
+	if (/verify/){
+	    open(IN, "$a/tmp/$_");
+	    while(<IN>){
+		chomp;
+		@row = split;
+		$s->{$row[0]}{$row[1]}{$row[2]} = $row[3];
+	    }
+	    close(IN);
+	}
+    }
+    foreach (sort readdir(DIR)){
+	if (/verify/){
+	    open(IN, "$b/tmp/$_");
+	    while(<IN>){
+		chomp;
+		@row = split;
+		$s->{$row[0]}{$row[1]}{$row[2]} = $row[3];
+	    }
+	close(IN);
+	}
+    }
+    
+    open(OUT, "|sort -T $wd/$a/tmp |uniq > $wd/$a/tmp/query");
+    if ($method eq "TSD"){
+	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    }else{
+	open(IN, "$wd/$a/tmp/te.candidate");
+    }
+    while(<IN>){
+	print;
+	@row = split;
+	foreach $upstream (sort keys %{$s->{$row[0]}{H}}){
+	    $htsd = $s->{$row[0]}{H}{$upstream};
+	    foreach $downstream (sort keys %{$s->{$row[1]}{T}}){
+		$ttsd = $s->{$row[1]}{T}{$downstream};
+		if ($htsd eq $ttsd){
+		    $tsdsize = length($htsd);
+		    $wildtype = $upstream . substr($downstream, $tsdsize, 20);
+		    $head = $upstream . $row[0];
+		    $tail = $row[1] . substr($downstream, 0, 20);
+		    print OUT "$head\n";
+		    print OUT "$tail\n";
+		    print OUT "$wildtype\n";
+		}
+	    }
+	}
+    }
+    close(IN);
+    close(OUT);
+    $cmd = "zcat $wd/$a/count.20/*.gz | join - $wd/$a/tmp/query > $wd/$a/tmp/verify.count";
+    &log($cmd);
+    $rc = system("$cmd");
+    $rc = $rc >> 8;
+    &log("ERROR : verify :$cmd") if $rc;
+    
+    $cmd = "zcat $wd/$b/count.20/*.gz | join - $wd/$a/tmp/query > $wd/$b/tmp/verify.count";
+    &log($cmd);
+    $rc = system("$cmd");
+    $rc = $rc >> 8;
+    &log("ERROR : verify : $cmd") if $rc;
+    
+    open(IN, "$wd/$a/tmp/verify.count");
+    while(<IN>){
+	chomp;
+	@row = split;
+	$a{$row[0]} = $row[1];
+	
+    }
+    open(IN, "$wd/$b/tmp/verify.count");
+    while(<IN>){
+	chomp;
+	@row = split;
+	$b{$row[0]} = $row[1];
+    }
+    
+    if ($method eq "TSD"){
+	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+	open(OUT, "> $wd/$a/tsd_method.verify.$a.$b.$tsd_size");
+    }else{
+	open(IN, "$wd/$a/tmp/te.candidate");
+	open(OUT, "> $wd/$a/junction_method.verify.$a.$b");
+    }
+    while(<IN>){
+	@row = split;
+	foreach $upstream (sort keys %{$s->{$row[0]}{H}}){
+	    $htsd = $s->{$row[0]}{H}{$upstream};
+	    foreach $downstream (sort keys %{$s->{$row[1]}{T}}){
+		$ttsd = $s->{$row[1]}{T}{$downstream};
+		if ($htsd eq $ttsd){
+		    $tsdsize = length($htsd);
+		    $wildtype = $upstream . substr($downstream, $tsdsize, 20);
+		    $head = $upstream . $row[0];
+		    $downfl = substr($downstream, 0, 20);
+		    $tail = $row[1] . $downfl;
+		    if (($a{$head} == 0 and $a{$tail} == 0 and $a{$wildtype} > 0 and $b{$head} > 0 and $b{$tail} > 0) or ($b{$head} == 0 and $b{$tail} == 0 and $a{$wildtype} > 0 and $a{$head} > 0 and $a{$tail} > 0)){
+			$result = "$row[0]\t$row[1]\t$upstream\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
+			print $result;
+			print OUT $result;
+		    }
+		}
+	    }
+	}
+    }
+    close(IN);
+    close(OUT);
+}
+
+sub verifyFunc{
+    my (@row, $tsdsize, %seq, %tsdsize, $length, $seq, $tsd, $upstream, $downstream);
+    print "$target $file\n";
+    if ($method eq "TSD"){
+	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    }else{
+	open(IN, "$wd/$a/tmp/te.candidate");
+    }
+    while(<IN>){
+	@row = split;
+	$tsdsize = length($row[2]);
+	$seq{$row[0]} = "H";
+	$seq{$row[1]} = "T";
+	$tsdsize{$row[0]} = $tsdsize;
+	$tsdsize{$row[1]} = $tsdsize;
+    }
+    close(IN);
+    open(OUT, "> $wd/$target/tmp/verify.$file");
+    open(IN, "$wd/$target/split/$file");
+    while(<IN>){
+	chomp;
+	$length = length($_) if $length eq "";
+	for($i = 0; $i <= $length - 20; $i++){
+	    $seq = substr($_, $i, 20);
+	    if ($seq{$seq}){
+		$tsdsize = $tsdsize{$seq};
+		if ($seq{$seq} eq "H"){
+		    $upstream = substr($_, $i - 20, 20);
+		    if(length($upstream) == 20){
+			$tsd = substr($_, $i - $tsdsize, $tsdsize);
+			print OUT "$seq\tH\t$upstream\t$tsd\n";
+		    }
+		}elsif($seq{$seq} eq "T"){
+		    $downstream = substr($_, $i + 20, 20 + $tsdsize);
+		    if(length($downstream) == 20 + $tsdsize){
+			$tsd = substr($_, $i +20, $tsdsize);
+			print OUT "$seq\tT\t$downstream\t$tsd\n";
+		    }
+		}
+	    }
+	}
+    }
+    close(IN);
+    close(OUT);
 }
 
 sub verify{
@@ -2070,10 +2271,10 @@ sub mergeFunc{
     open(OUT, "|gzip -c > $wd/$target/count.$tsd_size/$tag.gz");
     while(<IN>){
 	@row = split;
-	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
-	if ($row[1] >= 5){
+#	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
+#	if ($row[1] >= 5){
 	    print OUT "$row[0]\t$row[1]\n";
-	}
+#	}
     }
     close(IN);
     close(OUT);
