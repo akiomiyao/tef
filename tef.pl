@@ -85,6 +85,11 @@ $processor = $max_process if $max_process ne "";
 $processor = 4 if $processor eq "";
 $th = 0.2 if $th eq "";
 $tsd_size = 20 if $tsd_size eq "";
+if ($tsd_size == 20){
+    $method = "Junction";
+}else{
+    $method = "TSD";
+}
 
 if ($sub eq ""){
     system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp" and $option =~ /clear/;
@@ -97,11 +102,6 @@ if ($sub eq ""){
     system("mkdir $wd/$a/child");
     &log("job start");
     &log("Argument : $ARGV[0]");
-    if ($tsd_size == 20){
-	$method = "Junction";
-    }else{
-	$method = "TSD";
-    }
     &log("Method : $method");
     &commonMethod;
     if ($tsd_size == 20){
@@ -176,7 +176,8 @@ sub commonMethod{
 }
 
 sub junctionMethod{
-=pod
+    &verify2;
+    exit;
     system("mkdir $wd/$a/count.20") if ! -e "$wd/$a/count.20";
     system("mkdir $wd/$b/count.20") if ! -e "$wd/$b/count.20";
     if (&fragmentLength($a) != 40){
@@ -229,7 +230,6 @@ sub junctionMethod{
     &summary($b);
     &genotype($a);
     &genotype($b);
-=cut
     &verify2;
 }
 
@@ -254,47 +254,7 @@ sub tsdMethod{
     &join;
     &log("comm");
     &comm;
-    &join;
-    &log("tsdJoin");
-    &tsdJoin;
-    &join;
-    &log("tsd");
-    &tsd;
-    foreach $taga (@nuc){
-	foreach $tagb (@nuc){
-	    foreach $tagc (@nuc){
-		$tag = $taga . $tagb . $tagc;
-		&monitorWait;
-		&log("pair $tag");
-		$cmd = "perl $0 a=$a,b=$b,sub=pair,tag=$tag,tsd_size=$tsd_size &";
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : $cmd") if $rc;
-	    }
-	}
-    }
-    &join;
-    &log("sortPair");
-    &sortPair;
-    foreach $taga (@nuc){
-	foreach $tagb (@nuc){
-	    foreach $tagc (@nuc){
-		$tag = $taga . $tagb . $tagc;
-		&monitorWait;
-		&log("selectPair $tag");
-		$cmd = "perl $0 a=$a,b=$b,sub=selectPair,tag=$tag,tsd_size=$tsd_size,th=$th &";
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : $cmd") if $rc;
-	    }
-	}
-    }
-    &join;
-    #    system("cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size && rm $wd/$a/tmp/pair.$a.$b.$tsd_size.*");
-    $cmd = "cat $wd/$a/tmp/pair.$a.$b.$tsd_size.* > $wd/$a/tsd_method.pair.$a.$b.$tsd_size";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : $cmd") if $rc;
+
     if($ref eq ""){
 	&verify;
     }else{
@@ -1061,7 +1021,7 @@ sub junctionSpecificFunc{
     }
     close(IN);
     close(OUT);
-    system("rm wd/$a/tmp/specific.$tag.tmp wd/$b/tmp/specific.$tag.tmp");
+    system("rm $wd/$a/tmp/specific.$tag.tmp $wd/$b/tmp/specific.$tag.tmp");
 }
 
 sub junctionSpecific{
@@ -1532,6 +1492,7 @@ sub mk20{
 }
 
 sub verify2{
+=pod
     opendir(DIR, "$a/split");
     foreach (sort readdir(DIR)){
 	if (/^split/){
@@ -1557,30 +1518,32 @@ sub verify2{
     }
     closedir(DIR);
     &join;
+=cut
     opendir(DIR, "$a/tmp");
     foreach (sort readdir(DIR)){
-	if (/verify/){
+	if (/verify.split/){
 	    open(IN, "$a/tmp/$_");
 	    while(<IN>){
 		chomp;
 		@row = split;
-		$s->{$row[0]}{$row[1]}{$row[2]} = $row[3];
+		$s->{$row[0]}{$row[1]}{$row[2]}{$row[3]} = 1;
 	    }
 	    close(IN);
 	}
     }
+    opendir(DIR, "$b/tmp");
     foreach (sort readdir(DIR)){
-	if (/verify/){
+	if (/verify.split/){
 	    open(IN, "$b/tmp/$_");
 	    while(<IN>){
 		chomp;
 		@row = split;
-		$s->{$row[0]}{$row[1]}{$row[2]} = $row[3];
+		$s->{$row[0]}{$row[1]}{$row[2]}{$row[3]} = 1;
 	    }
 	close(IN);
 	}
     }
-    
+
     open(OUT, "|sort -T $wd/$a/tmp |uniq > $wd/$a/tmp/query");
     if ($method eq "TSD"){
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
@@ -1588,46 +1551,86 @@ sub verify2{
 	open(IN, "$wd/$a/tmp/te.candidate");
     }
     while(<IN>){
-	print;
 	@row = split;
 	foreach $upstream (sort keys %{$s->{$row[0]}{H}}){
-	    $htsd = $s->{$row[0]}{H}{$upstream};
-	    foreach $downstream (sort keys %{$s->{$row[1]}{T}}){
-		$ttsd = $s->{$row[1]}{T}{$downstream};
-		if ($htsd eq $ttsd){
-		    $tsdsize = length($htsd);
-		    $wildtype = $upstream . substr($downstream, $tsdsize, 20);
-		    $head = $upstream . $row[0];
-		    $tail = $row[1] . substr($downstream, 0, 20);
-		    print OUT "$head\n";
-		    print OUT "$tail\n";
-		    print OUT "$wildtype\n";
+	    foreach $htsd (sort keys %{$s->{$row[0]}{H}{$upstream}}){
+		foreach $downstream (sort keys %{$s->{$row[1]}{T}}){
+		    foreach $ttsd (sort keys %{$s->{$row[1]}{T}{$downstream}}){
+			if ($htsd eq $ttsd){
+			    $tsdsize = length($htsd);
+			    $wildtype = $upstream . substr($downstream, $tsdsize, 20);
+			    $head = $upstream . $row[0];
+			    $tail = $row[1] . substr($downstream, 0, 20);
+			    print OUT "$head\n";
+			    print OUT "$tail\n";
+			    print OUT "$wildtype\n";
+			}
+		    }
 		}
 	    }
 	}
     }
     close(IN);
     close(OUT);
-    $cmd = "zcat $wd/$a/count.20/*.gz | join - $wd/$a/tmp/query > $wd/$a/tmp/verify.count";
-    &log($cmd);
-    $rc = system("$cmd");
-    $rc = $rc >> 8;
-    &log("ERROR : verify :$cmd") if $rc;
-    
-    $cmd = "zcat $wd/$b/count.20/*.gz | join - $wd/$a/tmp/query > $wd/$b/tmp/verify.count";
-    &log($cmd);
-    $rc = system("$cmd");
-    $rc = $rc >> 8;
-    &log("ERROR : verify : $cmd") if $rc;
-    
-    open(IN, "$wd/$a/tmp/verify.count");
+
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		open($tag, "> $wd/$a/tmp/query.$tag")
+	    }
+	}
+    }
+    open(IN, "$wd/$a/tmp/query");
+    while(<IN>){
+	$tag = substr($_, 0, 3);
+	print $tag $_;
+
+    }
+    close(IN);
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		close($tag)
+	    }
+	}
+    }
+
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		if (-s "$wd/$a/tmp/query.$tag" > 0){
+		    &monitorWait;
+		    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=countQuery,tag=$tag &";
+		    &log($cmd);
+		    $rc = system($cmd);
+		    $rc = $rc >> 8;
+		    &log("ERROR : verify : $cmd") if $rc;
+		}
+	    }
+	}
+    }
+    &join;
+
+    open(IN, "cat $wd/$a/tmp/verify.count.* |");
     while(<IN>){
 	chomp;
 	@row = split;
 	$a{$row[0]} = $row[1];
 	
     }
-    open(IN, "$wd/$b/tmp/verify.count");
+    open(IN, "cat $wd/$b/tmp/verify.count.* |");
     while(<IN>){
 	chomp;
 	@row = split;
@@ -1644,19 +1647,21 @@ sub verify2{
     while(<IN>){
 	@row = split;
 	foreach $upstream (sort keys %{$s->{$row[0]}{H}}){
-	    $htsd = $s->{$row[0]}{H}{$upstream};
-	    foreach $downstream (sort keys %{$s->{$row[1]}{T}}){
-		$ttsd = $s->{$row[1]}{T}{$downstream};
-		if ($htsd eq $ttsd){
-		    $tsdsize = length($htsd);
-		    $wildtype = $upstream . substr($downstream, $tsdsize, 20);
-		    $head = $upstream . $row[0];
-		    $downfl = substr($downstream, 0, 20);
-		    $tail = $row[1] . $downfl;
-		    if (($a{$head} == 0 and $a{$tail} == 0 and $a{$wildtype} > 0 and $b{$head} > 0 and $b{$tail} > 0) or ($b{$head} == 0 and $b{$tail} == 0 and $a{$wildtype} > 0 and $a{$head} > 0 and $a{$tail} > 0)){
-			$result = "$row[0]\t$row[1]\t$upstream\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
-			print $result;
-			print OUT $result;
+	    foreach $htsd (sort keys %{$s->{$row[0]}{H}{$upstream}}){
+		foreach $downstream (sort keys %{$s->{$row[1]}{T}}){
+		    foreach $ttsd (sort keys %{$s->{$row[1]}{T}{$downstream}}){
+			if ($htsd eq $ttsd){
+			    $tsdsize = length($htsd);
+			    $wildtype = $upstream . substr($downstream, $tsdsize, 20);
+			    $head = $upstream . $row[0];
+			    $downfl = substr($downstream, 0, 20);
+			    $tail = $row[1] . $downfl;
+			    if (($a{$head} > 2 and $a{$tail} > 2 and $b{$wildtype} > 2) or ($b{$head} > 2 and $b{$tail} > 2 and $a{$wildtype} > 2)){
+				$result = "$row[0]\t$row[1]\t$upstream\t$htsd\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
+				print $result;
+				print OUT $result;
+			    }
+			}
 		    }
 		}
 	    }
@@ -1666,9 +1671,20 @@ sub verify2{
     close(OUT);
 }
 
+sub countQuery{
+    $cmd = "zcat $wd/$a/count.20/$tag.gz | join - $wd/$a/tmp/query.$tag > $wd/$a/tmp/verify.count.$tag";
+    $rc = system("$cmd");
+    $rc = $rc >> 8;
+    &log("ERROR : verify :$cmd") if $rc;
+    
+    $cmd = "zcat $wd/$b/count.20/$tag.gz | join - $wd/$a/tmp/query.$tag > $wd/$b/tmp/verify.count.$tag";
+    $rc = system("$cmd");
+    $rc = $rc >> 8;
+    &log("ERROR : verify : $cmd") if $rc;
+}
+
 sub verifyFunc{
     my (@row, $tsdsize, %seq, %tsdsize, $length, $seq, $tsd, $upstream, $downstream);
-    print "$target $file\n";
     if ($method eq "TSD"){
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
     }else{
@@ -1679,10 +1695,16 @@ sub verifyFunc{
 	$tsdsize = length($row[2]);
 	$seq{$row[0]} = "H";
 	$seq{$row[1]} = "T";
-	$tsdsize{$row[0]} = $tsdsize;
-	$tsdsize{$row[1]} = $tsdsize;
+	$s->{tsdsize}{$row[0]}{$tsdsize} = 1;
+	$s->{tsdsize}{$row[1]}{$tsdsize} = 1;
+	$seq{complement($row[0])} = "T";
+	$seq{complement($row[1])} = "H";
+	$s->{tsdsize}{complement($row[0])}{$tsdsize} = 1;
+	$s->{tsdsize}{complement($row[1])}{$tsdsize} = 1;
+	
     }
     close(IN);
+
     open(OUT, "> $wd/$target/tmp/verify.$file");
     open(IN, "$wd/$target/split/$file");
     while(<IN>){
@@ -1691,18 +1713,19 @@ sub verifyFunc{
 	for($i = 0; $i <= $length - 20; $i++){
 	    $seq = substr($_, $i, 20);
 	    if ($seq{$seq}){
-		$tsdsize = $tsdsize{$seq};
-		if ($seq{$seq} eq "H"){
-		    $upstream = substr($_, $i - 20, 20);
-		    if(length($upstream) == 20){
-			$tsd = substr($_, $i - $tsdsize, $tsdsize);
-			print OUT "$seq\tH\t$upstream\t$tsd\n";
-		    }
-		}elsif($seq{$seq} eq "T"){
-		    $downstream = substr($_, $i + 20, 20 + $tsdsize);
-		    if(length($downstream) == 20 + $tsdsize){
-			$tsd = substr($_, $i +20, $tsdsize);
-			print OUT "$seq\tT\t$downstream\t$tsd\n";
+		foreach $tsdsize (sort keys %{$s->{tsdsize}{$seq}}){		
+		    if ($seq{$seq} eq "H"){
+			$upstream = substr($_, $i - 20, 20);
+			if(length($upstream) == 20){
+			    $tsd = substr($_, $i - $tsdsize, $tsdsize);
+			    print OUT "$seq\tH\t$upstream\t$tsd\n";
+			}	    
+		    }elsif($seq{$seq} eq "T"){
+			$downstream = substr($_, $i + 20, 20 + $tsdsize);
+			if(length($downstream) == 20 + $tsdsize){
+			    $tsd = substr($_, $i +20, $tsdsize);
+			    print OUT "$seq\tT\t$downstream\t$tsd\n";
+			}
 		    }
 		}
 	    }
@@ -2144,38 +2167,46 @@ sub countHeadTail{
 
 sub commFunc{
     open(AH, "> $wd/$a/tmp/$tag.head");
-    open(BH, "> $wd/$b/tmp/$tag.head");
     open(AT, "> $wd/$a/tmp/$tag.tail");
-    open(BT, "> $wd/$b/tmp/$tag.tail");
-    open(IN, "bash -c 'comm -3 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) '|");
+    open(IN, "bash -c 'join -a 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) '|");
     while(<IN>){
 	chomp;
-	@row = split('\t', $_);
-	next if ($row[0] ne "" and  $row[1] <= 4) or ($row[0] eq "" and $row[2] <= 4);
-	next if ($row[0] =~ /A{8,}/ or $row[1] =~ /A{8,}/);
-	next if ($row[0] =~ /C{8,}/ or $row[1] =~ /C{8,}/);
-	next if ($row[0] =~ /G{8,}/ or $row[1] =~ /G{8,}/);
-	next if ($row[0] =~ /T{8,}/ or $row[1] =~ /T{8,}/);
-	if ($row[0] ne ""){
-	    $head = substr($row[0], $tsd_size);
-	    $tsd  = substr($row[0], 0, $tsd_size);
-	    print AH "$head\t$tsd\n";
-	    $tail = substr($row[0], 0, 20);
-	    $tsd = substr($row[0], 20, $tsd_size);
-	    print AT "$tail\t$tsd\n";
-	}
-	if ($row[1] ne ""){
-	    $head = substr($row[1], $tsd_size);
-	    $tsd  = substr($row[1], 0, $tsd_size);
-	    print BH "$head\t$tsd\n";
-	    $tail = substr($row[1], 0, 20);
-	    $tsd = substr($row[1], 20, $tsd_size);
-	    print BT "$tail\t$tsd\n";
-	}
+	@row = split;
+	next if ($row[2] ne "" or $row[1] <= 4);
+	next if ($row[0] =~ /A{8,}/);
+	next if ($row[0] =~ /C{8,}/);
+	next if ($row[0] =~ /G{8,}/);
+	next if ($row[0] =~ /T{8,}/);
+	$head = substr($row[0], $tsd_size);
+	$tsd  = substr($row[0], 0, $tsd_size);
+	print AH "$tsd\t$head\t$row[1]\n";
+	$tail = substr($row[0], 0, 20);
+	$tsd = substr($row[0], 20, $tsd_size);
+	print AT "$tsd\t$tail\t$row[1]\n";
     }
+    close(IN);
     close(AH);
-    close(BH);
     close(AT);
+    open(BH, "> $wd/$b/tmp/$tag.head");
+    open(BT, "> $wd/$b/tmp/$tag.tail");
+    open(IN, "bash -c 'join -a 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) '|");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if ($row[2] ne "" or $row[1] <= 4);
+	next if ($row[0] =~ /A{8,}/);
+	next if ($row[0] =~ /C{8,}/);
+	next if ($row[0] =~ /G{8,}/);
+	next if ($row[0] =~ /T{8,}/);
+	$head = substr($row[0], $tsd_size);
+	$tsd  = substr($row[0], 0, $tsd_size);
+	print BH "$tsd\t$head\t$row[1]\n";
+	$tail = substr($row[0], 0, 20);
+	$tsd = substr($row[0], 20, $tsd_size);
+	print BT "$tsd\t$tail\t$row[1]\n";
+    }
+    close(IN);
+    close(BH);
     close(BT);
 }
 
@@ -2195,6 +2226,96 @@ sub comm{
 		&log("ERROR : comm : $cmd") if $rc;
 	    }
 	}
+    }
+    &join;
+    $cmd = "cat $wd/$a/tmp/*.head | sort -T $wd/$a/tmp/ > $wd/$a/tmp/head.select";
+    &log("common : comm : $cmd");
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    &log("ERROR : comm : $cmd") if $rc;
+    $cmd = "cat $wd/$a/tmp/*.tail | sort -T $wd/$a/tmp/ > $wd/$a/tmp/tail.select";
+    &log("common : comm : $cmd");
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    &log("ERROR : comm : $cmd") if $rc;
+    $cmd = "cat $wd/$b/tmp/*.head | sort -T $wd/$b/tmp/ > $wd/$b/tmp/head.select";
+    &log("common : comm : $cmd");
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    &log("ERROR : comm : $cmd") if $rc;
+    $cmd = "cat $wd/$b/tmp/*.tail | sort -T $wd/$b/tmp/ > $wd/$b/tmp/tail.select";
+    &log("common : comm : $cmd");
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    &log("ERROR : comm : $cmd") if $rc;
+
+    &log("join $wd/$a/tmp/head.select $wd/$a/tmp/tail.select");
+    open(OUT, "|sort -T $wd/$a/tmp/ > $wd/$a/tmp/pair");
+    open(IN, "join $wd/$a/tmp/head.select $wd/$a/tmp/tail.select|");
+    while(<IN>){
+	chomp;
+	@row = split;
+	print OUT "$row[1]_$row[3]\t$row[0]\t$row[2]\t$row[4]\n";
+    }
+    close(IN);
+    close(OUT);
+    &log("join $wd/$b/tmp/head.select $wd/$b/tmp/tail.select");
+    open(OUT, "|sort -T $wd/$b/tmp/ > $wd/$b/tmp/pair");
+    open(IN, "join $wd/$b/tmp/head.select $wd/$b/tmp/tail.select|");
+    while(<IN>){
+	chomp;
+	@row = split;
+	print OUT "$row[1]_$row[3]\t$row[0]\t$row[2]\t$row[4]\n";
+    }
+    close(IN);
+    close(OUT);
+    
+    &log("common : comm : tsd list $a");
+    open(OUT, "> $wd/$a/tmp/tsd");
+    open(IN, "$wd/$a/tmp/pair");
+    while(<IN>){
+	chomp;
+	@row = spslit;
+	if ($prev eq $row[0]){
+	    $tsd .= $ptsd . ":";
+	}elsif ($tsd ne ""){
+	    print OUT "$prev\t$tsd" . "$ptsd\n";
+	    $tsd = "";
+	}
+	$prev = $row[0];
+	$ptsd = $row[1];
+    }
+    print OUT "$prev\t$tsd" . "ptsd" if $tsd ne "";
+    close(IN);
+    close(OUT);
+    
+    &log("common : comm : tsd list $b");
+    open(OUT, "> $wd/$b/tmp/tsd");
+    open(IN, "$wd/$b/tmp/pair");
+    while(<IN>){
+	chomp;
+	@row = split;
+	if ($prev eq $row[0]){
+	    $tsd .= $ptsd . ":";
+	}elsif ($tsd ne ""){
+	    print OUT "$prev\t$tsd" . "$ptsd\n";
+	    $tsd = "";
+	}
+	$prev = $row[0];
+	$ptsd = $row[1];
+    }
+    print OUT "$prev\t$tsd" . "ptsd" if $tsd ne "";
+    close(IN);
+    close(OUT);
+    open(OUT, "> $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    open(IN, "join $wd/$a/tmp/tsd $wd/$b/tmp/tsd|");
+    while(<IN>){
+	chomp;
+	@row = split;
+	($head, $tail) = split('_', $row[0]);
+	$row[1] =~ s/:/ /g;
+	$row[2] =~ s/:/ /g;
+	print OUT "$head\t$tail\t$row[1]\t$row[2]\n";
     }
 }
 
