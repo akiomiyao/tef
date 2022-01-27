@@ -176,7 +176,6 @@ sub commonMethod{
 }
 
 sub junctionMethod{
-=pod
     system("mkdir $wd/$a/count.20") if ! -e "$wd/$a/count.20";
     system("mkdir $wd/$b/count.20") if ! -e "$wd/$b/count.20";
     &count($a) if &fragmentLength($a) != 40;
@@ -198,11 +197,7 @@ sub junctionMethod{
     &junctionSelectCandidate($a);
     &junctionSelectCandidate($b);
     &join;
-    &junctionMapSelection($a);
-    &junctionMapSelection($b);
-    &join;
     &verify;
-=cut
     &map;
 }
 
@@ -218,141 +213,6 @@ sub tsdMethod{
     if ($ref ne ""){
 	&map;
     }
-}
-
-sub junctionMapSelection{
-    $target = shift;
-    opendir(REF, "$wd/$ref");
-    foreach $chr (sort readdir(REF)){
-	if ($chr =~ /^chr/){
-	    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
-	    while(<IN>){
-		&monitorWait;
-		chomp;
-		($head, $tail) = (split)[0, 1];
-		&log("map selection : $target : $chr $head $tail");
-		$cmd = "perl $0 a=$a,b=$b,sub=junctionMapSelectionFunc,target=$target,chr=$chr,head=$head,tail=$tail &";
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : junctionMapSelection : $cmd") if $rc;
-	    }
-	    close(IN);
-	}
-    }
-    closedir(REF);
-    &join;
-    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
-    while(<IN>){
-	chomp;
-	($head, $tail) = (split)[0, 1];
-	open(DAT, "cat $wd/$target/tmp/map_selected.$head.$tail.* |");
-	while(<DAT>){
-	    @row = split;
-	    $row[1] =~ s/^0+//;
-	    $row[2] =~ s/^0+//;
-	    $s->{j}{$row[1]}{$row[2]} = 1;
-	}
-	close(DAT);
-	open(DAT, "cat $wd/$target/tmp/map_selected.$head.$tail.* | sort | uniq |");
-	open(OUT, "> $wd/$target/junction_method.map.$target.$head.$tail");
-	while(<DAT>){
-	    chomp;
-	    @row = split;
-	    for($i = 0; $i <= $#row; $i++){
-		$row[$i] =~ s/^0+//;
-	    }
-	    $flag = 0;
-	    for($i = -10; $i <= 10; $i++){
-		next if abs($i) < 2;
-		$pos = $row[2] + $i;
-		if ($s->{j}{$row[1]}{$pos}){
-		    $flag = 1;
-		}
-	    }
-	    $output = join("\t", @row);
-	    print OUT "$output\n" if $flag;
-	}
-	close(DAT);
-	close(OUT);
-	open(DAT, "cat $wd/$target/tmp/pos.head.$head.* |");
-	open(OUT, "|sort |uniq > $wd/$target/pos.$head.$tail");
-	while(<DAT>){
-	    chomp;
-	    @row = split;
-	    print OUT "$target\t$row[2]\t$row[3]\thead\t$row[1]\n";
-	}
-	open(DAT, "cat $wd/$target/tmp/pos.tail.$tail* |");
-	while(<DAT>){
-	    chomp;
-	    @row = split;
-	    print OUT "$target\t$row[2]\t$row[3]\ttail\t$row[1]\n";
-	}
-	close(DAT);
-	close(OUT);
-	open(DAT, "$wd/$target/pos.$head.$tail");
-	open(OUT, ">$wd/$target/junction_method.tepos.$target.$head.$tail");
-	while(<DAT>){
-	    chomp;
-	    @row = split;
-	    $row[1] =~ s/^0+//g;
-	    $row[2] =~ s/^0+//g;
-	    print OUT "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\n";
-	}
-	close(DAT);
-	close(OUT);
-	system("rm $wd/$target/pos.$head.$tail");
-    }
-    close(IN);
-    system("rm $wd/$target/tmp/pos.head.$head.* $wd/$target/tmp/pos.tail.$tail.*");
-}
-
-sub junctionMapSelectionFunc{
-    open(DAT, "grep $head $wd/$target/tmp/sorted.$chr |");
-    open(OUT, "> $wd/$target/tmp/map_selected.$head.$tail.$chr");
-    open(HEAD, "|sort | uniq > $wd/$target/tmp/pos.head.$head.$chr");
-    while(<DAT>){
-	chomp;
-	@row = split;
-	if($row[2] =~ /$head$/){
-	    if ($row[5] eq "f"){
-		$pos = $row[4] + 19;
-	    }else{
-		$pos = $row[4] - 19;
-		}
-	    $row[3] = "000$row[3]";
-	    $row[3] = substr($row[3], length($row[3]) - 3, 3);
-	    $pos = "00000000000$pos";
-	    $pos = substr($pos, length($pos) - 11, 11);
-	    $row[6] = "000$row[6]";
-	    $row[6] = substr($row[6], length($row[6]) - 3, 3);
-	    $row[7] = "00000000000$row[7]";
-	    $row[7] = substr($row[7], length($row[7]) - 11, 11);
-	    print OUT "$target\t$row[3]\t$pos\thead\t$head\t$row[2]\n";
-	    print HEAD "$target\t$head\t$row[6]\t$row[7]\n";
-	}
-    }
-    close(HEAD);
-    open(DAT, "grep $tail $wd/$target/tmp/sorted.$chr |");
-    open(TAIL, "|sort |uniq > $wd/$target/tmp/pos.tail.$tail.$chr");
-    while(<DAT>){
-	chomp;
-	@row = split;
-	if($row[2] =~ /^$tail/){
-	    $row[3] = "000$row[3]";
-	    $row[3] = substr($row[3], length($row[3]) - 3, 3);
-	    $row[4] = "00000000000$row[4]";
-	    $row[4] = substr($row[4], length($row[4]) - 11, 11);
-	    $row[6] = "000$row[6]";
-	    $row[6] = substr($row[6], length($row[6]) - 3, 3);
-	    $row[7] = "00000000000$row[7]";
-	    $row[7] = substr($row[7], length($row[7]) - 11, 11);
-	    print OUT "$target\t$row[6]\t$row[7]\ttail\t$tail\t$row[2]\n";
-	    print TAIL "$target\t$tail\t$row[3]\t$row[4]\n";
-	}
-    }
-    close(DAT);
-    close(OUT);
-    close(TAIL);
 }
 
 sub junctionSelectCandidate{
