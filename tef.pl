@@ -663,7 +663,9 @@ sub map{
 				    $genotype = "H";
 				}
 				$uchr = "000" . $uchr if $uchr !~ /^0/;
+				$uchr = substr($uchr, length($uchr) - 3, 3);
 				$upos = "00000000000" . $upos if $upos !~ /^0/;
+				$upos = substr($upos, length($upos) - 11, 11);
 				print OUT "$a\t$uchr\t$upos\t$dpos\t$direction\t$tmp\t$genotype\n";
 			    }
 			    if ($row[8] > 3 and $row[9] > 3){
@@ -673,7 +675,9 @@ sub map{
 				    $genotype = "H";
 				}
 				$uchr = "000" . $uchr if $uchr !~ /^0/;
+				$uchr = substr($uchr, length($uchr) - 3, 3);
 				$upos = "00000000000" . $upos if $upos !~ /^0/;
+				$upos = substr($upos, length($upos) - 11, 11);
 				print OUT "$b\t$uchr\t$upos\t$dpos\t$direction\t$tmp\t$genotype\n";
 			    }
 			}
