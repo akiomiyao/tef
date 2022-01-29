@@ -341,6 +341,7 @@ sub junctionSort{
     foreach $file (@chr){
 	close($file);
     }
+    system("rm $wd/$target/tmp/map.*");
     $org_processor = $processor;
     $processor = 2 if -s "$wd/$target/tmp/$chr[0]" > 10000000000;
     foreach $file (@chr){
@@ -380,6 +381,7 @@ sub junctionSecondMap{
             }
         }
     }
+    system("rm $wd/$target/tmp/specific.* $wd/$target/tmp/target.*");
 }
 
 sub junctionSecondMapFunc{
