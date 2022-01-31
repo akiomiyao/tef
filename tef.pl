@@ -113,8 +113,6 @@ if ($sub eq ""){
 	&tsdMethod;
     }
     &join;
-    system("rm -rf $wd/$a/tmp") if $option =~ /clear/;
-    system("rm -rf $wd/$b/tmp") if $option =~ /clear/;
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
     $hour = int($elapsed_time / 3600);
@@ -176,17 +174,15 @@ sub commonMethod{
 	&log("ERROR : commonMethod : $cmd") if $rc;
     }
     &join;
+    &count($a) if &fragmentLength($a) != 20 + $tsd_size;
+    &count($b) if &fragmentLength($b) != 20 + $tsd_size;
+    &join;
+    &merge($a) if &fragmentLength($a) != 20 + $tsd_size;
+    &merge($b) if &fragmentLength($b) != 20 + $tsd_size;
+    &join;
 }
 
 sub junctionMethod{
-    system("mkdir $wd/$a/count.20") if ! -e "$wd/$a/count.20";
-    system("mkdir $wd/$b/count.20") if ! -e "$wd/$b/count.20";
-    &count($a) if &fragmentLength($a) != 40;
-    &count($b) if &fragmentLength($b) != 40;
-    &join;
-    &merge($a) if &fragmentLength($a) != 40;
-    &merge($b) if &fragmentLength($b) != 40;
-    &join;
     &junctionSpecific;
     &junctionFirstMap($a);
     &junctionFirstMap($b);
@@ -205,12 +201,6 @@ sub junctionMethod{
 }
 
 sub tsdMethod{
-    &count($a) if &fragmentLength($a) != 20 + $tsd_size;
-    &count($b) if &fragmentLength($b) != 20 + $tsd_size;
-    &join;
-    &merge($a) if &fragmentLength($a) != 20 + $tsd_size;
-    &merge($b) if &fragmentLength($b) != 20 + $tsd_size;
-    &join;
     &tsdHeadTail;
     &verify;
     if ($ref ne ""){
@@ -539,7 +529,7 @@ sub junctionSpecificFunc{
 	chomp;
 	@row = split;
 	next if $row[0] =~/AAAAAAAAAA|CCCCCCCCCC|GGGGGGGGGG|TTTTTTTTTT/;
-	if ($row[1] > 1){
+	if ($row[1] > 4){
 	    print OUT "$row[0]\n";
 	}
     }
