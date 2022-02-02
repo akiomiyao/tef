@@ -183,6 +183,7 @@ sub commonMethod{
 }
 
 sub junctionMethod{
+=pod
     &junctionSpecific;
     &junctionFirstMap($a);
     &junctionFirstMap($b);
@@ -193,6 +194,7 @@ sub junctionMethod{
     &junctionSort($a);
     &junctionSort($b);
     &join;
+=cut
     &junctionSelectCandidate($a);
     &junctionSelectCandidate($b);
     &join;
@@ -1436,6 +1438,7 @@ sub verifyFunc{
 
 sub tsdHeadTail{
     &log("detect head and tail sequences");
+=pod    
     foreach $nuc (@nuc){
 	$taga = $nuc;
 	foreach $nuc (@nuc){
@@ -1453,26 +1456,59 @@ sub tsdHeadTail{
 	}
     }
     &join;
-    $cmd = "cat $wd/$a/tmp/*.head | sort -S 1M -T $sort_tmp > $wd/$a/tmp/head.select";
-    &log("tsdHeadTail : head.select : $a");
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : tsdHeadTail : $cmd") if $rc;
-    $cmd = "cat $wd/$a/tmp/*.tail | sort -S 1M -T $sort_tmp > $wd/$a/tmp/tail.select";
-    &log("tsdHeadTail : tail.select : $a");
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : tsdHeadTail : $cmd") if $rc;
-    $cmd = "cat $wd/$b/tmp/*.head | sort -S 1M -T $sort_tmp > $wd/$b/tmp/head.select";
-    &log("tsdHeadTail : head.select : $b");
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : tsdHeadTail : $cmd") if $rc;
-    $cmd = "cat $wd/$b/tmp/*.tail | sort -S 1M -T $sort_tmp > $wd/$b/tmp/tail.select";
-    &log("tsdHeadTail : tail.select : $b");
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : tsdHeadTail : $cmd") if $rc;
+=cut
+    open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/head.select");
+    open(IN, "cat $wd/$a/tmp/*.head | sort -S 1M -T $sort_tmp |");
+    while(<IN>){
+	chomp;
+	@row  = split;
+	if ($row[0] eq $prev[0]){
+	    print OUT "$prev[1]\t$prev[0]\t$prev[2]\n
+$row[1]\t$row[0]\t$row[2]\n";
+	}
+ 	@prev = @row;      
+    }
+    close(IN);
+    close(OUT);
+    open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/tail.select");
+    open(IN, "cat $wd/$a/tmp/*.tail | sort -S 1M -T $sort_tmp |");
+    while(<IN>){
+	chomp;
+	@row  = split;
+	if ($row[0] eq $prev[0]){
+	    print OUT "$prev[1]\t$prev[0]\t$prev[2]\n
+$row[1]\t$row[0]\t$row[2]\n";
+	}
+	@prev = @row;
+    }
+    close(IN);
+    close(OUT);
+    open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$b/tmp/head.select");
+    open(IN, "cat $wd/$b/tmp/*.head | sort -S 1M -T $sort_tmp |");
+    while(<IN>){
+	chomp;
+	@row  = split;
+	if ($row[0] eq $prev[0]){
+	    print OUT "$prev[1]\t$prev[0]\t$prev[2]\n
+$row[1]\t$row[0]\t$row[2]\n";
+	}
+	@prev = @row;
+    }
+    close(IN);
+    close(OUT);
+    open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$b/tmp/tail.select");
+    open(IN, "cat $wd/$b/tmp/*.tail | sort -S 1M -T $sort_tmp |");
+    while(<IN>){
+	chomp;
+	@row  = split;
+	if ($row[0] eq $prev[0]){
+	    print OUT "$prev[1]\t$prev[0]\t$prev[2]\n
+$row[1]\t$row[0]\t$row[2]\n";
+	}
+	@prev = @row;
+    }
+    close(IN);
+    close(OUT);
 
     &log("join head.select tail.select : $a");
     open(OUT, "|sort -S 1M -T $sort_tmp > $wd/$a/tmp/pair");
@@ -1558,10 +1594,10 @@ sub tsdHeadTailFunc{
 	next if ($row[0] =~ /T{8,}/);
 	$head = substr($row[0], $tsd_size);
 	$tsd  = substr($row[0], 0, $tsd_size);
-	print AH "$tsd\t$head\t$row[1]\n";
+	print AH "$head\t$tsd\t$row[1]\n";
 	$tail = substr($row[0], 0, 20);
 	$tsd = substr($row[0], 20, $tsd_size);
-	print AT "$tsd\t$tail\t$row[1]\n";
+	print AT "$tail\t$tsd\t$row[1]\n";
     }
     close(IN);
     close(AH);
@@ -1579,10 +1615,10 @@ sub tsdHeadTailFunc{
 	next if ($row[0] =~ /T{8,}/);
 	$head = substr($row[0], $tsd_size);
 	$tsd  = substr($row[0], 0, $tsd_size);
-	print BH "$tsd\t$head\t$row[1]\n";
+	print BH "$head\t$tsd\t$row[1]\n";
 	$tail = substr($row[0], 0, 20);
 	$tsd = substr($row[0], 20, $tsd_size);
-	print BT "$tsd\t$tail\t$row[1]\n";
+	print BT "$tail\t$tsd\t$row[1]\n";
     }
     close(IN);
     close(BH);
