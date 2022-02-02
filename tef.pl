@@ -183,7 +183,6 @@ sub commonMethod{
 }
 
 sub junctionMethod{
-=pod
     &junctionSpecific;
     &junctionFirstMap($a);
     &junctionFirstMap($b);
@@ -194,7 +193,6 @@ sub junctionMethod{
     &junctionSort($a);
     &junctionSort($b);
     &join;
-=cut
     &junctionSelectCandidate($a);
     &junctionSelectCandidate($b);
     &join;
@@ -1438,7 +1436,6 @@ sub verifyFunc{
 
 sub tsdHeadTail{
     &log("detect head and tail sequences");
-=pod    
     foreach $nuc (@nuc){
 	$taga = $nuc;
 	foreach $nuc (@nuc){
@@ -1456,7 +1453,6 @@ sub tsdHeadTail{
 	}
     }
     &join;
-=cut
     open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/head.select");
     open(IN, "cat $wd/$a/tmp/*.head | sort -S 1M -T $sort_tmp |");
     while(<IN>){
