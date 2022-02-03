@@ -744,64 +744,6 @@ sub mapQuery{
     &log("ERROR : verify :$cmd") if $rc;
 }
 
-sub verify{
-    opendir(DIR, "$a/split");
-    foreach (sort readdir(DIR)){
-	if (/^split/){
-	    &monitorWait;
-	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$a,sub=verifyFunc,tsd_size=$tsd_size,file=$_,sort_tmp=$sort_tmp &";
-	    &log("$cmd");
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify :$cmd") if $rc;
-	}
-    }
-    closedir(DIR);
-    opendir(DIR, "$b/split");
-    foreach (sort readdir(DIR)){
-	if (/^split/){
-	    &monitorWait;
-	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$b,sub=verifyFunc,tsd_size=$tsd_size,file=$_,sort_tmp=$sort_tmp &";
-	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify : $cmd") if $rc;
-	}
-    }
-    closedir(DIR);
-    &join;
-
-    opendir(DIR, "$a/tmp");
-    foreach (sort readdir(DIR)){
-	if (/verify.split/){
-	    open(IN, "$a/tmp/$_");
-	    while(<IN>){
-		chomp;
-		@row = split;
-		$s->{$row[0]}{$row[1]}{$row[2]}{$row[3]} = 1;
-	    }
-	    close(IN);
-	}
-    }
-    opendir(DIR, "$b/tmp");
-    foreach (sort readdir(DIR)){
-	if (/verify.split/){
-	    open(IN, "$b/tmp/$_");
-	    while(<IN>){
-		chomp;
-		@row = split;
-		$s->{$row[0]}{$row[1]}{$row[2]}{$row[3]} = 1;
-	    }
-	close(IN);
-	}
-    }
-
-    open(OUT, "|sort -S 1M -T $sort_tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr && rm $wd/$target/tmp/$chr");
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : junctionSortFunc : $cmd") if $rc;
-}
-
 sub junctionSecondMap{
     my $target = shift;
     &log("junctionSecondMap : $target");
