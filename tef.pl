@@ -1185,7 +1185,7 @@ sub verify{
 	}
     }
 
-    open(OUT, "|sort -S 1M -T $wd/$a/tmp |uniq > $wd/$a/tmp/query");
+    open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/query");
     if ($method eq "TSD"){
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
     }else{
@@ -1263,7 +1263,6 @@ sub verify{
 	}
     }
     &join;
-
     open(IN, "cat $wd/$a/tmp/verify.count.* |");
     while(<IN>){
 	chomp;
@@ -1301,6 +1300,14 @@ sub verify{
 				$result = "$row[0]\t$row[1]\t$upstream\t$htsd\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
 				print $result;
 				print OUT $result;
+				if ($a{$head} > 2){
+				    $s->{tecount}{$a}{"$row[0]\t$row[1]"} ++;
+				    $s->{tetsd}{$a}{"$row[0]\t$row[1]"}{$htsd} ++;
+				}
+				if ($b{$head} > 2){
+				    $s->{tecount}{$b}{"$row[0]\t$row[1]"} ++;
+				    $s->{tetsd}{$b}{"$row[0]\t$row[1]"}{$htsd} ++;
+				}
 			    }
 			}
 		    }
@@ -1309,6 +1316,22 @@ sub verify{
 	}
     }
     close(IN);
+    close(OUT);
+    if ($method eq "TSD"){
+	open(OUT, "> $wd/$a/tsd_method.summary.$a.$b.$tsd_size");
+    }else{
+	open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
+    }
+    foreach $line (sort keys %{$s->{tecount}}){
+	foreach $te (sort keys %{$s->{tecount}{$line}}){
+	    $total = $s->{tecount}{$line}{$te};
+	    $count = 0;
+	    foreach (sort keys %{$s->{tetsd}{$line}{$te}}){
+		$count ++;
+	    }
+	    print OUT "$line\t$te\t$count / $total\n";
+	}
+    }
     close(OUT);
 }
 
