@@ -645,11 +645,9 @@ sub map{
 			if ($uchr eq $dchr and abs($upos - $dpos) < 37 and $s->{map}{$row[2]}{$uchr}{$upos} eq $s->{map}{$row[4]}{$dchr}{$dpos}){
 			    $direction = $s->{map}{$row[2]}{$uchr}{$upos};
 			    if ($direction eq "f"){
-				$upos += 20;
-				$dpos -= 1;
+				$upos += 19;
 			    }else{
-				$upos -= 20;
-				$dpos += 1;
+				$upos -= 19;
 			    }
 			    if ($row[5] > 3 and $row[6] > 3){
 				if ($row[7] <= 2){
