@@ -184,6 +184,7 @@ sub commonMethod{
 
 sub junctionMethod{
     &junctionSpecific;
+    &join;
     &junctionFirstMap($a);
     &junctionFirstMap($b);
     &join;
