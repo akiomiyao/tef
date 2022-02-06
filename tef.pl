@@ -538,7 +538,7 @@ sub map{
             foreach $nuc (@nuc){
                 $tag[2] = $nuc;
                 $tag = join('', @tag);
-		open($tag, "|sort -S 1M -T $sort_tmp > $wd/$a/tmp/mapquery.$tag")
+		open($tag, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/mapquery.$tag")
 	    }
 	}
     }
@@ -607,6 +607,7 @@ sub map{
     }
     open(OUT, "| sort -S 1M -T $sort_tmp > $wd/$a/tmp/mapped.tmp");
     while(<IN>){
+	print;
 	chomp;
 	@row = split('\t', $_);
 	for ($i = 5; $i <= 10; $i++){
@@ -880,7 +881,7 @@ sub verify{
 			    $head = $upstream . $row[0];
 			    $downfl = substr($downstream, 0, 20);
 			    $tail = $row[1] . $downfl;
-			    if (($a{$head} > 2 and $a{$tail} > 2 and $b{$wildtype} > 2) or ($b{$head} > 2 and $b{$tail} > 2 and $a{$wildtype} > 2)){
+			    if (($a{$head} > 2 and $a{$tail} > 2 and $b{$head} == 0 and $b{$tail} == 0 and $b{$wildtype} > 2) or ($a{$head} == 0 and $a{$tail} == 0 and $b{$head} > 2 and $b{$tail} > 2 and $a{$wildtype} > 2)){
 				$result = "$row[0]\t$row[1]\t$upstream\t$htsd\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
 				print $result;
 				print OUT $result;
@@ -964,12 +965,18 @@ sub verifyFunc{
 		foreach $tsdsize (sort keys %{$s->{tsdsize}{$seq}}){		
 		    if ($seq{$seq} eq "H"){
 			$upstream = substr($_, $i - 20, 20);
+			next if $upstream =~ /ATATATATATAT/;
+			next if $upstream =~ /CACACACACACA/;
+			next if $upstream =~ /GAGAGAGAGAGA/;
 			if(length($upstream) == 20){
 			    $tsd = substr($_, $i - $tsdsize, $tsdsize);
 			    print OUT "$seq\tH\t$upstream\t$tsd\n";
 			}	    
 		    }elsif($seq{$seq} eq "T"){
 			$downstream = substr($_, $i + 20, 20 + $tsdsize);
+			next if $downstream =~ /ATATATATATAT/;
+			next if $downstream =~ /CACACACACACA/;
+			next if $downstream =~ /GAGAGAGAGAGA/;
 			if(length($downstream) == 20 + $tsdsize){
 			    $tsd = substr($_, $i +20, $tsdsize);
 			    print OUT "$seq\tT\t$downstream\t$tsd\n";
