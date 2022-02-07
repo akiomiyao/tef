@@ -774,7 +774,7 @@ sub verify{
     if ($method eq "TSD"){
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
     }else{
-	open(IN, "$wd/$a/tmp/te.candidate");
+	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
     }
     while(<IN>){
 	@row = split;
@@ -866,7 +866,7 @@ sub verify{
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
 	open(OUT, "> $wd/$a/tsd_method.verify.$a.$b.$tsd_size");
     }else{
-	open(IN, "$wd/$a/tmp/te.candidate");
+	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
 	open(OUT, "> $wd/$a/junction_method.verify.$a.$b");
     }
     while(<IN>){
@@ -937,7 +937,7 @@ sub verifyFunc{
     if ($method eq "TSD"){
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
     }else{
-	open(IN, "$wd/$a/tmp/te.candidate");
+	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
     }
     while(<IN>){
 	@row = split;
