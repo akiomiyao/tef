@@ -867,7 +867,7 @@ sub verify{
 	open(OUT, "> $wd/$a/tsd_method.verify.$a.$b.$tsd_size");
     }else{
 	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
-	open(OUT, "> $wd/$a/junction_method.verify.$a.$b");
+	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/junction_method.verify.$a.$b");
     }
     while(<IN>){
 	@row = split;
