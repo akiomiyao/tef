@@ -202,7 +202,7 @@ sub junctionMethod{
 }
 
 sub tsdMethod{
-    &tsdHeadTail;
+#    &tsdHeadTail;
     &verify;
     if ($ref ne ""){
 	&map;
@@ -719,6 +719,7 @@ sub mapQuery{
 }
 
 sub verify{
+=pod    
     opendir(DIR, "$a/split");
     foreach (sort readdir(DIR)){
 	if (/^split/){
@@ -744,7 +745,7 @@ sub verify{
     }
     closedir(DIR);
     &join;
-
+=cut
     &log("verify : making query sequences");
     opendir(DIR, "$a/tmp");
     foreach (sort readdir(DIR)){
@@ -811,6 +812,7 @@ sub verify{
 	    $rc = system($cmd);
 	    $rc = $rc >> 8;
 	    &log("ERROR : verify :$cmd") if $rc;
+	    sleep 1;
 	}
     }
     closedir(DIR);
@@ -823,6 +825,7 @@ sub verify{
 	    $rc = system($cmd);
 	    $rc = $rc >> 8;
 	    &log("ERROR : verify : $cmd") if $rc;
+	    sleep 1;
 	}
     }
     closedir(DIR);
@@ -910,6 +913,7 @@ sub verify{
 }
 
 sub countQuery{
+    my %query;
     open(IN, "$wd/$a/tmp/query");
     while(<IN>){
 	chomp;
@@ -923,7 +927,7 @@ sub countQuery{
 	$length = length($_);
 	for($i = 0; $i <= $length - 40; $i++){
 	    $seq = substr($_, $i, 40);
-	    if (exists($query{$seq})){
+	    if ($query{$seq} > 0){
 		$query{$seq} ++;
 	    }
 	}
@@ -940,7 +944,7 @@ sub countQuery{
     open(OUT, "> $wd/$target/tmp/verify.count.$file");
     foreach (sort keys %query){
 	$number = $query{$_} - 1;
-	print OUT "$_\t$number\n";
+	print OUT "$_\t$number\n" if $number > 0;
     }
     close(OUT);
 }
@@ -1636,8 +1640,16 @@ sub monitorWait{
 	    $wait_time = 0.5;
 	}else{
 	    $wait_time = 0.1;
-	}	    
-        if ($processor > $count){
+	}
+	open(IN, "free |");
+	while(<IN>){
+	    if (/Mem/){
+		@row = split;
+		$ratio = $row[3] / $row[1];
+	    }
+	}
+	close(IN);
+        if ($processor > $count and $ratio > 0.5){
             return 1;
         }
     }
