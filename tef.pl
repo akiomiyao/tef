@@ -174,11 +174,31 @@ sub commonMethod{
 	&log("ERROR : commonMethod : $cmd") if $rc;
     }
     &join;
-    &count($a) if &fragmentLength($a) != 20 + $tsd_size;
-    &count($b) if &fragmentLength($b) != 20 + $tsd_size;
-    &join;
-    &merge($a) if &fragmentLength($a) != 20 + $tsd_size;
-    &merge($b) if &fragmentLength($b) != 20 + $tsd_size;
+    if($tsd_size != 20){
+	$tsd_size_org = $tsd_size;
+	$tsd_size = 20;
+	&log("making count.20");
+	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
+	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
+	&join;
+	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
+	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
+
+	$tsd_size = $tsd_size_org;
+	&log("making count.$tsd_size");
+	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
+	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
+	&join;
+	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
+	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
+    }else{
+	&log("making count.20");
+	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
+	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
+	&join;
+	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
+	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
+    }
     &join;
 }
 
@@ -202,7 +222,7 @@ sub junctionMethod{
 }
 
 sub tsdMethod{
-#    &tsdHeadTail;
+    &tsdHeadTail;
     &verify;
     if ($ref ne ""){
 	&map;
@@ -719,7 +739,6 @@ sub mapQuery{
 }
 
 sub verify{
-=pod    
     opendir(DIR, "$a/split");
     foreach (sort readdir(DIR)){
 	if (/^split/){
@@ -745,7 +764,7 @@ sub verify{
     }
     closedir(DIR);
     &join;
-=cut
+
     &log("verify : making query sequences");
     opendir(DIR, "$a/tmp");
     foreach (sort readdir(DIR)){
@@ -803,32 +822,54 @@ sub verify{
     close(IN);
     close(OUT);
     
-    opendir(DIR, "$a/split");
-    foreach (sort readdir(DIR)){
-	if (/^split/){
-	    &monitorWait;
-	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$a,sub=countQuery,tsd_size=$tsd_size,file=$_,sort_tmp=$sort_tmp &";
-	    &log("$cmd");
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify :$cmd") if $rc;
-	    sleep 1;
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		open($tag, "> $wd/$a/tmp/query.$tag")
+	    }
 	}
     }
-    closedir(DIR);
-    opendir(DIR, "$b/split");
-    foreach (sort readdir(DIR)){
-	if (/^split/){
-	    &monitorWait;
-	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$b,sub=countQuery,tsd_size=$tsd_size,file=$_,sort_tmp=$sort_tmp &";
-	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify : $cmd") if $rc;
-	    sleep 1;
+    open(IN, "$wd/$a/tmp/query");
+    while(<IN>){
+	$tag = substr($_, 0, 3);
+	print $tag $_;
+
+    }
+    close(IN);
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		close($tag)
+	    }
 	}
     }
-    closedir(DIR);
+
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		if (-s "$wd/$a/tmp/query.$tag" > 0){
+		    &monitorWait;
+		    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=countQuery,tag=$tag,sort_tmp=$sort_tmp &";
+		    &log($cmd);
+		    $rc = system($cmd);
+		    $rc = $rc >> 8;
+		    &log("ERROR : verify : $cmd") if $rc;
+		}
+	    }
+	}
+    }
     &join;
 
     &log("verify : making verify file");
@@ -913,40 +954,15 @@ sub verify{
 }
 
 sub countQuery{
-    my %query;
-    open(IN, "$wd/$a/tmp/query");
-    while(<IN>){
-	chomp;
-	$query{$_} = 1;
-    }
-    close(IN);
+    $cmd = "zcat $wd/$a/count.20/$tag.gz | join - $wd/$a/tmp/query.$tag > $wd/$a/tmp/verify.count.$tag";
+    $rc = system("$cmd");
+    $rc = $rc >> 8;
+    &log("ERROR : verify :$cmd") if $rc;
     
-    open(IN, "$wd/$target/split/$file");
-    while(<IN>){
-	chomp;
-	$length = length($_);
-	for($i = 0; $i <= $length - 40; $i++){
-	    $seq = substr($_, $i, 40);
-	    if ($query{$seq} > 0){
-		$query{$seq} ++;
-	    }
-	}
-	$complement = &complement($_);
-	for($i = 0; $i <= $length - 40; $i++){
-	    $seq = substr($complement, $i, 40);
-	    if ($query{$seq} > 0){
-		$query{$seq} ++;
-	    }
-	}
-    }
-    close(IN);
-    
-    open(OUT, "> $wd/$target/tmp/verify.count.$file");
-    foreach (sort keys %query){
-	$number = $query{$_} - 1;
-	print OUT "$_\t$number\n" if $number > 0;
-    }
-    close(OUT);
+    $cmd = "zcat $wd/$b/count.20/$tag.gz | join - $wd/$a/tmp/query.$tag > $wd/$b/tmp/verify.count.$tag";
+    $rc = system("$cmd");
+    $rc = $rc >> 8;
+    &log("ERROR : verify : $cmd") if $rc;
 }
 
 sub verifyFunc{
@@ -1311,7 +1327,7 @@ sub mergeFunc{
 }
 
 sub count{
-    my $target = shift;
+    my $target= shift;
     my ($last, $i, $cmd);
     &log("count subfiles : $target");
     opendir(DIR, "$wd/$target/split");
@@ -1641,15 +1657,7 @@ sub monitorWait{
 	}else{
 	    $wait_time = 0.1;
 	}
-	open(IN, "free |");
-	while(<IN>){
-	    if (/Mem/){
-		@row = split;
-		$ratio = $row[3] / $row[1];
-	    }
-	}
-	close(IN);
-        if ($processor > $count and $ratio > 0.5){
+        if ($processor > $count){
             return 1;
         }
     }
