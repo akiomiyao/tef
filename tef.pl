@@ -247,15 +247,15 @@ sub junctionSelectCandidate{
     while(<IN>){
 	chomp;
 	@row = split;
-	$s->{$row[0]}{$row[1]}{$row[2]} = 1;
+	$s->{C}{$row[0]}{$row[1]}{$row[2]} = 1;
     }
     close(IN);
     open(OUT, "> $wd/$target/tmp/te.candidate");
-    foreach $head (sort keys %$s){
-	foreach $tail (sort keys %{$s->{$head}}){
+    foreach $head (sort keys %{$s->{C}}){
+	foreach $tail (sort keys %{$s->{C}{$head}}){
 	    $dat =  "$head\t$tail\t";
 	    $count = 0;
-	    foreach $tsd (sort keys %{$s->{$head}{$tail}}){
+	    foreach $tsd (sort keys %{$s->{C}{$head}{$tail}}){
 		next if $tsd =~ /^A+$/;
 		next if $tsd =~ /^C+$/;
 		next if $tsd =~ /^G+$/;
@@ -395,7 +395,6 @@ sub junctionSecondMap{
             }
         }
     }
-    system("rm $wd/$target/tmp/first.*");
 }
 
 sub junctionSecondMapFunc{
@@ -889,7 +888,7 @@ sub verify{
 
     if ($method eq "TSD"){
 	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
-	open(OUT, "> $wd/$a/tsd_method.verify.$a.$b.$tsd_size");
+	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tsd_method.verify.$a.$b.$tsd_size");
     }else{
 	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
 	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/junction_method.verify.$a.$b");
@@ -910,15 +909,15 @@ sub verify{
 		    $head = $upstream . $row[0];
 		    $downfl = substr($downstream, 0, 20);
 		    $tail = $row[1] . $downfl;
-		    if (($a{$head} > 2 and $a{$tail} > 2 and $b{$head} == 0 and $b{$tail} == 0 and $b{$wildtype} > 2) or ($a{$head} == 0 and $a{$tail} == 0 and $b{$head} > 2 and $b{$tail} > 2 and $a{$wildtype} > 2)){
+		    if (($a{$head} > 0 and $a{$tail} > 0 and $b{$head} == 0 and $b{$tail} == 0 and $b{$wildtype} > 2) or ($a{$head} == 0 and $a{$tail} == 0 and $b{$head} > 0 and $b{$tail} > 0 and $a{$wildtype} > 2)){
 			$result = "$row[0]\t$row[1]\t$upstream\t$htsd\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
 			print $result;
 			print OUT $result;
-			if ($a{$head} > 2){
+			if ($a{$head} > 0){
 			    $s->{tecount}{"$row[0]\t$row[1]"}{$a} ++;
 			    $s->{tetsd}{"$row[0]\t$row[1]"}{$a}{$htsd} ++;
 			}
-			if ($b{$head} > 2){
+			if ($b{$head} > 0){
 			    $s->{tecount}{"$row[0]\t$row[1]"}{$b} ++;
 			    $s->{tetsd}{"$row[0]\t$row[1]"}{$b}{$htsd} ++;
 			}
