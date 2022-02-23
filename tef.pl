@@ -614,6 +614,7 @@ sub map{
 
     open(IN, "cat $wd/$a/tmp/map.* |");
     while(<IN>){
+	next if /TATATATATATATATATA/;
 	chomp;
 	@row = split;
 	$s->{map}{$row[0]}{$row[1]}{$row[2]} = $row[3];
