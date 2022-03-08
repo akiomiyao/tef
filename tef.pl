@@ -229,6 +229,7 @@ sub tsdMethod{
     }
 }
 
+
 sub junctionSelectCandidate{
     $target = shift;
     opendir(REF, "$wd/$ref");
@@ -253,8 +254,16 @@ sub junctionSelectCandidate{
     open(OUT, "> $wd/$target/tmp/te.candidate");
     foreach $head (sort keys %{$s->{C}}){
 	foreach $tail (sort keys %{$s->{C}{$head}}){
-	    $dat =  "$head\t$tail\t";
+	    next if $head =~ /AAAAAAAAAAAAAAAA/ or $tail =~ /AAAAAAAAAAAAAAAA/;
+	    next if $head =~ /TTTTTTTTTTTTTTTT/ or $tail =~ /TTTTTTTTTTTTTTTT/;
+	    next if $head =~ /ACACACACACACACAC/ or $tail =~ /ACACACACACACACAC/;
+	    next if $head =~ /AGAGAGAGAGAGAGAG/ or $tail =~ /AGAGAGAGAGAGAGAG/;
+	    next if $head =~ /ATATATATATATATAT/ or $tail =~ /ATATATATATATATAT/;	
+	    next if $head =~ /CGCGCGCGCGCGCGCG/ or $tail =~ /CGCGCGCGCGCGCGCG/;	
+	    next if $head =~ /CTCTCTCTCTCTCTCT/ or $tail =~ /CTCTCTCTCTCTCTCT/;	
+	    next if $head =~ /GTGTGTGTGTGTGTGT/ or $tail =~ /GTGTGTGTGTGTGTGT/;	
 	    $count = 0;
+	    $dat =  "$head\t$tail\t";
 	    foreach $tsd (sort keys %{$s->{C}{$head}{$tail}}){
 		next if $tsd =~ /^A+$/;
 		next if $tsd =~ /^C+$/;
