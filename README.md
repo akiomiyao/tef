@@ -84,5 +84,8 @@ If the reference data is imcomplete or broken, delete the reference directory an
 ## Update
 - Initial version 1.0 2022-03-29
 
+## Lisence
+Free of use for academics. For non-academics, license by NARO (same as PED) is required.  
+
 ## Author 
 Akio Miyao miyao@affrc.go.jp
