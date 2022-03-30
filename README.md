@@ -4,7 +4,8 @@ Transposable Element Finder (TEF) is a detection program of active transposable 
 Active TEs transposed on the host genome. Because the transposition events are independent, inserted positions of TE should be different between two samples.
 Short read sequences from both samples should contain different fusion fragments of genome and TE sequences.
 Most TEs make target site duplication (TSD) at inserted position.
-TEF detects both ends of TE and inserted position on the genome with information of TSD from NGS short reads.
+TEF detects both ends of TE and inserted position on the genome with information of TSD from NGS short reads.  
+TEF runs on Unix (Linux and FreeBSD) machine.  Eight or 16GB memory is enough. One or more TB disk (SSD is better) space is required.   
 
 ## Usage
 
