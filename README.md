@@ -34,7 +34,8 @@ sort_tmp=directory_for_sort is the option for temporary directory for sort comma
 If sort_tmp is specified to fast disk, *e.g.* SSD, sorting will be accelerated.  
 
 For Linux, max process is number of CPU core. For other OS, defalt process number is 4.  
-If you add max_process option, *e.g.* max_process=8, tef use 8 cores.  
+If you add max_process option, *e.g.* max_process=8, the tef.pl uses 8 cores.  
+perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7,option=clear,sort_tmp=/mnt/ssd/tmp,max_process=8  
 
 ## Getting tef.pl
 ```
