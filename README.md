@@ -7,6 +7,8 @@ Most TEs make target site duplication (TSD) at inserted position.
 TEF detects both ends of TE and inserted position on the genome with information of TSD from NGS short reads.  
 TEF runs on Unix (Linux and FreeBSD) machine.  Eight or 16GB memory is enough. One or more TB disk (SSD is better) space is required.   
 
+Web page : https://akiomiyao.github.io/tef/  
+
 ## Usage
 
 For example,  
