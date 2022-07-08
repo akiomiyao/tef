@@ -1,6 +1,7 @@
 <html>
   <head>
     <link rel = "stylesheet" href = "default.css">
+	<title>Transposable Element Finder (TEF)</title>
   </head>
   <body>
     <h1>Transposable Element Finder (TEF)<font size = "4"> - Detection of active transposable elements from NGS data</font></h1>
@@ -33,7 +34,7 @@ cd ..
 perl tef.pl a=SRR823377,b=SRR823382,ref=dmel
 </code></pre>
 	<li>At the first run of tef.pl. 'config' file is created in the reference directory.<br>
-Edit config file in tef/dmel derectory. Scaffold may be not required.<br>
+Edit config file in tef/dmel directory. Scaffold may be not required.<br>
 If names of scaffold are changed to 'NOP', nucleotide seqeunce of scaffold will be ignored.<br>
 For example,<pre>
 2L
@@ -53,8 +54,53 @@ continue to line number 1870.
 </pre>
 	<li>If you feel hard to change to NOP, open config file by Excel, and paste 'NOP' in all scaffold cells, and save 'config' in the 'tef/dmel' directory as a text file.
 	<li>Run again tef.pl
-<pre><code>perl tef.pl a=SRR823377,b=SRR823382,ref=dmel</code></pre>  
-
+<pre><code>perl tef.pl a=SRR823377,b=SRR823382,ref=dmel</code></pre>
+	Default is mode of 'Junction method'.
+	<li>For the analysis 'TSD method', specify the value of 'tsd_size'.<br>
+For example,
+<pre><code>perl tef.pl a=SRR823377,b=SRR823382,ref=dmel,tsd_size=8</code></pre>
+	<li>Results are saved in the 'SRR823377' (specified with 'a') directory.
+	<pre>
+child/
+count.20/
+count.8/
+junction_method.genotype.SRR823377.SRR823382
+junction_method.log
+junction_method.summary.SRR823377.SRR823382
+junction_method.tepos.SRR823377.SRR823382
+junction_method.verify.SRR823377.SRR823382
+read/
+split/
+tmp/
+tsd_method.genotype.SRR823377.SRR823382.8
+tsd_method.log.8
+tsd_method.pair.SRR823377.SRR823382.8
+tsd_method.summary.SRR823377.SRR823382.8
+tsd_method.tepos.SRR823377.SRR823382.8
+tsd_method.verify.SRR823377.SRR823382.8
+	</pre>
+	<li>Following is a part of genotype file of TSD method.<pre>
+                                                                                                                                                                   SRR823377              SRR823382             
+Accession   Chr.  Head Junction  Tail Junction  Direction TE Head                 TE Tail                 Head Flanking          TSD        Tail Flanking          Head   Tail  No-ins.   Head    Tail   No-Ins.  Genotype
+SRR823377   3L    11009306       11009313       r         CATGATGAAATAACATAAGG    CCTTATGTTATTTCATCATG    CGGCGAATGAGAGGCCAACA   GGCCAACA   GGCCAACAGTCGGCACTAAC   5      7     15        0       0      26       H
+SRR823377   3L    11009313       11009306       f         CATGATGAAATAACATAAGG    CCTTATGTTATTTCATCATG    GTTAGTGCCGACTGTTGGCC   TGTTGGCC   TGTTGGCCTCTCATTCGCCG   7      5     17        0       0      23       H
+SRR823377   3L    13569996       13570003       r         CAGAGAACTGCAAGGGTGGC    TGGCGGGCTGCAGTTCTCTG    ATGGTGGTGTGCATGTGGGG   ATGTGGGG   ATGTGGGGTAACCTGCCCAA   25     15    0         0       0      16       M
+SRR823377   3L    13570003       13569996       f         CAGAGAACTGCAGCCCGCCA    GCCACCCTTGCAGTTCTCTG    TTGGGCAGGTTACCCCACAT   CCCCACAT   CCCCACATGCACACCACCAT   15     25    0         0       0      13       M
+SRR823377   3L    16020833       16020840       r         CAGAGAACTGCAAGGGTGGC    TGGCGGGCTGCAGTTCTCTG    CAACAGATGGGCTCCCGGAT   TCCCGGAT   TCCCGGATCGCCGGTCGCCG   19     10    0         0       0      27       M
+SRR823377   3L    16020840       16020833       f         CAGAGAACTGCAGCCCGCCA    GCCACCCTTGCAGTTCTCTG    CGGCGACCGGCGATCCGGGA   ATCCGGGA   ATCCGGGAGCCCATCTGTTG   10     19    0         0       0      27       M
+SRR823377   3L    23672618       23672625       r         CATGATGAAATAACATAAGG    CCTTATGTTATTTCATCATG    CCGCTGCGCTTGGGATAGCC   GGATAGCC   GGATAGCCTAACTAATTAGA   9      7     387       0       0      309      H
+SRR823377   3L    23672619       23672626       r         CCATGATGAAATAACATAAG    ACCTTATGTTATTTCATCAT    TCCGCTGCGCTTGGGATAGC   GGGATAGC   GGGATAGCCTAACTAATTAG   9      7     388       0       0      319      H
+SRR823377   3L    23672625       23672618       f         CATGATGAAATAACATAAGG    CCTTATGTTATTTCATCATG    TCTAATTAGTTAGGCTATCC   GGCTATCC   GGCTATCCCAAGCGCAGCGG   7      9     64        0       0      70       H
+SRR823377   3L    23672626       23672619       f         ATGATGAAATAACATAAGGT    CTTATGTTATTTCATCATGG    CTAATTAGTTAGGCTATCCC   GCTATCCC   GCTATCCCAAGCGCAGCGGA   7      9     63        0       0      70       H
+</pre>
+The result file is tab separated text file, and can be opened by Excel.<br>
+The CATGATGAAATAACATAAGG-CCTTATGTTATTTCATCATG head-tail pair is <i>P-</i>element.<br>
+Numbers of Head, Tail, and No-ins. are read counts containing junction of head, junction of tail, and No-insertion (wild-type) from SRR823377 and SRR823382.<br>
+Forward and complementary seqeunces of TE Head and TE Tail are listed.<br>
+If counts of Head, Tail and No-ins. are detected in SRR823377 and only counts of No-Ins. are detected in SRR823382, TE is transposed into only SRR823377 and genotype is Heterozygous (shown in 'H').<br>
+If counts of Head, Tail are detected and no count for No-ins. in SRR823377 and only counts of No-Ins. are detected in SRR823382, TE is transposed into only SRR823377 and genotype is Homozygous (shown in 'M').<br>
+The high counts of No-insertion indicats that the transposed region is in the repetitive region.<br>
+If pair of adjuscent bases of TSD is complementary, tef.pl detects both positions as junctions. <i>e.g.,</i> 3L 23672618 and 23672619.
 	</ul>
 
     <h2>Citing TEF</h2>
