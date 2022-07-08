@@ -5,8 +5,59 @@
   <body>
     <h1>Transposable Element Finder (TEF)<font size = "4"> - Detection of active transposable elements from NGS data</font></h1>
     TEF is a high-performance detector of active transposable elements from short-reads of next generation sequencer, based on detection of Target Site Duplication (TSD) at the transposition.
-    <h2>How to get TEF</h2>
+    <h2>Tutrial</h2>
     Scripts and Readme: <a href = "https://github.com/akiomiyao/tef/" "_blank">https://github.com/akiomiyao/tef/</a><br><br>
+	Download the souce code from 'Code' pulldown menu or clone the code in your local machine.<br>
+	git clone https://github.com/akiomiyao/tef.git<br><br>
+	'tef' directory will be cleated. All codes will be saved into the tef directory.
+
+	Download fastq files<br>
+	<ul>
+	<li>Access to NCBI SRA page at  <a href = "https://www.ncbi.nlm.nih.gov/sra/" "_blank">https://www.ncbi.nlm.nih.gov/sra/<a>
+	<li>Search accessions SRR823377 and SRR823382.
+	<li>Click the link of accesssion in table of run.
+	<li>Click FASTA/FASTQ download tab.
+	<li>Click FASTQ link in Download. Complessed fastq file will be downloaded.
+	<pre><code>
+git clone https://github.com/akiomiyao/tef.git
+cd tef
+mkdir SRR823377 SRR823382
+mkdir SRR823377/read
+mkdir SRR823382/read
+mv Download/SRR823377.fastq.gz SRR823377/read
+mv Download/SRR823382.fastq.gz SRR823382/read
+mkdir dmel
+cd dmel
+curl -O ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_r6.26_FB2019_01/fasta/dmel-all-chromosome-r6.26.fasta.gz
+cd ..
+perl tef.pl a=SRR823377,b=SRR823382,ref=dmel
+</code></pre>
+	<li>At the first run of tef.pl. 'config' file is created in the reference directory.<br>
+Edit config file in tef/dmel derectory. Scaffold may be not required.<br>
+If names of scaffold are changed to 'NOP', nucleotide seqeunce of scaffold will be ignored.<br>
+For example,<pre>
+2L
+2R
+3L
+3R
+4
+X
+Y
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+continue to line number 1870.
+</pre>
+	<li>If you feel hard to change to NOP, open config file by Excel, and paste 'NOP' in all scaffold cells, and save 'config' in the 'tef/dmel' directory as a text file.
+	<li>Run again tef.pl
+<pre><code>perl tef.pl a=SRR823377,b=SRR823382,ref=dmel</code></pre>  
+
+	</ul>
+
+    <h2>Citing TEF</h2>
     Paper: Transposable Element Finder (TEF): finding active transposable elements from next generation sequencing data (submitted).<br>
     <h2>Contact</h2>
     Akio Miyao, Ph.D (<a href = "mailto:miyao@affrc.go.jp">miyao@affrc.go.jp</a>)<br>
