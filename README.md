@@ -1,6 +1,8 @@
 # TEF
 ## Transposable Element Finder - Detection of active transposable elements from NGS data  
 Transposable Element Finder (TEF) is a detection program of active transposable elements (TEs) by comparing two NGS sequences.
+TEF does not require TE information to detect transposition.  
+Instead, TEF returns transposed transposon ends information and transposed positon on the reference genome.  
 Active TEs transposed on the host genome. Because the transposition events are independent, inserted positions of TE should be different between two samples.
 Short read sequences from both samples should contain different fusion fragments of genome and TE sequences.
 Most TEs make target site duplication (TSD) at inserted position.
@@ -35,7 +37,7 @@ If option=clear is specified, data in tmp will be cleared at the begining of ana
 sort_tmp=directory_for_sort is the option for temporary directory for sort command.  
 If sort_tmp is specified to fast disk, *e.g.* SSD, sorting will be accelerated.  
 
-For Linux, max process is number of CPU core. For other OS, defalt process number is 4.  
+For Linux, max process is limited to number of CPU core. For other OS, default process number is 4.  
 If you add max_process option, *e.g.* max_process=8, the tef.pl uses 8 cores.  
 perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7,option=clear,sort_tmp=/mnt/ssd/tmp,max_process=8  
 
@@ -71,7 +73,7 @@ perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
 Fastq files should be saved in read directory in targets.  
 Files compressed with gz, bzip2, and xz format can be processed.  
   
-Results are saved in ttm2, specified by a,  directory.
+Results are saved in ttm2 directory, specified by 'a'.
 
 ## Making reference data set
 At the first run of for a reference, the empty directory with specified name is created.  
@@ -80,7 +82,7 @@ After the second run of tef.pl, config file is created in the reference director
 Config file is the list of chromosome names in order to appearance of fasta file.  
 If required, rename and/or change to NOP the chromosome name in the config file.  
 If the sequence is partial contig or extra chromosome and is not required, the chromosome name should be replaced to NOP.  
-In the case of too many partial contigs which should be ignore, make config file with all lines are NOP and then replace chromosome names at related positions.  
+In the case of too many partial contigs which should be ignore, make config file with all lines are NOP and then replace disired chromosome names at related positions.  
 At the third run, ped.pl makes reference data set according to the config file and then proceed main routine.  
 Once the reference data set is created, data set will be reused for additional analysis.  
 If the reference data is imcomplete or broken, delete the reference directory and then run again tef.pl.  
@@ -89,10 +91,11 @@ If the reference data is imcomplete or broken, delete the reference directory an
 - Initial version 1.0 2022-03-29
 
 ## Citing TEF
-Submitted to BMC Bioinformatics. 
+Accepted by BMC Bioinformatics. 
 
 ## Lisence
 Free of use for academics. For non-academics, license by NARO (same as PED) is required.  
+Patent pending JP 2020-217693.  
 
 ## Author 
 Akio Miyao miyao@affrc.go.jp
