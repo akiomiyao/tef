@@ -91,7 +91,7 @@ If the reference data is imcomplete or broken, delete the reference directory an
 - Initial version 1.0 2022-03-29
 
 ## Citing TEF
-Accepted by BMC Bioinformatics. 
+Miyao, A., Yamanouchi, U. Transposable element finder (TEF): finding active transposable elements from next generation sequencing data. BMC Bioinformatics 23, 500 (2022). https://doi.org/10.1186/s12859-022-05011-3
 
 ## Lisence
 Free of use for academics. For non-academics, license by NARO (same as PED) is required.  
