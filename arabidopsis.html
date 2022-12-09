@@ -39,9 +39,9 @@ cd ..
 perl tef.pl a=SRR21814507,b=SRR21814514,ref=TAIR10
 </code></pre>
 	Options are separated by comma. Do not add space after comma.
-	<li>At the first run of tef.pl. 'config' file is created in the reference directory.<br>
+	<li>At the first run of tef.pl. 'config' file is created in the reference directory TAIR10.<br>
 Edit config file in tef/TAIR10 directory. Mt and Pt may be not required.<br>
-If names are changed to 'NOP', nucleotide seqeunce of Mt and Pt will be ignored.<br>
+If names of Mt and Pt are changed to 'NOP', nucleotide seqeunce of Mt and Pt will be ignored.<br>
 For example,<pre>
 1
 2
@@ -53,7 +53,7 @@ NOP
 </pre>
 	<li>Run again tef.pl
 <pre><code>perl tef.pl a=SRR21814507,b=SRR21814514,ref=TAIR10</code></pre>
-	Default is mode of 'Junction method'.
+	Default mode is 'Junction method'.
 
 	<li>Results are saved in the 'SRR21814507' (specified with 'a') directory.
 	<pre>
@@ -168,6 +168,7 @@ tmp/
 <tr><td align = "center">SRR21814514</td><td align = "center">5</td><td align = "right">11872145</td><td align = "right">11872141</td><td align = "center">f</td><td align = "center">TGATATGTCTATAATTTGCA</td><td align = "center">TGACTAAAAACCTATTATCA</td><td align = "center">ATACGGACTTTGACTACACC</td><td align = "center">ACACC</td><td align = "center">ACACCATCAAAGCTTTGAGA</td><td align = "center">0</td><td align = "center">0</td><td align = "center">30</td><td align = "center">4</td><td align = "center">8</td><td align = "center">54</td><td align = "center">H</td></tr>
 </table>
 	<li>HB764 (Accession Number SRR21814507) was sampled in 1905. HB750 (Accession Number SRR21814514) was sampled in 1957.
+	<li>Most of detected TEs are duplicated in the list, due to detection of complementary sequences of TE head and tail.
 </ul>
 
     <h2>References</h2>
