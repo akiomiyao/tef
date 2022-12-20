@@ -2,7 +2,7 @@
   <head>
     <link rel = "stylesheet" href = "default.css">
 	<style>
-		tableÅCth, td{font-size: 50%;}
+		td{font-family: monospace;}
 	</style>
 	<title>Transposable Element Finder (TEF)</title>
   </head>
@@ -14,7 +14,8 @@
 Scripts and Readme: <a href = "https://github.com/akiomiyao/tef/" target = "_blank">https://github.com/akiomiyao/tef/</a>	
     <h2>Detection of transposed TEs in <i>Arabidopsis thaliana</i> herbarium specimen</h2>
 	Transposed TEs have been detected from herbarium specimen of old <i>Arabidopsis thaliana</i>.<br>
-	The history of TE evolution can be revealed by specimens kept in the herbarium.
+	The history of TE evolution can be revealed by specimens kept in the herbarium.<br>
+	The expansion of the territory of <i>Arabidopsis</i> lines can also be grasped.
 	<ul>
     <li>SRA information: <a href = "https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP401121" target = "_blank">SRP401121</a>
 	<li>First run of tef.pl
@@ -68,7 +69,8 @@ read/
 split/
 tmp/
 	</pre>
-	<li>Following is the genotype file of Junction method for SRR21814507 and SRR21814514.
+</ul>
+	<h3>Genotype file of Junction method for SRR21814507 and SRR21814514</h3>
 <table border>
 <tr>
 <th rowspan = "2">Accession</th>
@@ -167,8 +169,212 @@ tmp/
 <tr><td align = "center">SRR21814514</td><td align = "center">5</td><td align = "right">11872141</td><td align = "right">11872145</td><td align = "center">r</td><td align = "center">TGATAATAGGTTTTTAGTCA</td><td align = "center">TGCAAATTATAGACATATCA</td><td align = "center">TCTCAAAGCTTTGATGGTGT</td><td align = "center">GGTGT</td><td align = "center">GGTGTAGTCAAAGTCCGTAT</td><td align = "center">0</td><td align = "center">0</td><td align = "center">49</td><td align = "center">8</td><td align = "center">4</td><td align = "center">83</td><td align = "center">H</td></tr>
 <tr><td align = "center">SRR21814514</td><td align = "center">5</td><td align = "right">11872145</td><td align = "right">11872141</td><td align = "center">f</td><td align = "center">TGATATGTCTATAATTTGCA</td><td align = "center">TGACTAAAAACCTATTATCA</td><td align = "center">ATACGGACTTTGACTACACC</td><td align = "center">ACACC</td><td align = "center">ACACCATCAAAGCTTTGAGA</td><td align = "center">0</td><td align = "center">0</td><td align = "center">30</td><td align = "center">4</td><td align = "center">8</td><td align = "center">54</td><td align = "center">H</td></tr>
 </table>
+<ul>
 	<li>HB764 (Accession Number SRR21814507) was sampled in 1905. HB750 (Accession Number SRR21814514) was sampled in 1957.
 	<li>Most of detected TEs are duplicated in the list, due to detection of complementary sequences of TE head and tail.
+	<li>Genotype: M is homozyous insertion. H is heterozygous insertion.
+</ul>
+	<h3>Accession list of co-existence TEs</h3>
+<table border>
+<tr><th>Chr</th><th>Position</th><th>TE Head-Tail</th><th colspan = "7">Accession</th></tr>
+<tr><td align = "right">1</td><td align = "right">641992</td><td>TTCTTCTTCTTCTTCTTCTT-CTTCTTCTTCTTCTTCTTCT</td><td>SRR21814488</td><td>SRR21814494</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">6657008</td><td>GGGTGTGTTGGCAAAATAGT-ACTAGTTTGCAAATTAACCC</td><td>SRR21814488</td><td>SRR21814504</td><td>SRR21814516</td><td>SRR21814517</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">8853957</td><td>GGGAAAAATGTTGTTTTATA-TATAAAACAACATTTTTCCC</td><td>SRR21814488</td><td>SRR21814496</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">8853966</td><td>GGGAAAAATGTTGTTTTATA-TATAAAACAACATTTTTCCC</td><td>SRR21814488</td><td>SRR21814496</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">11458011</td><td>TGTTGATACATCAATTGGGC-GTTTAATTCGTGCATTAACA</td><td>SRR21814492</td><td>SRR21814496</td><td>SRR21814515</td><td>SRR21814520</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">11458015</td><td>TGTTAATGCACGAATTAAAC-GCCCAATTGATGTATCAACA</td><td>SRR21814492</td><td>SRR21814496</td><td>SRR21814515</td><td>SRR21814520</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">12255991</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">13414457</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814490</td><td>SRR21814496</td><td>SRR21814499</td><td>SRR21814504</td><td>SRR21814508</td><td>SRR21814515</td><td>SRR21814518</td></tr>
+<tr><td align = "right">1</td><td align = "right">13414461</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814490</td><td>SRR21814496</td><td>SRR21814499</td><td>SRR21814504</td><td>SRR21814508</td><td>SRR21814515</td><td>SRR21814518</td></tr>
+<tr><td align = "right">1</td><td align = "right">13776040</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">14044414</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">14044418</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">14474485</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814491</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814509</td><td>SRR21814511</td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">14474489</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814491</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814509</td><td>SRR21814511</td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15082039</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15082039</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15082043</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15082043</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15082368</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15082372</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">15567913</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814501</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">16511308</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">16511312</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">18886645</td><td>TGTTATAAACAGAGAAAGAG-ATCCATCTTTATTCATAACA</td><td>SRR21814491</td><td>SRR21814495</td><td>SRR21814506</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">18895989</td><td>GGGAAAAAACCCGAAAAAAC-GTTTTTTCGGGTTTTTTCCC</td><td>SRR21814510</td><td>SRR21814511</td><td>SRR21814515</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">18895998</td><td>GGGAAAAAACCCGAAAAAAC-GTTTTTTCGGGTTTTTTCCC</td><td>SRR21814510</td><td>SRR21814511</td><td>SRR21814515</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">21177621</td><td>GGGTAAATTGCAGGCCACAC-CACTTTTGTGAAAATTTCTT</td><td>SRR21814494</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">23802707</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">23802715</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">23802716</td><td>GGAATTTAATGAAAAAAACC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">24289444</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814491</td><td>SRR21814495</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">24289452</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814491</td><td>SRR21814495</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">24459726</td><td>CAATGTTTTTAAAACCGACC-GGTCGGGCGTGAAAACACTG</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">24459733</td><td>CAGTGTTTTCACGCCCGACC-GGTCGGTTTTAAAAACATTG</td><td>SRR21814490</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">29099460</td><td>GGATTTTTAGTAATTAAACC-GGTTTTATTACTAAAAACCC</td><td>SRR21814490</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">29099468</td><td>GGGTTTTTAGTAATAAAACC-GGTTTAATTACTAAAAATCC</td><td>SRR21814490</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">29630582</td><td>GGGCTGCCTATAGGAGGCCC-GGGCCTCCTATAGGCAGCCC</td><td>SRR21814502</td><td>SRR21814505</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">1</td><td align = "right">29630590</td><td>GGGCTGCCTATAGGAGGCCC-GGGCCTCCTATAGGCAGCCC</td><td>SRR21814502</td><td>SRR21814505</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">5075</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814496</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">8674</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814504</td><td>SRR21814505</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">2157321</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814496</td><td>SRR21814512</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">2157329</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814496</td><td>SRR21814512</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">2344412</td><td>GGGAAATTTGGGTGTATAAC-GTTACTTTTGCAATTCACCC</td><td>SRR21814512</td><td>SRR21814516</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">2452096</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">2691597</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">2691601</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3550955</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814501</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3605922</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3605922</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3605926</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3605926</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3606661</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3606665</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3615251</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814494</td><td>SRR21814495</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3615255</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814495</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3615964</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814509</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3615968</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814495</td><td>SRR21814509</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3664649</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814491</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814509</td><td>SRR21814511</td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3664653</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814491</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814509</td><td>SRR21814511</td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3909712</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814509</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">3909716</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814495</td><td>SRR21814509</td><td>SRR21814512</td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">4076553</td><td>GTTGGTGCAGGAATTAGCAC-GTTTGATTACAGAATCAACA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">4225669</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814499</td><td>SRR21814510</td><td>SRR21814511</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">4225673</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814499</td><td>SRR21814518</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">9080709</td><td>GGGTGAATTGCAAAAATAAC-GTTAGTTTTCCAAATTTCCC</td><td>SRR21814497</td><td>SRR21814503</td><td>SRR21814515</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">9080717</td><td>GGGAAATTTGGAAAACTAAC-GTTATTTTTGCAATTCACCC</td><td>SRR21814497</td><td>SRR21814503</td><td>SRR21814515</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">10658069</td><td>TGTTAGAGTAAAATTCTTTT-ATCAAGTTTAACTTTCAACA</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">10658073</td><td>TGTTGAAAGTTAAACTTGAT-AAAAGAATTTTACTCTAACA</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">15092509</td><td>TTATTTTATTTTATTTTAGT-TTTCTATTTTATTTTATTTT</td><td>SRR21814504</td><td>SRR21814518</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">15348095</td><td>GGGTGTGTTGGCAAAATAGT-ACTAGTTTGCAAATTAACCC</td><td>SRR21814502</td><td>SRR21814504</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">16446910</td><td>CAGTGTTTTCACGCCCGACC-GGTCGGTTTTAAAAACATTG</td><td>SRR21814500</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">2</td><td align = "right">16446917</td><td>CAATGTTTTTAAAACCGACC-GGTCGGGCGTGAAAACACTG</td><td>SRR21814500</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">188166</td><td>CAGTGTTTTCACGCCCGACC-GGTCGGGTTTCAAAACATTG</td><td>SRR21814507</td><td>SRR21814508</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">4266731</td><td>TGTTATGAATAAAGATGGAT-CTCTTTCTCTGTTTATAACA</td><td>SRR21814507</td><td>SRR21814520</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">4266735</td><td>TGTTATAAACAGAGAAAGAG-ATCCATCTTTATTCATAACA</td><td>SRR21814490</td><td>SRR21814507</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">5621228</td><td>GGGTAAATTGCAGGCCACAC-CACTTTTGTGAAAATTTCTT</td><td>SRR21814515</td><td>SRR21814518</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">5670953</td><td>GGGTTTTTAGTAATAAAACC-GGTTTAATTACTAAAAATCC</td><td>SRR21814496</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">5670961</td><td>GGATTTTTAGTAATTAAACC-GGTTTTATTACTAAAAACCC</td><td>SRR21814496</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">6356211</td><td>GGATTTTTAGTAATTAAACC-GGTTTTATTACTAAAAACCC</td><td>SRR21814490</td><td>SRR21814517</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">6356219</td><td>GGGTTTTTAGTAATAAAACC-GGTTTAATTACTAAAAATCC</td><td>SRR21814490</td><td>SRR21814517</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">11208023</td><td>TGTTAGAAAAGAAGAAGAAG-TCCATCTAATATTCATAACA</td><td>SRR21814493</td><td>SRR21814496</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">11208023</td><td>TGTTATAAACAGAGAAAGAG-ATCCATCTTTATTCATAACA</td><td>SRR21814490</td><td>SRR21814491</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">11240538</td><td>GGGTTTTTAGTAATAAAACC-GGTTTAATTACTAAAAATCC</td><td>SRR21814510</td><td>SRR21814511</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">12050020</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">12201778</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">12201782</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13192846</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814501</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587033</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587037</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587184</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814495</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587188</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814494</td><td>SRR21814495</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587539</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587539</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587543</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13587543</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13589630</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814501</td><td>SRR21814503</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">13589634</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814501</td><td>SRR21814503</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">14193398</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814502</td><td>SRR21814504</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">14194233</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814496</td><td>SRR21814504</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">14199046</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814496</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">14202645</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814504</td><td>SRR21814505</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">16991927</td><td>GTTAGAGTAAAATTCTTTTA-ATCAAGTTTAACTTTCAACA</td><td>SRR21814486</td><td>SRR21814495</td><td>SRR21814511</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">16991932</td><td>TGTTGAAAGTTAAACTTGAT-TAAAAGAATTTTACTCTAAC</td><td>SRR21814486</td><td>SRR21814495</td><td>SRR21814511</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">22239380</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814499</td><td>SRR21814518</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">22239384</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814499</td><td>SRR21814510</td><td>SRR21814511</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">22552986</td><td>TGTTGGTGTTTGAAAAAGTC-TTTTAGTCAAACAATTCACA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">3</td><td align = "right">22552990</td><td>TGTGAATTGTTTGACTAAAA-GACTTTTTCAAACACCAACA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">1533309</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814497</td><td>SRR21814504</td><td>SRR21814516</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">1533317</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814504</td><td>SRR21814516</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">1687121</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">2029642</td><td>GGGTTGGCTGATTTTATAGC-GCTATAAAATCAGCCAACCC</td><td>SRR21814512</td><td>SRR21814516</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">2029650</td><td>GGGTTGGCTGATTTTATAGC-GCTATAAAATCAGCCAACCC</td><td>SRR21814512</td><td>SRR21814516</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">2922404</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">2922404</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">2922408</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">2922408</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3840263</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3840267</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3850493</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814501</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3950545</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814501</td><td>SRR21814503</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3950549</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814501</td><td>SRR21814503</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3950790</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814495</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3950794</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814494</td><td>SRR21814495</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3951351</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3951355</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3965961</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814491</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814509</td><td>SRR21814511</td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">3965965</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814491</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814509</td><td>SRR21814511</td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">8959144</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814496</td><td>SRR21814510</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">14072586</td><td>GGGAAAAATGTTATTTAATA-TATTAAATAACATTTTTCCC</td><td>SRR21814494</td><td>SRR21814496</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">4</td><td align = "right">14072595</td><td>GGGAAAAATGTTATTTAATA-TATTAAATAACATTTTTCCC</td><td>SRR21814494</td><td>SRR21814496</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">3571897</td><td>GTTAGAGTAAAATTCTTTTA-ATCAAGTTTAACTTTCAACA</td><td>SRR21814495</td><td>SRR21814510</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">3571902</td><td>TGTTGAAAGTTAAACTTGAT-TAAAAGAATTTTACTCTAAC</td><td>SRR21814495</td><td>SRR21814510</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">7457269</td><td>CAGTGTTTTCACGCCCGACC-GGTCGGTTTTAAAAACATTG</td><td>SRR21814494</td><td>SRR21814507</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">10370817</td><td>GGGAATTTAATGAAAAAAAC-GTTTTTTTCATTAAATTCCC</td><td>SRR21814488</td><td>SRR21814509</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">10686241</td><td>GTTGGTGCAGGAATTAGCAC-GTTTGATTACAGAATCAACA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11205045</td><td>TGATAAGTGTGTATTTTGCA-GACTGAAAAACCTATTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11205049</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814495</td><td>SRR21814496</td><td>SRR21814509</td><td>SRR21814518</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11651342</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11651342</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11651346</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814497</td><td>SRR21814500</td><td>SRR21814501</td><td>SRR21814505</td><td>SRR21814511</td><td>SRR21814520</td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11651346</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814487</td><td>SRR21814501</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11701125</td><td>TGTAACGCCCGCGATCCTCA-GTCCGGATCGGGGCCTTTCA</td><td>SRR21814501</td><td>SRR21814502</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11702382</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11702386</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814507</td><td>SRR21814515</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11727514</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814494</td><td>SRR21814495</td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11727518</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814492</td><td>SRR21814493</td><td>SRR21814495</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11730427</td><td>TGATATGTCTATAATTTGCA-TGACTAAAAACCTATTATCA</td><td>SRR21814501</td><td>SRR21814503</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11730431</td><td>TGATAATAGGTTTTTAGTCA-TGCAAATTATAGACATATCA</td><td>SRR21814501</td><td>SRR21814503</td><td>SRR21814520</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">11780681</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814492</td><td>SRR21814493</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">13390711</td><td>TGATAATAGGTTTTTCAGTC-TGCAAAATACACACTTATCA</td><td>SRR21814511</td><td>SRR21814518</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">13881448</td><td>TATTAGGGACAATGTCCCAC-GTGGGACATTGTCCCTAATA</td><td>SRR21814490</td><td>SRR21814504</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">13881452</td><td>TATTAGGGACAATGTCCCAC-GTGGGACATTGTCCCTAATA</td><td>SRR21814490</td><td>SRR21814504</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">20523372</td><td>TGTTATGAATAAAGATGGAT-CTCTTTCTCTGTTTATAACA</td><td>SRR21814503</td><td>SRR21814509</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">21957656</td><td>GGGAAAAATGTTGTTTTATA-TATAAAACAACATTTTTCCC</td><td>SRR21814496</td><td>SRR21814497</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">21957665</td><td>GGGAAAAATGTTGTTTTATA-TATAAAACAACATTTTTCCC</td><td>SRR21814496</td><td>SRR21814497</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">23918572</td><td>GGGAAAAAAGCCGAAAAAAC-GTTTTTTCGGCTTTTTTCCC</td><td>SRR21814515</td><td>SRR21814517</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">24328213</td><td>GTAAGATTTGCTTAGATTGA-GTTACTCTAGTAAATTTCCC</td><td>SRR21814501</td><td>SRR21814508</td><td>SRR21814517</td><td></td><td></td><td></td><td></td></tr>
+<tr><td align = "right">5</td><td align = "right">24328221</td><td>GGGAAATTTACTAGAGTAAC-TCAATCTAAGCAAATCTTAC</td><td>SRR21814501</td><td>SRR21814508</td><td>SRR21814517</td><td></td><td></td><td></td><td></td></tr>
+</table>
+	<h3>Sample Information (Latorre M et al. 2022)</h3>
+<table border>
+<tr><th>Accession</th><th>Sample_ID</th><th>Collection_Year</th><th>Location</th><th>Latitude</th><th>Longitude</th></tr>
+<tr><td align = "center">SRR21814486</td><td align = "center">HB0729</td><td align = "center">1866</td><td>Tuebingen</td><td align = "right">48.5236164</td><td align = "right">9.0535531</td></tr>
+<tr><td align = "center">SRR21814487</td><td align = "center">HB0725</td><td align = "center">1888</td><td>Tuebingen</td><td align = "right">48.5236164</td><td align = "right">9.0535531</td></tr>
+<tr><td align = "center">SRR21814488</td><td align = "center">HB0722</td><td align = "center">1891</td><td>Altburg</td><td align = "right">48.6619431</td><td align = "right">8.6926366</td></tr>
+<tr><td align = "center">SRR21814489</td><td align = "center">HB0719</td><td align = "center">1890</td><td>Tuebingen</td><td align = "right">48.5236164</td><td align = "right">9.0535531</td></tr>
+<tr><td align = "center">SRR21814490</td><td align = "center">HB0718</td><td align = "center">1890</td><td>Tuebingen</td><td align = "right">48.5236164</td><td align = "right">9.0535531</td></tr>
+<tr><td align = "center">SRR21814491</td><td align = "center">HB0717</td><td align = "center">1826</td><td>Alpirsbach</td><td align = "right">48.3456021</td><td align = "right">8.4033079</td></tr>
+<tr><td align = "center">SRR21814492</td><td align = "center">HB0841</td><td align = "center">1875</td><td>Freudenstadt_in_the_Black_Forest</td><td align = "right">48.4637727</td><td align = "right">8.4111727</td></tr>
+<tr><td align = "center">SRR21814493</td><td align = "center">HB0840</td><td align = "center">1851</td><td>Sulz_am_Neckar</td><td align = "right">48.3617509</td><td align = "right">8.6314329</td></tr>
+<tr><td align = "center">SRR21814494</td><td align = "center">HB0830</td><td align = "center">1862</td><td>near_Beimerstetten</td><td align = "right">48.4840643</td><td align = "right">9.9836241</td></tr>
+<tr><td align = "center">SRR21814495</td><td align = "center">HB0828</td><td align = "center">1890</td><td>Schramberg</td><td align = "right">48.225478</td><td align = "right">8.3852168</td></tr>
+<tr><td align = "center">SRR21814496</td><td align = "center">HB0826</td><td align = "center">1948</td><td>Abtsgmuend</td><td align = "right">48.8936471</td><td align = "right">10.0027636</td></tr>
+<tr><td align = "center">SRR21814497</td><td align = "center">HB0715</td><td align = "center">1828</td><td>Esslingen</td><td align = "right">48.7427584</td><td align = "right">9.3071685</td></tr>
+<tr><td align = "center">SRR21814498</td><td align = "center">HB0822</td><td align = "center">1936</td><td>Hohentwiel</td><td align = "right">47.7617515</td><td align = "right">8.8348709</td></tr>
+<tr><td align = "center">SRR21814499</td><td align = "center">HB0821</td><td align = "center">1874</td><td>Winnenden</td><td align = "right">48.8754571</td><td align = "right">9.3978478</td></tr>
+<tr><td align = "center">SRR21814500</td><td align = "center">HB0819</td><td align = "center">1928</td><td>Langenau_near_Ulm</td><td align = "right">48.7276553</td><td align = "right">8.0150864</td></tr>
+<tr><td align = "center">SRR21814501</td><td align = "center">HB0818</td><td align = "center">1928</td><td>Langenau_near_Ulm</td><td align = "right">48.7276553</td><td align = "right">8.0150864</td></tr>
+<tr><td align = "center">SRR21814502</td><td align = "center">HB0817</td><td align = "center">1934</td><td>Gundelwangen_near_Bonndorf</td><td align = "right">47.8426163</td><td align = "right">8.2864051</td></tr>
+<tr><td align = "center">SRR21814503</td><td align = "center">HB0814</td><td align = "center">1882</td><td>Heidelberg</td><td align = "right">49.4093582</td><td align = "right">8.694724</td></tr>
+<tr><td align = "center">SRR21814504</td><td align = "center">HB0808</td><td align = "center">1817</td><td>Stuttgart_Moehringen</td><td align = "right">48.7784485</td><td align = "right">9.1800132</td></tr>
+<tr><td align = "center">SRR21814505</td><td align = "center">HB0768</td><td align = "center">1894</td><td>Todtnau</td><td align = "right">47.8303378</td><td align = "right">7.9452378</td></tr>
+<tr><td align = "center">SRR21814506</td><td align = "center">HB0766</td><td align = "center">1846</td><td>Monastery_forest_Hohenzollern</td><td align = "right">47.9724751</td><td align = "right">10.3005044</td></tr>
+<tr><td align = "center">SRR21814507</td><td align = "center">HB0764</td><td align = "center">1905</td><td>Mengen</td><td align = "right">48.049796</td><td align = "right">9.3316096</td></tr>
+<tr><td align = "center">SRR21814508</td><td align = "center">HB0713</td><td align = "center">1826</td><td>Esslingen</td><td align = "right">48.7427584</td><td align = "right">9.3071685</td></tr>
+<tr><td align = "center">SRR21814509</td><td align = "center">HB0759</td><td align = "center">1893</td><td>Wohlmuthausen</td><td align = "right">50.5727241</td><td align = "right">10.21353915</td></tr>
+<tr><td align = "center">SRR21814510</td><td align = "center">HB0757</td><td align = "center">1951</td><td>Wendlingen</td><td align = "right">50.8021737</td><td align = "right">7.7130698</td></tr>
+<tr><td align = "center">SRR21814511</td><td align = "center">HB0756</td><td align = "center">1951</td><td>Wendlingen</td><td align = "right">50.8021737</td><td align = "right">7.7130698</td></tr>
+<tr><td align = "center">SRR21814512</td><td align = "center">HB0754</td><td align = "center">1951</td><td>District_of_Calw</td><td align = "right">48.7153344</td><td align = "right">8.7381796</td></tr>
+<tr><td align = "center">SRR21814513</td><td align = "center">HB0752</td><td align = "center">1952</td><td>Eberspiel_in_the_district_of_Calw</td><td align = "right">48.7415506</td><td align = "right">8.6842699</td></tr>
+<tr><td align = "center">SRR21814514</td><td align = "center">HB0750</td><td align = "center">1957</td><td>Boeblingen</td><td align = "right">48.684969</td><td align = "right">9.0113444</td></tr>
+<tr><td align = "center">SRR21814515</td><td align = "center">HB0749</td><td align = "center">1849</td><td>near_Hohenheim</td><td align = "right">48.7118</td><td align = "right">9.2113</td></tr>
+<tr><td align = "center">SRR21814516</td><td align = "center">HB0742</td><td align = "center">1953</td><td>Lichtenstein</td><td align = "right">48.41996913</td><td align = "right">9.26630222</td></tr>
+<tr><td align = "center">SRR21814517</td><td align = "center">HB0737</td><td align = "center">1937</td><td>Tuebingen</td><td align = "right">48.5236164</td><td align = "right">9.0535531</td></tr>
+<tr><td align = "center">SRR21814518</td><td align = "center">HB0732</td><td align = "center">1932</td><td>Rastatt</td><td align = "right">49.0532906</td><td align = "right">8.5245089</td></tr>
+<tr><td align = "center">SRR21814519</td><td align = "center">HB0711</td><td align = "center">1840</td><td>NA</td><td align = "right">NA</td><td align = "right">NA</td></tr>
+<tr><td align = "center">SRR21814520</td><td align = "center">HB0702</td><td align = "center">1905</td><td>Mellendorf_near_Buttlar</td><td align = "right">52.5470675</td><td align = "right">9.7299326</td></tr>
+</table>
 </ul>
 
     <h2>References</h2>

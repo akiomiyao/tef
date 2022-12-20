@@ -11,4 +11,11 @@ h2{
     background: #f4fff4;
     border-left: solid 5px #27e887;
 }
+h3{
+    padding: 0.2em 0.5em;
+    color: #494949;
+    background: #f4fff4;
+    border-left: solid 5px #27e887;
+}
+
 th {background-color: #f4fff4;}
