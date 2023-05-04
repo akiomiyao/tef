@@ -253,15 +253,9 @@ sub junctionSelectCandidate{
     close(IN);
     open(OUT, "> $wd/$target/tmp/te.candidate");
     foreach $head (sort keys %{$s->{C}}){
+	next if isRepeat($head);
 	foreach $tail (sort keys %{$s->{C}{$head}}){
-	    next if $head =~ /AAAAAAAAAAAAAAAA/ or $tail =~ /AAAAAAAAAAAAAAAA/;
-	    next if $head =~ /TTTTTTTTTTTTTTTT/ or $tail =~ /TTTTTTTTTTTTTTTT/;
-	    next if $head =~ /ACACACACACACACAC/ or $tail =~ /ACACACACACACACAC/;
-	    next if $head =~ /AGAGAGAGAGAGAGAG/ or $tail =~ /AGAGAGAGAGAGAGAG/;
-	    next if $head =~ /ATATATATATATATAT/ or $tail =~ /ATATATATATATATAT/;	
-	    next if $head =~ /CGCGCGCGCGCGCGCG/ or $tail =~ /CGCGCGCGCGCGCGCG/;	
-	    next if $head =~ /CTCTCTCTCTCTCTCT/ or $tail =~ /CTCTCTCTCTCTCTCT/;	
-	    next if $head =~ /GTGTGTGTGTGTGTGT/ or $tail =~ /GTGTGTGTGTGTGTGT/;	
+	    next if isRepeat($tail);
 	    $count = 0;
 	    $dat =  "$head\t$tail\t";
 	    foreach $tsd (sort keys %{$s->{C}{$head}{$tail}}){
@@ -636,7 +630,7 @@ sub map{
     }
     open(OUT, "| sort -S 1M -T $sort_tmp > $wd/$a/tmp/mapped.tmp");
     while(<IN>){
-	print;
+#	print;
 	chomp;
 	@row = split('\t', $_);
 	for ($i = 5; $i <= 10; $i++){
@@ -698,7 +692,7 @@ sub map{
 	$row[1] =~ s/^0+//;
 	$row[2] =~ s/^0+//;
 	$result = join("\t", @row) . "\n";
-	print $result;
+#	print $result;
 	print OUT $result;
     }
     close(IN);
@@ -733,7 +727,7 @@ sub map{
 	$row[0] =~ s/^0+//g;
 	$row[1] =~ s/^0+//g;
 	$output = join("\t", @row) . "\n";
-	print $output;
+#	print $output;
 	print OUT$output;
     }
     close(IN);
@@ -921,7 +915,7 @@ sub verify{
 		    $tail = $row[1] . $downfl;
 		    if (($a{$head} > 0 and $a{$tail} > 0 and $b{$head} == 0 and $b{$tail} == 0 and $b{$wildtype} > 2) or ($a{$head} == 0 and $a{$tail} == 0 and $b{$head} > 0 and $b{$tail} > 0 and $a{$wildtype} > 2)){
 			$result = "$row[0]\t$row[1]\t$upstream\t$htsd\t$downfl\t$a{$head}\t$a{$tail}\t$a{$wildtype}\t$b{$head}\t$b{$tail}\t$b{$wildtype}\n";
-			print $result;
+#			print $result;
 			print OUT $result;
 			if ($a{$head} > 0){
 			    $s->{tecount}{"$row[0]\t$row[1]"}{$a} ++;
@@ -1670,6 +1664,45 @@ sub monitorWait{
             return 1;
         }
     }
+}
+
+sub isRepeat{
+    my $seq = shift;
+    my ($i, $rep, $count);
+    foreach $rep ('A', 'T'){
+	$count = 0;
+	for ($i = 0; $i < 20; $i++){
+	    if ($rep eq substr($seq, $i, 1)){
+		$count++;
+	    }
+	}
+	if ($count >= 16){
+	    return 1;
+	}
+    }
+    foreach $rep ('AC', 'AG', 'AT', 'CG', 'CT', 'GT'){
+	$count = 0;
+	for ($i = 0; $i < 19; $i++){
+	    if ($rep eq substr($seq, $i, 2)){
+		$count++;
+	    }
+	}
+	if ($count >= 8){
+	    return 1;
+	}
+    }
+    foreach $rep ('AAT', 'ATT', 'CAA', 'CCA', 'CCT', 'CTT', 'GAA', 'GGA', 'GGT', 'GTT'){
+	$count = 0;
+	for ($i = 0; $i < 18; $i++){
+	    if ($rep eq substr($seq, $i, 3)){
+		$count++;
+	    }
+	}
+	if ($count >= 5){
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 sub join{
