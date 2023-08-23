@@ -177,7 +177,7 @@ sub commonMethod{
     if($tsd_size != 20){
 	$tsd_size_org = $tsd_size;
 	$tsd_size = 20;
-	&log("making count.20");
+	&log("making count.20") if &fragmentLength($a) != 20 + $tsd_size;
 	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
 	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
 	&join;
@@ -192,7 +192,7 @@ sub commonMethod{
 	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
 	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
     }else{
-	&log("making count.20");
+	&log("making count.20") if &fragmentLength($a) != 20 + $tsd_size;
 	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
 	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
 	&join;
@@ -217,8 +217,7 @@ sub junctionMethod{
     &junctionSelectCandidate($a);
     &junctionSelectCandidate($b);
     &join;
-    &verify;
-    &map;
+    &junctionCountCandidate;
 }
 
 sub tsdMethod{
@@ -229,6 +228,224 @@ sub tsdMethod{
     }
 }
 
+sub junctionCountCandidate{
+    open(OUT, "|sort -T $sort_tmp > $wd/$a/tmp/tmp");
+    open(IN, "cat $wd/$a/tmp/candidate.chr*|");
+    while(<IN>){
+	chomp;
+	@row = split;
+	print OUT $row[3] . $row[0] . "\t$_\tah\n";
+	print OUT $row[1] . $row[4] . "\t$_\tat\n";
+	print OUT $row[5] . "\t$_\taw\n";
+    }
+    close(IN);
+    open(IN, "cat $wd/$b/tmp/candidate.chr*|");
+    while(<IN>){
+	chomp;
+	@row = split;
+	print OUT $row[3] . $row[0] . "\t$_\tbh\n";
+	print OUT $row[1] . $row[4] . "\t$_\tbt\n";
+	print OUT $row[5] . "\t$_\tbw\n";
+    }
+    close(IN);
+    close(OUT);
+    open(OUT, "|sort -T $sort_tmp > $wd/$a/tmp/count");
+    open(IN, "$wd/$a/tmp/tmp");
+    while(<IN>){
+	$tag = substr($_, 0, 3);
+	if ($tag ne $prev){
+	    open(OUT, "> $wd/$a/tmp/tmp.$tag");
+	}
+	print OUT;
+	$prev = $tag;
+    }
+    close(IN);
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		&monitorWait;
+		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionCountCandidateFunc,tag=$tag,sort_tmp=$sort_tmp &";
+		&log("$cmd");
+		$rc = system($cmd);
+		$rc = $rc >> 8;
+		&log("ERROR : junctionCountCandidate : $cmd") if $rc;
+            }
+        }
+    }
+    &join;
+
+    open(OUT, "| sort -T $sort_tmp > $wd/$a/tmp/junction_method.genotype.tmp");
+    open(IN, "cat $wd/$a/tmp/count.* | sort -T $sort_tmp |");
+    while(<IN>){
+	chomp;
+	@row = split;
+	if ($row[11] =~ /h$/){
+	    $ah = $row[12];
+	    $bh = $row[13];
+	}elsif($row[11] =~ /t$/){
+	    $at = $row[12];
+	    $bt = $row[13];
+	}elsif($row[11] =~ /w$/){
+	    $aw = $row[12];
+	    $bw = $row[13];
+	    $genotype = "";
+	    if ($ah > 0 and $at > 0 and $bh == 0 and $bt == 0 and $bw > 0){
+		if ($aw == 0){
+		    $genotype = "M";
+		}else{
+		    $genotype = "H";
+		}
+	    }elsif($ah == 0 and $at == 0 and $aw > 0 and $bh > 0 and $bt > 0){
+		if ($bw == 0){
+		    $genotype = "M";
+		}else{
+		    $genotype = "H";
+		}
+	    }
+	    if ($genotype){
+		if ($row[11] =~ /^a/){
+		    $target = $a;
+		}else{
+		    $target = $b;
+		}
+		$row[5] = "0000$row[5]";
+		$row[5] = substr($row[5], length($row[5]) - 4, 4);
+		$row[6] = "0000000000$row[6]";
+		$row[6] = substr($row[6], length($row[6]) - 10, 10);
+	    $row[9] = "0000000000$row[9]";
+		$row[9] = substr($row[9], length($row[9]) - 10, 10);
+		print OUT "$target\t$row[5]\t$row[6]\t$row[9]\t$row[7]\t$row[0]\t$row[1]\t$row[3]\t$row[2]\t$row[4]\t$ah\t$at\t$aw\t$bh\t$bt\t$bw\t$genotype\n";
+	    }
+	    undef $ah;
+	    undef $at;
+	    undef $at;
+	    undef $aw;
+	    undef $bh;
+	    undef $bt;
+	    undef $bw;
+	}
+    }
+    open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
+    open(IN, "$wd/$a/tmp/junction_method.genotype.tmp");
+    while(<IN>){
+	chomp;
+	@row = split;
+	$row[1] =~ s/^0*// ;
+	$row[2] += 0;
+	$row[3] += 0;
+	print OUT join("\t", @row) . "\n";
+    }
+    close(IN);
+    close(OUT);
+
+    open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
+    open(IN, "$wd/$a/junction_method.genotype.$a.$b");
+    while(<IN>){
+	@row = split;
+	$s->{ct}{"$row[5]\t$row[6]"}{$row[0]} ++;
+ 	$s->{tsd}{"$row[5]\t$row[6]"}{$row[8]} = 1;
+   }
+    print OUT "Head\tTail\t$a\t$b\tTSD\n";
+    foreach $ht (sort keys %{$s->{ct}}){
+	foreach $name (sort keys %{$s->{ct}{$ht}}){
+	    $counta = 0;
+	    $countb = 0;
+	    if ($name eq $a){
+		$counta = $s->{ct}{$ht}{$name} + 0;
+	    }else{
+		$countb = $s->{ct}{$ht}{$name} + 0;
+	    }		
+	    if ($counta > 1 or $countb > 1){
+		print OUT "$ht\t$counta\t$countb";
+		foreach $tsd (sort keys %{$s->{tsd}{$ht}}){
+		    print OUT "\t$tsd";
+		}
+		print OUT "\n";
+	    }
+	}
+    }
+
+    open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/telist");
+    open(IN, "$wd/$a/junction_method.summary.$a.$b");
+    while(<IN>){
+	@row = split;
+	next if $row[0] eq "Head";
+	print OUT "$row[0]\thead
+$row[1]\ttail\n";
+    }
+    close(IN);
+    close(OUT);
+
+    open(IN, "$wd/$a/tmp/telist");
+    while(<IN>){
+	$tag = substr($_, 0, 3);
+	if ($tag ne $prev){
+	    open(OUT, "> $wd/$a/tmp/telist.$tag");
+	}
+	print OUT;
+	$prev = $tag;
+    }
+    close(IN);
+    close(OUT);
+
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		&monitorWait;
+		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionTePosFunc,tag=$tag,sort_tmp=$sort_tmp &";
+		&log("$cmd");
+		$rc = system($cmd);
+		$rc = $rc >> 8;
+		&log("ERROR : junctionTePos : $cmd") if $rc;
+            }
+        }
+    }
+    &join;
+
+    open(OUT, "|sort -T $sort_tmp >  $wd/$a/tmp/tepostmp");
+    open(IN, "cat $wd/$a/tmp/tepos.* |");
+    while(<IN>){
+	chomp;
+	@row = split;
+	$row[2] = "0000$row[2]";
+	$row[2] = substr($row[2], length($row[2]) - 4, 4);
+	$row[3] = "0000000000$row[3]";
+	$row[3] = substr($row[3], length($row[3]) - 10, 10);
+	print OUT "$row[2]\t$row[3]\t$row[0]\t$row[1]\t$row[4]\n";
+    }
+    close(IN);
+    close(OUT);
+
+    open(OUT, "> $wd/$a/junction_method.tepos.$a.$b");
+    open(IN, "$wd/$a/tmp/tepostmp");
+    while(<IN>){
+	chomp;
+	@row = split;
+	$row[0] =~ s/^0*//;
+	$row[1] =~ s/^0*//;
+	print OUT join("\t", @row) . "\n";
+    }
+    close(IN);
+    close(OUT);
+}
+
+sub junctionTePosFunc{
+    return if ! -e "$wd/$a/tmp/telist.$tag";
+    system("zcat $wd/$ref/ref20.$tag.gz | join $wd/$a/tmp/telist.$tag - > $wd/$a/tmp/tepos.$tag");
+}
+
+sub junctionCountCandidateFunc{
+    system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.8 1.9 1.10 1.11 1.12 1.13 1.14 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
+    system("zcat $wd/$b/count.20/$tag.gz |join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 1.12 1.13 1.14 2.2 -e 0 $wd/$a/tmp/tmpa.$tag - > $wd/$a/tmp/count.$tag");
+}
 
 sub junctionSelectCandidate{
     $target = shift;
@@ -294,6 +511,8 @@ sub junctionSelectCandidate{
 }
 
 sub junctionSelectCandidateFunc{
+    open(CHR, "$wd/$ref/$chr");
+    binmode(CHR);
     open(IN, "$wd/$target/tmp/sorted.$chr");
     open(OUT, "> $wd/$target/tmp/candidate.$chr");
     while(<IN>){
@@ -308,22 +527,29 @@ sub junctionSelectCandidateFunc{
 		    $hflanking = substr($row[2], 0, 20);
 		    $head = substr($row[2], 20);
 		    $tail = substr($prev[2], 0, 20);
-		    $tflanking = substr($prev[2], 21);
+		    $tflanking = substr($prev[2], 20);
 		    $hjunction = $row[0] + 19;
 		    $tjunction = $row[0] + 20;
-		    print OUT "$head\t$tail\t$htsd\n";
+		    seek(CHR, $row[4] - 1, 40);
+		    read(CHR, $wt, 40);
+		    next if $wt =~ /N/;
+		    print OUT "$head\t$tail\t$htsd\t$hflanking\t$tflanking\t$wt\t$row[3]\t$row[4]\t$row[5]\t$prev[6]\t$prev[7]\t$prev[8]\n";
 		}
 	    }elsif ($row[1] eq "t" and $prev[1] eq "h"){
 		$htsd = substr($prev[2], 20 - $tsd_size, $tsd_size);
 		$ttsd = substr($row[2], 20, $tsd_size);
 		if ($htsd eq $ttsd){
-		    $hflanking = substr($pref[2], 0, 20);
+		    $hflanking = substr($prev[2], 0, 20);
 		    $head = substr($prev[2], 20);
 		    $tail = substr($row[2], 0, 20);
-		    $tflanking = substr($row[2], 21);
+		    $tflanking = substr($row[2], 20);
 		    $hjunction = $prev[0] + 19;
 		    $tjunction = $prev[0] + 20;
-		    print OUT "$head\t$tail\t$htsd\n";
+		    seek(CHR, $row[4] - 40, 40);
+		    read(CHR, $wt, 40);
+		    next if $wt =~ /N/;
+		    print OUT "$head\t$tail\t$htsd\t$hflanking\t$tflanking\t$wt\t$prev[3]\t$prev[4]\t$prev[5]\t$row[6]\t$row[7]\t$row[8]\n";
+
 		}
 	    }
 	}

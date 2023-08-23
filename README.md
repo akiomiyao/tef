@@ -7,7 +7,7 @@ Active TEs transposed on the host genome. Because the transposition events are i
 Short read sequences from both samples should contain different fusion fragments of genome and TE sequences.
 Most TEs make target site duplication (TSD) at inserted position.
 TEF detects both ends of TE and inserted position on the genome with information of TSD from NGS short reads.  
-TEF runs on Unix (Linux and FreeBSD) machine.  Eight or 16GB memory is enough. One or more TB disk (SSD is better) space is required.   
+TEF runs on Unix (Linux and FreeBSD) machine.  Eight or 16GB memory is enough. One or more TB disk (SSD is better) space is required. To analyze NGS data of human, 4 or more TB disk space is recommended.  
 
 Web page : https://akiomiyao.github.io/tef/  
 
@@ -31,11 +31,14 @@ Default = 0.2
 If too many noises are detected, increase th value, *e.g.* th=0.7.  
 perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,th=0.7  
 
+The th option is TSD method specific.  
+
 tmp directory in target is not deleted and can be reused.  
 If option=clear is specified, data in tmp will be cleared at the begining of analysis.  
   
 sort_tmp=directory_for_sort is the option for temporary directory for sort command.  
 If sort_tmp is specified to fast disk, *e.g.* SSD, sorting will be accelerated.  
+If your SSD is not enough size, set the tef directory in HDD space and specify sort_tmp in SDD space.  
 
 For Linux, max process is limited to number of CPU core. For other OS, default process number is 4.  
 If you add max_process option, *e.g.* max_process=8, the tef.pl uses 8 cores.  
@@ -88,7 +91,8 @@ Once the reference data set is created, data set will be reused for additional a
 If the reference data is imcomplete or broken, delete the reference directory and then run again tef.pl.  
 
 ## Update
-- Initial version 1.0 2022-03-29
+- 1.1 Improve junction method. Large genome data (even human) can be applicable. 2023-08-23
+- 1.0 Initial version. 2022-03-29
 
 ## Citing TEF
 Miyao, A., Yamanouchi, U. Transposable element finder (TEF): finding active transposable elements from next generation sequencing data. BMC Bioinformatics 23, 500 (2022). https://doi.org/10.1186/s12859-022-05011-3
