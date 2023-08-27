@@ -217,6 +217,10 @@ sub junctionMethod{
     &junctionSelectCandidate($a);
     &junctionSelectCandidate($b);
     &join;
+    &junctionSelectTe;
+    &junctionSelectCandidate($a);
+    &junctionSelectCandidate($b);
+    &join;
     &junctionCountCandidate;
 }
 
@@ -225,6 +229,75 @@ sub tsdMethod{
     &verify;
     if ($ref ne ""){
 	&map;
+    }
+}
+
+sub junctionSelectTe{
+    &monitorWait;
+    &log("select TE");
+    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSelectTeFunc,sort_tmp=$sort_tmp &";
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    &log("ERROR : junctionSelectTeFunc : $cmd") if $rc;
+    &join;
+}
+
+sub junctionSelectTeFunc{
+    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate|");
+    while(<IN>){
+	@row = split;
+	$head{$row[0]} = 1;
+	$tail{$row[1]} = 1;
+    }
+    close(IN);
+    foreach $head (sort keys %head){
+	$shifted = substr($head, 1);
+	foreach (sort keys %head){
+	    $head{$_} = 2 if $head ne $_ and /$shifted/;
+	}
+    }
+    foreach $tail (sort keys %tail){
+	$shifted = substr($tail, 0, length($tail) -1);
+	foreach (sort keys %tail){
+	    $tail{$_} = 2 if $tail ne $_ and /$shifted/;
+	}
+    }
+
+    opendir(DIR, "$wd/$a/tmp/");
+    foreach $file (sort readdir(DIR)){
+	if ($file =~ /^sorted\./){
+	    open(OUT, "> $wd/$a/tmp/selected.$file");
+	    open(IN, "$wd/$a/tmp/$file");
+	    while(<IN>){
+		@row = split;
+		$head = substr($row[2], 20);
+		$tail = substr($row[2], 0, 20);
+		if ($head{$head} != 2 and $tail{$tail} != 2){
+		    print OUT;
+		}		
+	    }
+	    close(IN);
+	    close(OUT);
+	    system("mv $wd/$a/tmp/$file $wd/$a/tmp/old.$file && mv $wd/$a/tmp/selected.$file $wd/$a/tmp/$file");
+	}
+    }
+    opendir(DIR, "$wd/$b/tmp/");
+    foreach $file (sort readdir(DIR)){
+	if ($file =~ /^sorted\./){
+	    open(OUT, "> $wd/$b/tmp/selected.$file");
+	    open(IN, "$wd/$b/tmp/$file");
+	    while(<IN>){
+		@row = split;
+		$head = substr($row[2], 20);
+		$tail = substr($row[2], 0, 20);
+		if ($head{$head} != 2 and $tail{$tail} != 2){
+		    print OUT;
+		}		
+	    }
+	    close(IN);
+	    close(OUT);
+	    system("mv $wd/$b/tmp/$file $wd/$b/tmp/old.$file && mv $wd/$b/tmp/selected.$file $wd/$b/tmp/$file");
+	}
     }
 }
 
@@ -249,7 +322,7 @@ sub junctionCountCandidate{
     }
     close(IN);
     close(OUT);
-    open(OUT, "|sort -T $sort_tmp > $wd/$a/tmp/count");
+
     open(IN, "$wd/$a/tmp/tmp");
     while(<IN>){
 	$tag = substr($_, 0, 3);
@@ -329,7 +402,7 @@ sub junctionCountCandidate{
 	    undef $bw;
 	}
     }
-    open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
+    open(OUT, "> $wd/$a/junction_method.all.$a.$b");
     open(IN, "$wd/$a/tmp/junction_method.genotype.tmp");
     while(<IN>){
 	chomp;
@@ -342,32 +415,44 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
+    open(IN, "$wd/$a/tmp/te.candidate");
+    while(<IN>){
+	@row = split;
+	$hit{"$row[0]\t$row[1]"} = 1;
+    }
+    close(IN);
+    open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
+    open(IN, "$wd/$a/junction_method.all.$a.$b");
+    while(<IN>){
+	@row = split;
+	if ($hit{"$row[5]\t$row[6]"}){
+	    print OUT;
+	}
+    }
+    close(IN);
+    close(OUT);
     open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
     open(IN, "$wd/$a/junction_method.genotype.$a.$b");
     while(<IN>){
 	@row = split;
-	$s->{ct}{"$row[5]\t$row[6]"}{$row[0]} ++;
- 	$s->{tsd}{"$row[5]\t$row[6]"}{$row[8]} = 1;
-   }
+	$s->{ht}{"$row[5]\t$row[6]"}{$row[0]} ++;
+	$s->{tsd}{"$row[5]\t$row[6]"}{$row[8]} = 1;
+    }
+    close(IN);
     print OUT "Head\tTail\t$a\t$b\tTSD\n";
-    foreach $ht (sort keys %{$s->{ct}}){
-	foreach $name (sort keys %{$s->{ct}{$ht}}){
-	    $counta = 0;
-	    $countb = 0;
-	    if ($name eq $a){
-		$counta = $s->{ct}{$ht}{$name} + 0;
-	    }else{
-		$countb = $s->{ct}{$ht}{$name} + 0;
-	    }		
-	    if ($counta > 1 or $countb > 1){
-		print OUT "$ht\t$counta\t$countb";
-		foreach $tsd (sort keys %{$s->{tsd}{$ht}}){
-		    print OUT "\t$tsd";
-		}
-		print OUT "\n";
+    foreach $ht (sort keys %{$s->{ht}}){
+	@row = split('\t', $ht);
+	next if isRepeat($row[0]);
+	next if isRepeat($row[1]);
+	if ($hit{$ht}){
+	    print OUT "$ht\t$s->{ht}{$ht}{$a}\t$s->{ht}{$ht}{$b}";
+	    foreach $tsd (sort keys %{$s->{tsd}{$ht}}){
+		print OUT "\t$tsd";
 	    }
+	    print OUT "\n";
 	}
     }
+    close(OUT);
 
     open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/telist");
     open(IN, "$wd/$a/junction_method.summary.$a.$b");
@@ -410,7 +495,7 @@ $row[1]\ttail\n";
     }
     &join;
 
-    open(OUT, "|sort -T $sort_tmp >  $wd/$a/tmp/tepostmp");
+    open(OUT, "|sort -T $sort_tmp >  $wd/$a/tmp/tmp.tepos");
     open(IN, "cat $wd/$a/tmp/tepos.* |");
     while(<IN>){
 	chomp;
@@ -425,7 +510,7 @@ $row[1]\ttail\n";
     close(OUT);
 
     open(OUT, "> $wd/$a/junction_method.tepos.$a.$b");
-    open(IN, "$wd/$a/tmp/tepostmp");
+    open(IN, "$wd/$a/tmp/tmp.tepos");
     while(<IN>){
 	chomp;
 	@row = split;
@@ -438,7 +523,6 @@ $row[1]\ttail\n";
 }
 
 sub junctionTePosFunc{
-    return if ! -e "$wd/$a/tmp/telist.$tag";
     system("zcat $wd/$ref/ref20.$tag.gz | join $wd/$a/tmp/telist.$tag - > $wd/$a/tmp/tepos.$tag");
 }
 
@@ -549,7 +633,6 @@ sub junctionSelectCandidateFunc{
 		    read(CHR, $wt, 40);
 		    next if $wt =~ /N/;
 		    print OUT "$head\t$tail\t$htsd\t$hflanking\t$tflanking\t$wt\t$prev[3]\t$prev[4]\t$prev[5]\t$row[6]\t$row[7]\t$row[8]\n";
-
 		}
 	    }
 	}
@@ -557,6 +640,7 @@ sub junctionSelectCandidateFunc{
     }
     close(IN);
     close(OUT);
+    close(CHR);
 }
 
 sub junctionSort{
@@ -856,7 +940,6 @@ sub map{
     }
     open(OUT, "| sort -S 1M -T $sort_tmp > $wd/$a/tmp/mapped.tmp");
     while(<IN>){
-#	print;
 	chomp;
 	@row = split('\t', $_);
 	for ($i = 5; $i <= 10; $i++){
@@ -918,12 +1001,10 @@ sub map{
 	$row[1] =~ s/^0+//;
 	$row[2] =~ s/^0+//;
 	$result = join("\t", @row) . "\n";
-#	print $result;
 	print OUT $result;
     }
     close(IN);
     close(OUT);
-
 
     open(OUT, "| sort -S 1M -T $sort_tmp > $wd/$a/tmp/temap");
     foreach $seq (sort keys %{$s->{map}}){
@@ -952,9 +1033,7 @@ sub map{
 	@row = split;
 	$row[0] =~ s/^0+//g;
 	$row[1] =~ s/^0+//g;
-	$output = join("\t", @row) . "\n";
-#	print $output;
-	print OUT$output;
+	print OUT join("\t", @row) . "\n";
     }
     close(IN);
     close(OUT);
