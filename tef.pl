@@ -445,6 +445,8 @@ sub junctionCountCandidate{
 	next if isRepeat($row[0]);
 	next if isRepeat($row[1]);
 	if ($hit{$ht}){
+	    $s->{ht}{$ht}{$a} += 0;
+	    $s->{ht}{$ht}{$b} += 0;
 	    print OUT "$ht\t$s->{ht}{$ht}{$a}\t$s->{ht}{$ht}{$b}";
 	    foreach $tsd (sort keys %{$s->{tsd}{$ht}}){
 		print OUT "\t$tsd";
@@ -453,7 +455,6 @@ sub junctionCountCandidate{
 	}
     }
     close(OUT);
-
     open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/telist");
     open(IN, "$wd/$a/junction_method.summary.$a.$b");
     while(<IN>){
@@ -523,6 +524,7 @@ $row[1]\ttail\n";
 }
 
 sub junctionTePosFunc{
+    return if ! -e "$wd/$a/tmp/telist.$tag";
     system("zcat $wd/$ref/ref20.$tag.gz | join $wd/$a/tmp/telist.$tag - > $wd/$a/tmp/tepos.$tag");
 }
 
