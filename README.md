@@ -91,6 +91,7 @@ Once the reference data set is created, data set will be reused for additional a
 If the reference data is imcomplete or broken, delete the reference directory and then run again tef.pl.  
 
 ## Update
+- 1.2 Correct output transposed positions. Add filter for ambigure TSDs. 2023-09-18
 - 1.1 Improve junction method. Large genome data (even human) can be applicable. 2023-08-23
 - 1.0 Initial version. 2022-03-29
 
