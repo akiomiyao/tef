@@ -214,13 +214,7 @@ sub junctionMethod{
     &junctionSort($a);
     &junctionSort($b);
     &join;
-    &junctionSelectCandidate($a);
-    &junctionSelectCandidate($b);
-    &join;
-    &junctionSelectTe;
-    &junctionSelectCandidate($a);
-    &junctionSelectCandidate($b);
-    &join;
+    &junctionCandidate;
     &junctionCountCandidate;
 }
 
@@ -232,107 +226,161 @@ sub tsdMethod{
     }
 }
 
-sub junctionSelectTe{
-    &monitorWait;
-    &log("select TE");
-    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSelectTeFunc,sort_tmp=$sort_tmp &";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : junctionSelectTeFunc : $cmd") if $rc;
+sub junctionCandidate{
+    $target = shift;
+    opendir(REF, "$wd/$ref");
+    foreach $file (sort readdir(REF)){
+	if ($file =~ /^chr/){
+	    &monitorWait;
+	    &log("select candidate : $file");
+	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionCandidateFunc,chr=$file,sort_tmp=$sort_tmp &";
+	    $rc = system($cmd);
+	    $rc = $rc >> 8;
+	    &log("ERROR : junctionCandidate : $cmd") if $rc;
+	}
+    }
     &join;
 }
 
-sub junctionSelectTeFunc{
-    open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate|");
+sub junctionCandidateFunc{
+    open(CHR, "$wd/$ref/$chr");
+    binmode(CHR);
+    ($chrnum = $chr)=~ s/^chr//;
+    open(OUT, "> $wd/$a/tmp/candidate.$chr");
+    open(IN, "cat $wd/$a/tmp/sorted.$chr.f $wd/$a/tmp/sorted.$chr.r |");
     while(<IN>){
-	@row = split;
-	$head{$row[0]} = 1;
-	$tail{$row[1]} = 1;
+	chomp;
+	push(@dat, $_);
+	next if $i++ < 40;
+	$dat = shift(@dat);
+	@row = split('\t', $dat);
+	foreach (@dat){
+	    @pos = split;
+	    $size = $pos[0] - $row[0];
+	    next if $size > 16;
+	    next if $size == 0;
+	    $size ++;
+	    if ($row[1] eq "h"){
+		if ($pos[1] eq "t"){
+		    $htsd = substr($row[2], 20 - $size, $size);
+		    $ttsd = substr($pos[2], 20, $size);
+		    if ($htsd eq $ttsd){
+			$head = substr($row[2], 20, 20);
+			$hflanking = substr($row[2], 0, 20);
+			$tail = substr($pos[2], 0, 20);
+			$tflanking = substr($pos[2], 20, 20);
+			seek(CHR, $row[0] - 21, 0);
+			read(CHR, $wt, 40);
+			next if $wt =~ /N/;
+			print OUT "$row[2]\t$chrnum\t$row[0]\t$pos[0]\tah\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$pos[2]\t$chrnum\t$row[0]\t$pos[0]\tat\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$wt\t$chrnum\t$row[0]\t$pos[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\n";
+		    }
+		}
+	    }else{
+		if ($pos[1] eq "h"){
+		    $htsd = substr($pos[2], 20 - $size, $size);
+		    $ttsd = substr($row[2], 20, $size);
+		    if ($htsd eq $ttsd){
+			$head = substr($pos[2], 20, 20);
+			$hflanking = substr($pos[2], 0, 20);
+			$tail = substr($row[2], 0, 20);
+			$tflanking = substr($row[2], 20, 20);
+			seek(CHR, $pos[0] - 21, 0);
+			read(CHR, $wt, 40);
+			next if $wt =~ /N/;
+			print OUT "$pos[2]\t$chrnum\t$pos[0]\t$row[0]\tah\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$row[2]\t$chrnum\t$pos[0]\t$row[0]\tat\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$wt\t$chrnum\t$pos[0]\t$row[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\n";
+		    }
+		}
+	    }
+	}
     }
     close(IN);
-    foreach $head (sort keys %head){
-	$shifted = substr($head, 1);
-	foreach (sort keys %head){
-	    $head{$_} = 2 if $head ne $_ and /$shifted/;
-	}
-    }
-    foreach $tail (sort keys %tail){
-	$shifted = substr($tail, 0, length($tail) -1);
-	foreach (sort keys %tail){
-	    $tail{$_} = 2 if $tail ne $_ and /$shifted/;
-	}
-    }
-
-    opendir(DIR, "$wd/$a/tmp/");
-    foreach $file (sort readdir(DIR)){
-	if ($file =~ /^sorted\./){
-	    open(OUT, "> $wd/$a/tmp/selected.$file");
-	    open(IN, "$wd/$a/tmp/$file");
-	    while(<IN>){
-		@row = split;
-		$head = substr($row[2], 20);
-		$tail = substr($row[2], 0, 20);
-		if ($head{$head} != 2 and $tail{$tail} != 2){
-		    print OUT;
-		}		
+    open(IN, "cat $wd/$b/tmp/sorted.$chr.f $wd/$b/tmp/sorted.$chr.r |");
+    while(<IN>){
+	chomp;
+	push(@dat, $_);
+	next if $i++ < 40;
+	$dat = shift(@dat);
+	@row = split('\t', $dat);
+	foreach (@dat){
+	    @pos = split;
+	    $size = $pos[0] - $row[0];
+	    next if $size > 16;
+	    next if $size == 0;
+	    $size ++;
+	    if ($row[1] eq "h"){
+		if ($pos[1] eq "t"){
+		    $htsd = substr($row[2], 20 - $size, $size);
+		    $ttsd = substr($pos[2], 20, $size);
+		    if ($htsd eq $ttsd){
+			$head = substr($row[2], 20, 20);
+			$hflanking = substr($row[2], 0, 20);
+			$tail = substr($pos[2], 0, 20);
+			$tflanking = substr($pos[2], 20, 20);
+			seek(CHR, $row[0] - 21, 0);
+			read(CHR, $wt, 40);
+			next if $wt =~ /N/;
+			print OUT "$row[2]\t$chrnum\t$row[0]\t$pos[0]\tbh\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$pos[2]\t$chrnum\t$row[0]\t$pos[0]\tbt\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$wt\t$chrnum\t$row[0]\t$pos[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\n";
+		    }
+		}
+	    }else{
+		if ($pos[1] eq "h"){
+		    $htsd = substr($pos[2], 20 - $size, $size);
+		    $ttsd = substr($row[2], 20, $size);
+		    if ($htsd eq $ttsd){
+			$head = substr($pos[2], 20, 20);
+			$hflanking = substr($pos[2], 0, 20);
+			$tail = substr($row[2], 0, 20);
+			$tflanking = substr($row[2], 20, 20);
+			seek(CHR, $pos[0] - 21, 0);
+			read(CHR, $wt, 40);
+			next if $wt =~ /N/;
+			print OUT "$pos[2]\t$chrnum\t$pos[0]\t$row[0]\tbh\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$row[2]\t$chrnum\t$pos[0]\t$row[0]\tbt\t$head\t$tail\t$hflanking\t$htsd\t$tflanking
+$wt\t$chrnum\t$pos[0]\t$row[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\n";
+		    }
+		}
 	    }
-	    close(IN);
-	    close(OUT);
-	    system("mv $wd/$a/tmp/$file $wd/$a/tmp/old.$file && mv $wd/$a/tmp/selected.$file $wd/$a/tmp/$file");
 	}
     }
-    opendir(DIR, "$wd/$b/tmp/");
-    foreach $file (sort readdir(DIR)){
-	if ($file =~ /^sorted\./){
-	    open(OUT, "> $wd/$b/tmp/selected.$file");
-	    open(IN, "$wd/$b/tmp/$file");
-	    while(<IN>){
-		@row = split;
-		$head = substr($row[2], 20);
-		$tail = substr($row[2], 0, 20);
-		if ($head{$head} != 2 and $tail{$tail} != 2){
-		    print OUT;
-		}		
-	    }
-	    close(IN);
-	    close(OUT);
-	    system("mv $wd/$b/tmp/$file $wd/$b/tmp/old.$file && mv $wd/$b/tmp/selected.$file $wd/$b/tmp/$file");
-	}
-    }
+    close(IN);
 }
 
 sub junctionCountCandidate{
-    open(OUT, "|sort -T $sort_tmp > $wd/$a/tmp/tmp");
-    open(IN, "cat $wd/$a/tmp/candidate.chr*|");
-    while(<IN>){
-	chomp;
-	@row = split;
-	print OUT $row[3] . $row[0] . "\t$_\tah\n";
-	print OUT $row[1] . $row[4] . "\t$_\tat\n";
-	print OUT $row[5] . "\t$_\taw\n";
+    &log("junctionCountCandidate: sorting candidates");
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		open($tag, "|sort -T $sort_tmp > $wd/$a/tmp/tmp.$tag ");
+	    }
+	}
     }
-    close(IN);
-    open(IN, "cat $wd/$b/tmp/candidate.chr*|");
-    while(<IN>){
-	chomp;
-	@row = split;
-	print OUT $row[3] . $row[0] . "\t$_\tbh\n";
-	print OUT $row[1] . $row[4] . "\t$_\tbt\n";
-	print OUT $row[5] . "\t$_\tbw\n";
-    }
-    close(IN);
-    close(OUT);
-
-    open(IN, "$wd/$a/tmp/tmp");
+    open(IN, "cat $wd/$a/tmp/candidate.* |");
     while(<IN>){
 	$tag = substr($_, 0, 3);
-	if ($tag ne $prev){
-	    open(OUT, "> $wd/$a/tmp/tmp.$tag");
-	}
-	print OUT;
-	$prev = $tag;
+	print $tag $_;
     }
     close(IN);
+    foreach $nuc (@nuc){
+        $tag[0] = $nuc;
+        foreach $nuc (@nuc){
+            $tag[1] = $nuc;
+            foreach $nuc (@nuc){
+                $tag[2] = $nuc;
+                $tag = join('', @tag);
+		close($tag);
+	    }
+	}
+    }
     foreach $nuc (@nuc){
         $tag[0] = $nuc;
         foreach $nuc (@nuc){
@@ -350,21 +398,21 @@ sub junctionCountCandidate{
         }
     }
     &join;
-
+    &log("junctionCountCandidate : making junction_method.summary.$a.$b");
     open(OUT, "| sort -T $sort_tmp > $wd/$a/tmp/junction_method.genotype.tmp");
-    open(IN, "cat $wd/$a/tmp/count.* | sort -T $sort_tmp |");
+    open(IN, "cat $wd/$a/tmp/count.* | sort -T $sort_tmp |uniq |");
     while(<IN>){
 	chomp;
 	@row = split;
-	if ($row[11] =~ /h$/){
-	    $ah = $row[12];
-	    $bh = $row[13];
-	}elsif($row[11] =~ /t$/){
-	    $at = $row[12];
-	    $bt = $row[13];
-	}elsif($row[11] =~ /w$/){
-	    $aw = $row[12];
-	    $bw = $row[13];
+	if ($row[3] =~ /h$/){
+	    $ah = $row[9];
+	    $bh = $row[10];
+	}elsif($row[3] =~ /t$/){
+	    $at = $row[9];
+	    $bt = $row[10];
+	}elsif($row[3] =~ /w$/){
+	    $aw = $row[9];
+	    $bw = $row[10];
 	    $genotype = "";
 	    if ($ah > 0 and $at > 0 and $bh == 0 and $bt == 0 and $bw > 0){
 		if ($aw == 0){
@@ -380,18 +428,18 @@ sub junctionCountCandidate{
 		}
 	    }
 	    if ($genotype){
-		if ($row[11] =~ /^a/){
+		if ($row[3] =~ /^a/){
 		    $target = $a;
 		}else{
 		    $target = $b;
 		}
-		$row[5] = "0000$row[5]";
-		$row[5] = substr($row[5], length($row[5]) - 4, 4);
-		$row[6] = "0000000000$row[6]";
-		$row[6] = substr($row[6], length($row[6]) - 10, 10);
-	    $row[9] = "0000000000$row[9]";
-		$row[9] = substr($row[9], length($row[9]) - 10, 10);
-		print OUT "$target\t$row[5]\t$row[6]\t$row[9]\t$row[7]\t$row[0]\t$row[1]\t$row[3]\t$row[2]\t$row[4]\t$ah\t$at\t$aw\t$bh\t$bt\t$bw\t$genotype\n";
+		$row[0] = "0000$row[0]";
+		$row[0] = substr($row[0], length($row[0]) - 4, 4);
+		$row[1] = "0000000000$row[1]";
+		$row[1] = substr($row[1], length($row[1]) - 10, 10);
+		$row[2] = "0000000000$row[2]";
+		$row[2] = substr($row[2], length($row[2]) - 10, 10);
+		print OUT "$target\t$row[0]\t$row[1]\t$row[2]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$ah\t$at\t$aw\t$bh\t$bt\t$bw\t$genotype\n";
 	    }
 	    undef $ah;
 	    undef $at;
@@ -402,6 +450,7 @@ sub junctionCountCandidate{
 	    undef $bw;
 	}
     }
+
     open(OUT, "> $wd/$a/junction_method.all.$a.$b");
     open(IN, "$wd/$a/tmp/junction_method.genotype.tmp");
     while(<IN>){
@@ -415,47 +464,189 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
-    open(IN, "$wd/$a/tmp/te.candidate");
+    open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/telist");
+    open(IN, "$wd/$a/junction_method.all.$a.$b");
     while(<IN>){
 	@row = split;
-	$hit{"$row[0]\t$row[1]"} = 1;
+	next if length($row[7]) > 10;
+	print OUT "$row[4]\t$row[5]\t$row[0]\t$row[7]\n";
     }
     close(IN);
+    close(OUT);
+
+    open(OUT, "|uniq -c > $wd/$a/tmp/telist.count");
+    open(IN, "$wd/$a/tmp/telist");
+    while(<IN>){
+	chomp;
+	@row = split;
+	print OUT "$row[0] $row[1]\n";
+    }
+    close(IN);
+    close(OUT);
+
+    open(HEAD, "| sort -k 1 -k 2 -n > $wd/$a/tmp/telist.head");
+    open(TAIL, "| sort -k 1 -k 2 -n > $wd/$a/tmp/telist.tail");
+    open(IN, "$wd/$a/tmp/telist.count");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if $row[0] < 2;
+	$ht{"$row[1] $row[2]"} = " ";
+    }
+    close(IN);
+    open(IN, "$wd/$a/tmp/telist");
+    while(<IN>){
+	chomp;
+	@row = split;
+	if ($ht{"$row[0] $row[1]"} ne ""){
+	    $ht{"$row[0] $row[1]"} .= "$row[3] ";
+	}
+    }
+    close(IN);
+
+    foreach (sort keys %ht){
+	$tsd = $ht{$_};
+	$tsd =~ s/^\ //;
+	$tsd =~ s/\ $//;
+	$flag = 1;
+	@tsd = split(' ', $tsd);
+	$flag = 0 if $#tsd < 2;
+	$size = length($tsd[0]);
+	for ($i = 1; $i <= $#tsd; $i++){
+	    if (length($tsd[$i]) != $size){
+		$flag = 0;
+	    }
+	}
+	if ($flag){
+	    my ($head, $tail) = split;
+	    $tsd_count = $#tsd + 1;
+	    print HEAD "$head $tsd_count $tail\n";
+	    print TAIL "$tail $tsd_count $head\n";
+	}
+    }
+    close(IN);
+    close(HEAD);
+    close(TAIL);
+    %select = ();
+    open(TAIL, "$wd/$a/tmp/telist.tail");
+    while(<TAIL>){
+	chomp;
+	@row = split;
+	$select{$row[0]} = $row[2];
+    }
+    close(TAIL);
+
+    %exclude = ();
+    open(TAIL, "$wd/$a/tmp/telist.tail");
+    while(<TAIL>){
+	chomp;
+	@row = split;
+	if ($select{$row[0]} ne $row[2]){
+	    $exclude{$row[2]} = $row[0];
+	}
+    }
+    close(TAIL);
+    %select = ();
+    open(HEAD, "$wd/$a/tmp/telist.head");
+    while(<HEAD>){
+	chomp;
+	@row = split;
+	$select{$row[0]} = $row[2];
+    }
+    close(HEAD);
+
+    foreach $head (sort keys %select){
+	$tail = $select{$head};
+	if ($exclude{$head} ne $tail){
+	    $tsd = $ht{"$head $tail"};
+	    @tsd = split("\ ", $tsd);
+	    @std = split('', $tsd[0]);
+	    $similar = 0;
+	    for($i = 1; $i <= $#tsd; $i++){
+		$hit = 0;
+		@tg = split('', $tsd[$i]);
+		for($j = 0; $j <= $#std; $j++){
+		    if ($std[$j] eq $tg[$j]){
+			$hit++;
+		    }
+		}
+		if ($hit / $#std > 0.6){
+		    $similar++;
+		}
+	    }
+	    if ($similar / ($#tsd + 1) < 0.5){
+		$final{$head} = $tail;
+	    }
+	}
+    }
+    
+    $acount = 0;
+    $bcount = 0;
+    $tea = "";
+    $teb = "";
+    open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
+    open(IN, "$wd/$a/tmp/telist");
+    while(<IN>){
+	chomp;
+	@row = split;
+	if ($prev[0] ne $row[0] or $prev[1] ne $row[1]){
+	    if ($prev[0] ne "" and $final{$prev[0]} eq $prev[1]){
+		$tea =~ s/\ $//;
+		$teb =~ s/\ $//;
+		print OUT "$prev[0]\t$prev[1]\t$acount\t$bcount\t$tea\t$teb\n";
+		print "$prev[0]\t$prev[1]\t$acount\t$bcount\t$tea\t$teb\n";
+	    }
+	    $acount = 0;
+	    $bcount = 0;
+	    $tea = "";
+	    $teb = "";
+	    if ($row[2] eq $a){
+		$acount ++;
+		$tea .= "$row[3] "
+	    }else{
+		$bcount ++;
+		$teb .= "$row[3] "
+	    }
+	}else{
+	    if ($row[2] eq $a){
+		$acount ++;
+		$tea .= "$row[3] "
+	    }else{
+		$bcount ++;
+		$teb .= "$row[3] "
+	    }
+	}
+	@prev = @row;
+    }
+    close(IN);
+    if ($row[0] ne $prev[0] and $final{$row[0]} eq $row[1]){
+	if ($row[2] eq $a){
+	    $acount ++;
+	    $tea .= "$row[3] "
+	}else{
+	    $bcount ++;
+	    $teb .= "$row[3] "
+	}
+	$tea =~ s/\ $//;
+	$teb =~ s/\ $//;
+	print OUT "$row[0]\t$row[1]\t$acount\t$bcount\t$tea\t$teb\n";
+	print "$row[0]\t$row[1]\t$acount\t$bcount\t$tea\t$teb\n";
+    }
+    close(OUT);
+    
+    &log("junctionCountCandidate: making junction_method.genotype.$a.$b");
     open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
     open(IN, "$wd/$a/junction_method.all.$a.$b");
     while(<IN>){
 	@row = split;
-	if ($hit{"$row[5]\t$row[6]"}){
+	if ($final{$row[4]} eq $row[5]){
 	    print OUT;
 	}
     }
     close(IN);
     close(OUT);
-    open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
-    open(IN, "$wd/$a/junction_method.genotype.$a.$b");
-    while(<IN>){
-	@row = split;
-	$s->{ht}{"$row[5]\t$row[6]"}{$row[0]} ++;
-	$s->{tsd}{"$row[5]\t$row[6]"}{$row[8]} = 1;
-    }
-    close(IN);
-    print OUT "Head\tTail\t$a\t$b\tTSD\n";
-    foreach $ht (sort keys %{$s->{ht}}){
-	@row = split('\t', $ht);
-	next if isRepeat($row[0]);
-	next if isRepeat($row[1]);
-	if ($hit{$ht}){
-	    $s->{ht}{$ht}{$a} += 0;
-	    $s->{ht}{$ht}{$b} += 0;
-	    print OUT "$ht\t$s->{ht}{$ht}{$a}\t$s->{ht}{$ht}{$b}";
-	    foreach $tsd (sort keys %{$s->{tsd}{$ht}}){
-		print OUT "\t$tsd";
-	    }
-	    print OUT "\n";
-	}
-    }
-    close(OUT);
-    open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/telist");
+
+    open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/te.list");
     open(IN, "$wd/$a/junction_method.summary.$a.$b");
     while(<IN>){
 	@row = split;
@@ -466,11 +657,12 @@ $row[1]\ttail\n";
     close(IN);
     close(OUT);
 
-    open(IN, "$wd/$a/tmp/telist");
+    open(IN, "$wd/$a/tmp/te.list");
     while(<IN>){
 	$tag = substr($_, 0, 3);
 	if ($tag ne $prev){
 	    open(OUT, "> $wd/$a/tmp/telist.$tag");
+	    push(@tag, $tag);
 	}
 	print OUT;
 	$prev = $tag;
@@ -478,21 +670,13 @@ $row[1]\ttail\n";
     close(IN);
     close(OUT);
 
-    foreach $nuc (@nuc){
-        $tag[0] = $nuc;
-        foreach $nuc (@nuc){
-            $tag[1] = $nuc;
-            foreach $nuc (@nuc){
-                $tag[2] = $nuc;
-                $tag = join('', @tag);
-		&monitorWait;
-		$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionTePosFunc,tag=$tag,sort_tmp=$sort_tmp &";
-		&log("$cmd");
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : junctionTePos : $cmd") if $rc;
-            }
-        }
+    foreach $tag (@tag){
+	&monitorWait;
+	$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionTePosFunc,tag=$tag,sort_tmp=$sort_tmp &";
+	&log("$cmd");
+	$rc = system($cmd);
+	$rc = $rc >> 8;
+	&log("ERROR : junctionTePos : $cmd") if $rc;
     }
     &join;
 
@@ -523,126 +707,14 @@ $row[1]\ttail\n";
     close(OUT);
 }
 
+sub junctionCountCandidateFunc{
+    system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
+    system("zcat $wd/$b/count.20/$tag.gz |join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 $wd/$a/tmp/tmpa.$tag - > $wd/$a/tmp/count.$tag");
+}
+
 sub junctionTePosFunc{
     return if ! -e "$wd/$a/tmp/telist.$tag";
     system("zcat $wd/$ref/ref20.$tag.gz | join $wd/$a/tmp/telist.$tag - > $wd/$a/tmp/tepos.$tag");
-}
-
-sub junctionCountCandidateFunc{
-    system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.8 1.9 1.10 1.11 1.12 1.13 1.14 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
-    system("zcat $wd/$b/count.20/$tag.gz |join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 1.12 1.13 1.14 2.2 -e 0 $wd/$a/tmp/tmpa.$tag - > $wd/$a/tmp/count.$tag");
-}
-
-sub junctionSelectCandidate{
-    $target = shift;
-    opendir(REF, "$wd/$ref");
-    foreach $file (sort readdir(REF)){
-	if ($file =~ /^chr/){
-	    &monitorWait;
-	    &log("select candidate : $target : $file");
-	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSelectCandidateFunc,chr=$file,sort_tmp=$sort_tmp &";
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : junctionSelectCandidate : $cmd") if $rc;
-	}
-    }
-    &join;
-    open(IN, "cat $wd/$target/tmp/candidate.* |");
-    while(<IN>){
-	chomp;
-	@row = split;
-	$s->{C}{$row[0]}{$row[1]}{$row[2]} = 1;
-    }
-    close(IN);
-    open(OUT, "> $wd/$target/tmp/te.candidate");
-    foreach $head (sort keys %{$s->{C}}){
-	next if isRepeat($head);
-	foreach $tail (sort keys %{$s->{C}{$head}}){
-	    next if isRepeat($tail);
-	    $count = 0;
-	    $dat =  "$head\t$tail\t";
-	    foreach $tsd (sort keys %{$s->{C}{$head}{$tail}}){
-		next if $tsd =~ /^A+$/;
-		next if $tsd =~ /^C+$/;
-		next if $tsd =~ /^G+$/;
-		next if $tsd =~ /^T+$/;
-		next if $tsd =~ /^(AT)+$/;
-		next if $tsd =~ /^(TA)+$/;
-		next if $tsd =~ /^(TA)+T$/;
-		next if $tsd =~ /^A(TA)+$/;
-		next if $tsd =~ /^(AC)+$/;
-		next if $tsd =~ /^(CA)+$/;
-		next if $tsd =~ /^(CA)+C$/;
-		next if $tsd =~ /^A(CA)+$/;
-		next if $tsd =~ /^(AG)+$/;
-		next if $tsd =~ /^(GA)+$/;
-		next if $tsd =~ /^(GA)+G$/;
-		next if $tsd =~ /^A(GA)+$/;
-		next if $tsd =~ /^(TG)+$/;
-		next if $tsd =~ /^(GT)+$/;
-		next if $tsd =~ /^(GT)+G$/;
-		next if $tsd =~ /^T(GT)+$/;
-		next if $tsd =~ /^(TC)+$/;
-		next if $tsd =~ /^(CT)+$/;
-		next if $tsd =~ /^(CT)+C$/;
-		next if $tsd =~ /^T(CT)+$/;
-		$dat .= "$tsd\t";
-		$count++;
-	    }
-	    chomp($dat);
-	    print OUT "$dat\n" if $count > 1;
-	}
-    }
-    close(OUT);
-}
-
-sub junctionSelectCandidateFunc{
-    open(CHR, "$wd/$ref/$chr");
-    binmode(CHR);
-    open(IN, "$wd/$target/tmp/sorted.$chr");
-    open(OUT, "> $wd/$target/tmp/candidate.$chr");
-    while(<IN>){
-	chomp;
-	@row = split;
-	$tsd_size = 20 - ($row[0] - $prev[0]);
-	if ($tsd_size <= 16 and $tsd_size >= 3){
-	    if ($row[1] eq "h" and $prev[1] eq "t"){
-		$htsd = substr($row[2], 20 - $tsd_size, $tsd_size);
-		$ttsd = substr($prev[2], 20, $tsd_size);
-		if ($htsd eq $ttsd){
-		    $hflanking = substr($row[2], 0, 20);
-		    $head = substr($row[2], 20);
-		    $tail = substr($prev[2], 0, 20);
-		    $tflanking = substr($prev[2], 20);
-		    $hjunction = $row[0] + 19;
-		    $tjunction = $row[0] + 20;
-		    seek(CHR, $row[4] - 1, 40);
-		    read(CHR, $wt, 40);
-		    next if $wt =~ /N/;
-		    print OUT "$head\t$tail\t$htsd\t$hflanking\t$tflanking\t$wt\t$row[3]\t$row[4]\t$row[5]\t$prev[6]\t$prev[7]\t$prev[8]\n";
-		}
-	    }elsif ($row[1] eq "t" and $prev[1] eq "h"){
-		$htsd = substr($prev[2], 20 - $tsd_size, $tsd_size);
-		$ttsd = substr($row[2], 20, $tsd_size);
-		if ($htsd eq $ttsd){
-		    $hflanking = substr($prev[2], 0, 20);
-		    $head = substr($prev[2], 20);
-		    $tail = substr($row[2], 0, 20);
-		    $tflanking = substr($row[2], 20);
-		    $hjunction = $prev[0] + 19;
-		    $tjunction = $prev[0] + 20;
-		    seek(CHR, $row[4] - 40, 40);
-		    read(CHR, $wt, 40);
-		    next if $wt =~ /N/;
-		    print OUT "$head\t$tail\t$htsd\t$hflanking\t$tflanking\t$wt\t$prev[3]\t$prev[4]\t$prev[5]\t$row[6]\t$row[7]\t$row[8]\n";
-		}
-	    }
-	}
-	@prev = @row;
-    }
-    close(IN);
-    close(OUT);
-    close(CHR);
 }
 
 sub junctionSort{
@@ -653,7 +725,10 @@ sub junctionSort{
     foreach $file (sort readdir(REF)){
 	if ($file =~ /^chr/){
 	    push(@chr, $file);
-	    open($file, "> $wd/$target/tmp/$file");
+	    $filename = $file . ".f";
+	    open($filename, "> $wd/$target/tmp/$filename");
+	    $filename = $file . ".r";
+	    open($filename, "> $wd/$target/tmp/$filename");
 	}
     }
     open(IN, "cat $wd/$target/tmp/map.* |");
@@ -663,14 +738,22 @@ sub junctionSort{
 	@row = split;
 	$head = "chr$row[1]";
 	$tail = "chr$row[4]";
-	print $head "$row[2]\th\t$_\n";
-	print $tail "$row[5]\tt\t$_\n";
+	if($row[3] eq "f"){
+	    $pos = $row[2] + 19;
+	}else{
+	    $pos = $row[2] - 19;
+	}
+	$head = $head . "." . $row[3];
+	print $head "$pos\th\t$row[0]\t$row[1]\t$pos\t$row[3]\t$row[4]\t$row[5]\t$row[6]\n";
+	$tail = $tail . "." . $row[6];
+	print $tail "$row[5]\tt\t$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\n";
     }
     close(IN);
     foreach $file (@chr){
-	close($file);
+	close("$file.f");
+	close("$file.r");
     }
-    system("rm $wd/$target/tmp/map.*");
+#    system("rm $wd/$target/tmp/map.*");
     $org_processor = $processor;
     $processor = 2 if -s "$wd/$target/tmp/$chr[0]" > 10000000000;
     foreach $file (@chr){
@@ -685,7 +768,11 @@ sub junctionSort{
 }
 
 sub junctionSortFunc{
-    $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr > $wd/$target/tmp/sorted.$chr && rm $wd/$target/tmp/$chr";
+    $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.f > $wd/$target/tmp/sorted.$chr.f";
+    $rc = system($cmd);
+    $rc = $rc >> 8;
+    &log("ERROR : junctionSortFunc : $cmd") if $rc;
+    $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.r > $wd/$target/tmp/sorted.$chr.r";
     $rc = system($cmd);
     $rc = $rc >> 8;
     &log("ERROR : junctionSortFunc : $cmd") if $rc;
