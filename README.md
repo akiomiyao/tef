@@ -33,10 +33,11 @@ perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,th=0.7
 
 The th option is TSD method specific.  
 
-tmp directory in target is not deleted and can be reused.  
-If option=clear is specified, data in tmp will be cleared at the begining of analysis.  
+Because tmp directries in tergets grow huge size, tmp directories will be deleted  
+at the end of analysis. If debug=yes is added in options, tmp directories will not  
+deleted.  
   
-sort_tmp=directory_for_sort is the option for temporary directory for sort command.  
+sort_tmp=directory_for_sort is the option for temporary directory for sort command.   
 If sort_tmp is specified to fast disk, *e.g.* SSD, sorting will be accelerated.  
 If your SSD is not enough size, set the tef directory in HDD space and specify sort_tmp in SDD space.  
 
@@ -79,10 +80,10 @@ Files compressed with gz, bzip2, and xz format can be processed.
 Results are saved in ttm2 directory, specified by 'a'.
 
 ## Making reference data set
-At the first run of for a reference, the empty directory with specified name is created.  
+At the first run of tef.pl, the empty directory with specified by reference name is created.  
 Save the gz compressed fasta file for the reference into the directory, and then run again tef.pl.  
 After the second run of tef.pl, config file is created in the reference directory.  
-Config file is the list of chromosome names in order to appearance of fasta file.  
+Config file is the list of chromosome names in order to appearance in fasta file.  
 If required, rename and/or change to NOP the chromosome name in the config file.  
 If the sequence is partial contig or extra chromosome and is not required, the chromosome name should be replaced to NOP.  
 In the case of too many partial contigs which should be ignore, make config file with all lines are NOP and then replace disired chromosome names at related positions.  

@@ -18,7 +18,7 @@ if ($ARGV[0] eq ""){
 
  e.g. perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
-      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,option=clear,max_process=8,sort_tmp=/mnt/ssd/tmp
+      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,max_process=8,sort_tmp=/mnt/ssd/tmp
 
  tef.pl requires a pair of NGS reads from different conditions.
  For example, ttm2 and ttm5 are from regenerated rice individuals from callus.
@@ -45,9 +45,10 @@ if ($ARGV[0] eq ""){
  If th (threthold) on the TSD method is not specified, default value 0.2 will be used.
  If a lot of noize are detected, try again with higher value e.g. th=0.7  
 
- tmp directory in target is not deleted and can be reused.
- If option=clear is specified, data in tmp will be cleared at 
- the begining of analysis. 
+ Because tmp directries in targets grow huge size, tmp directories will be deleted
+ at the end of analysis. If debug=yes is added in options, tmp directories will not
+ deleted.  
+
  sort_tmp=directory_for_sort is the option for temporary directory for sort command.
  If sort_tmp is specified to fast disk, e.g. SSD, sorting will be accelerated.
 
@@ -95,8 +96,6 @@ if ($tsd_size == 20){
 }
 
 if ($sub eq ""){
-    system("rm -rf $wd/$a/tmp") if -e "$wd/$a/tmp" and $option =~ /clear/;
-    system("rm -rf $wd/$b/tmp") if -e "$wd/$b/tmp" and $option =~ /clear/;
     system("rm -rf $wd/$a/child") if -e "$wd/$a/child";
     system("mkdir $wd/$a/tmp") if ! -e "$wd/$a/tmp";
     system("mkdir $wd/$b/tmp") if ! -e "$wd/$b/tmp";
@@ -113,6 +112,8 @@ if ($sub eq ""){
 	&tsdMethod;
     }
     &join;
+    system("rm -r $wd/$a/child $wd/$a/tmp $wd/$b/tmp") if ! $debug;
+    system("rm $wd/$a/junction_method.all.$a.$b") if ! $debug;
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
     $hour = int($elapsed_time / 3600);
@@ -227,12 +228,12 @@ sub tsdMethod{
 }
 
 sub junctionCandidate{
-    $target = shift;
+    system("cd $wd/$a/tmp/ && rm chr* first.* map.* second.* specific.* target.* && cd $wd/$b/tmp/ && rm chr* first.* map.* second.* specific.* target.*") if ! $debug;
     opendir(REF, "$wd/$ref");
     foreach $file (sort readdir(REF)){
 	if ($file =~ /^chr/){
 	    &monitorWait;
-	    &log("select candidate : $file");
+	    &log("junctionCandidate: select candidate : $file");
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionCandidateFunc,chr=$file,sort_tmp=$sort_tmp &";
 	    $rc = system($cmd);
 	    $rc = $rc >> 8;
@@ -381,6 +382,7 @@ sub junctionCountCandidate{
 	    }
 	}
     }
+
     foreach $nuc (@nuc){
         $tag[0] = $nuc;
         foreach $nuc (@nuc){
@@ -398,7 +400,8 @@ sub junctionCountCandidate{
         }
     }
     &join;
-    &log("junctionCountCandidate : making junction_method.summary.$a.$b");
+    system("rm $wd/$a/tmp/candidate.*");
+    &log("junctionCountCandidate : making junction_method.summary.$a.$b and junction_method.all.$a.$b");
     open(OUT, "| sort -T $sort_tmp > $wd/$a/tmp/junction_method.genotype.tmp");
     open(IN, "cat $wd/$a/tmp/count.* | sort -T $sort_tmp |uniq |");
     while(<IN>){
@@ -450,7 +453,10 @@ sub junctionCountCandidate{
 	    undef $bw;
 	}
     }
+    close(IN);
+    close(OUT);
 
+    &log("junctionCountCandidate : making junction_method.all.$a.$b");
     open(OUT, "> $wd/$a/junction_method.all.$a.$b");
     open(IN, "$wd/$a/tmp/junction_method.genotype.tmp");
     while(<IN>){
@@ -464,6 +470,7 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
+    &log("junctionCountCandidate : making telist");
     open(OUT, "|sort -T $sort_tmp |uniq > $wd/$a/tmp/telist");
     open(IN, "$wd/$a/junction_method.all.$a.$b");
     while(<IN>){
@@ -474,6 +481,7 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
+    &log("junctionCountCandidate : making telist.count");
     open(OUT, "|uniq -c > $wd/$a/tmp/telist.count");
     open(IN, "$wd/$a/tmp/telist");
     while(<IN>){
@@ -580,6 +588,7 @@ sub junctionCountCandidate{
 	}
     }
     
+    &log("junctionCountCandidate : output junction_method.summary.$a.$b");
     $acount = 0;
     $bcount = 0;
     $tea = "";
@@ -710,6 +719,7 @@ $row[1]\ttail\n";
 sub junctionCountCandidateFunc{
     system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
     system("zcat $wd/$b/count.20/$tag.gz |join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 $wd/$a/tmp/tmpa.$tag - > $wd/$a/tmp/count.$tag");
+    system("rm $wd/$a/tmp/tmp.$tag $wd/$a/tmp/tmpa.$tag");
 }
 
 sub junctionTePosFunc{
@@ -753,12 +763,11 @@ sub junctionSort{
 	close("$file.f");
 	close("$file.r");
     }
-#    system("rm $wd/$target/tmp/map.*");
     $org_processor = $processor;
     $processor = 2 if -s "$wd/$target/tmp/$chr[0]" > 10000000000;
     foreach $file (@chr){
 	&monitorWait;
-	&log("junctionSort: Sorting $file");
+	&log("junctionSort : Sorting $file");
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file,sort_tmp=$sort_tmp &";
 	$rc = system($cmd);
 	$rc = $rc >> 8;
@@ -853,6 +862,7 @@ sub junctionFirstMapFunc{
     }
     close(IN);
     close(OUT);
+    
     open(IN, "zcat $wd/$ref/ref20.$tag.gz |join $wd/$target/tmp/target.$tag - |");
     open(OUT, "> $wd/$target/tmp/first.$tag");
     while(<IN>){
@@ -863,6 +873,7 @@ sub junctionFirstMapFunc{
     }
     close(IN);
     close(OUT);
+
     foreach $nuc (@nuc){
         $tag[0] = $nuc;
         foreach $nuc (@nuc){
@@ -894,8 +905,6 @@ sub junctionFirstMapFunc{
 }
 
 sub junctionSpecific{
-    my $target = shift;
-    &log("junctionSpecific : $target");
     foreach $nuc (@nuc){
         $tag[0] = $nuc;
         foreach $nuc (@nuc){
