@@ -57,7 +57,7 @@ git pull
   
 ## Analysis by tef.pl  
 At first, directories specified by a and b should be made.  
-  
+
 For example,  
 ```
 cd tef  
@@ -91,7 +91,29 @@ At the third run, ped.pl makes reference data set according to the config file a
 Once the reference data set is created, data set will be reused for additional analysis.  
 If the reference data is imcomplete or broken, delete the reference directory and then run again tef.pl.  
 
+## sliceTE.pl
+Usage
+perl sliceTE.pl path_of_reference_genome head_sequence tail_sequence
+
+The sliceTE.pl outputs sequences between head and tail sequences from fasta file of reference genome. Options should be separated by single space.  
+
+Fasta file compressed by gzip, bzip2 and xz can be processed.  
+
+For example,
+```
+perl sliceTE.pl IRGSP1.0/IRGSP-1.0_genome.fasta.gz TGTTAAATATATATACAAGC AGGTTGCAAGTTAGTTAAGA
+```
+## sliceRef.pl
+The sliceRef.pl outputs sliced sequence from the chromosome sequence in reference directory.
+
+For example,
+```
+perl sliceRef.pl IRGSP1.0/chr7 26694795 26698908
+```
+The chromosome sequence should be the output of tef.pl.  
+
 ## Update
+- 1.3 Insertion direction of TE is shown with same format of version 1.0. 2023-10-09
 - 1.2 Correct output transposed positions. Add filter for ambigure TSDs. 2023-09-18
 - 1.1 Improve junction method. Large genome data (even human) can be applicable. 2023-08-23
 - 1.0 Initial version. 2022-03-29
