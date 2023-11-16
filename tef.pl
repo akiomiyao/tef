@@ -372,7 +372,6 @@ sub junctionCountCandidate{
 	    push(@chr, $chr);
 	}
     }
-
     &log("junctionCountCandidate: $a : sorting candidates");
     foreach $tag (@tag){
 	open($tag, "> $wd/$a/tmp/tmpa.$tag ");
@@ -519,8 +518,8 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
-    open(HEAD, "| sort -k 1 -k 2 -n > $wd/$a/tmp/telist.head");
-    open(TAIL, "| sort -k 1 -k 2 -n > $wd/$a/tmp/telist.tail");
+    open(HEAD, "| sort -k 1 -k 2 -n -S 1M -T $sort_tmp > $wd/$a/tmp/telist.head");
+    open(TAIL, "| sort -k 1 -k 2 -n -S 1M -T $sort_tmp > $wd/$a/tmp/telist.tail");
     open(IN, "$wd/$a/tmp/telist.count");
     while(<IN>){
 	chomp;
@@ -529,6 +528,7 @@ sub junctionCountCandidate{
 	$ht{"$row[1] $row[2]"} = " ";
     }
     close(IN);
+
     open(IN, "$wd/$a/tmp/telist");
     while(<IN>){
 	chomp;
@@ -545,7 +545,7 @@ sub junctionCountCandidate{
 	$tsd =~ s/\ $//;
 	$flag = 1;
 	@tsd = split(' ', $tsd);
-	$flag = 0 if $#tsd < 2;
+	$flag = 0 if $#tsd < 1;
 	$size = length($tsd[0]);
 	for ($i = 1; $i <= $#tsd; $i++){
 	    if (length($tsd[$i]) != $size){
@@ -562,6 +562,7 @@ sub junctionCountCandidate{
     close(IN);
     close(HEAD);
     close(TAIL);
+
     %select = ();
     open(TAIL, "$wd/$a/tmp/telist.tail");
     while(<TAIL>){
@@ -614,7 +615,7 @@ sub junctionCountCandidate{
 	    }
 	}
     }
-    
+
     &log("junctionCountCandidate : output junction_method.summary.$a.$b");
     $acount = 0;
     $bcount = 0;
