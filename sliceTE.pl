@@ -50,7 +50,8 @@ foreach $name (sort keys %$s){
 	    $hpos ++;
 	    $pos += length($tail);
 #	    print ">$name $hpos-$pos $length bp\n$te\n" if $length < 20000;
-	    print ">$name $hpos-$pos $length bp\n$te\n" if $length > 4000 and $length < 4500;
+#	    print ">$name $hpos-$pos $length bp\n$te\n" if $length > 4000 and $length < 4500;
+	    print ">$name $hpos-$pos $length bp\n$te\n" if $length > 200 and $length < 20000;
 	}
     }
 }

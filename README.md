@@ -110,9 +110,11 @@ For example,
 ```
 perl sliceRef.pl IRGSP1.0/chr7 26694795 26698908
 ```
-The chromosome sequence should be the output of tef.pl.  
+The chromosome sequence should be the output of tef.pl.
+The range of TE size can be adjusted on line 54 of sliceRef.pl.  
 
 ## Update
+- 1.4 Improved accuracy of TE detection. 2023-12-14
 - 1.3 Insertion direction of TE is shown with same format of version 1.0. 2023-10-09
 - 1.2 Correct output transposed positions. Add filter for ambigure TSDs. 2023-09-18
 - 1.1 Improve junction method. Large genome data (even human) can be applicable. 2023-08-23
