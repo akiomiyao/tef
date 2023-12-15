@@ -97,6 +97,8 @@ perl sliceTE.pl path_of_reference_genome head_sequence tail_sequence
 
 The sliceTE.pl outputs sequences between head and tail sequences from fasta file of reference genome. Options should be separated by single space.  
 
+The range of TE size can be adjusted on line 54 of sliceTE.pl.  
+
 Fasta file compressed by gzip, bzip2 and xz can be processed.  
 
 For example,
@@ -111,7 +113,6 @@ For example,
 perl sliceRef.pl IRGSP1.0/chr7 26694795 26698908
 ```
 The chromosome sequence should be the output of tef.pl.
-The range of TE size can be adjusted on line 54 of sliceRef.pl.  
 
 ## Update
 - 1.4 Improved accuracy of TE detection. 2023-12-14
