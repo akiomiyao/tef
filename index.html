@@ -9,7 +9,7 @@
     <h2>News</h2>
 	<ul>
     <li><a href = "https://www.nature.com/articles/s41467-023-41023-0" target = "_blank">Result of TEF is cited by a Nature communications paper</a>
-	<li><a href = "https://zenodo.org/doi/10.5281/zenodo.8162656" target = "_blank">List of head and tail seqeucne pairs of transposable element in rice</a><font color = "red"><b>Update (2024-04-26)</b></font>
+	<li><a href = "https://zenodo.org/doi/10.5281/zenodo.8162656" target = "_blank">List of head and tail seqeucne pairs of transposable element in rice </a><font color = "red"><b>Update (2024-04-26)</b></font>
 	<li><a href = "arabidopsis.html" target = "_blank">Detection of transposed TEs in <i>Arabidopsis thaliana</i> herbarium specimen</a> <font color = "red"><b>Update (2023-12-15)</b></font>
     </ul>
     <h2>Tutrial</h2>
@@ -20,18 +20,18 @@
 	'tef' directory will be cleated. All codes will be saved into the tef directory.
 	<li>Download fastq files<br>
 The following explanation uses nucleotide sequence data obtained from two individuals of <i>Drosophila melanogaster</i>, which are relatively small in size and require short analysis time.<br>
-Access to NCBI SRA page at  <a href = "https://www.ncbi.nlm.nih.gov/sra/" target = "_blank">https://www.ncbi.nlm.nih.gov/sra/<a><br>
-Search accessions SRR823377 and SRR823382.<br>
-Click the link of accesssion in table of run.<br>
-Click FASTA/FASTQ download tab.<br><br>
-Or download from <a href = "https://ddbj.nig.ac.jp/search" target = "_blank">DDBJ DRA page</a>,<br>
+Download from <a href = "https://ddbj.nig.ac.jp/search" target = "_blank">DDBJ DRA page</a>,<br>
 <a href = "https://ddbj.nig.ac.jp/resource/sra-run/SRR823377" target = "_blank">https://ddbj.nig.ac.jp/resource/sra-run/SRR823377</a><br>
 &nbsp;&nbsp;<a href = "https://ddbj.nig.ac.jp/public/ddbj_database/dra/fastq/SRA071/SRA071525/SRX262892/SRR823377_1.fastq.bz2">SRR823377_1.fastq.bz2</a> and
 <a href = "https://ddbj.nig.ac.jp/public/ddbj_database/dra/fastq/SRA071/SRA071525/SRX262892/SRR823377_2.fastq.bz2">SRR823377_2.fastq.bz2</a><br>
 <a href = "https://ddbj.nig.ac.jp/resource/sra-run/SRR823382" target = "_blank">https://ddbj.nig.ac.jp/resource/sra-run/SRR823382</a><br>
 &nbsp;&nbsp;<a href = "https://ddbj.nig.ac.jp/public/ddbj_database/dra/fastq/SRA071/SRA071525/SRX262914/SRR823382_1.fastq.bz2">SRR823382_1.fastq.bz2</a> and
 <a href = "https://ddbj.nig.ac.jp/public/ddbj_database/dra/fastq/SRA071/SRA071525/SRX262914/SRR823382_2.fastq.bz2">SRR823382_2.fastq.bz2</a><br>
-Files with bz2 format can also be analyzed by tef.pl. 
+Files with bz2 format can also be analyzed by tef.pl. <br><br>
+Or download fastq.gz files from NCBI using fastq-dump.<br>
+'fastq-dump' can be installed by apt command (Ubuntu).<br>
+<i>e.g.</i> apt install fastq-dump<br>
+fastq-dump --split-files SRR823377 SRR823382<br>
 	<li>First run of tef.pl
 	<pre><code>
 git clone https://github.com/akiomiyao/tef.git
