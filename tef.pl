@@ -18,7 +18,7 @@ if ($ARGV[0] eq ""){
 
  e.g. perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
       perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
-      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,max_process=8,sort_tmp=/mnt/ssd/tmp
+      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,compress=yes,max_process=8,sort_tmp=/mnt/ssd/tmp
 
  tef.pl requires a pair of NGS reads from different conditions.
  For example, ttm2 and ttm5 are from regenerated rice individuals from callus.
@@ -47,7 +47,8 @@ if ($ARGV[0] eq ""){
 
  Because tmp directries in targets grow huge size, tmp directories will be deleted
  at the end of analysis. If debug=yes is added in options, tmp directories will not
- deleted.  
+ deleted. In addition, to save disk space, the compress=yes option is used to compress
+ temporary files.   
 
  sort_tmp=directory_for_sort is the option for temporary directory for sort command.
  If sort_tmp is specified to fast disk, e.g. SSD, sorting will be accelerated.
@@ -110,8 +111,6 @@ if ($sub eq ""){
     system("rm -rf $wd/$a/child") if -e "$wd/$a/child";
     system("mkdir $wd/$a/tmp") if ! -e "$wd/$a/tmp";
     system("mkdir $wd/$b/tmp") if ! -e "$wd/$b/tmp";
-    system("mkdir $wd/$a/split") if ! -e "$wd/$a/split";
-    system("mkdir $wd/$b/split") if ! -e "$wd/$b/split";
     system("mkdir $wd/$a/child");
     &log("job start");
     &log("Argument : $ARGV[0]");
@@ -170,48 +169,14 @@ sub commonMethod{
     if ($ref ne ""){
 	&mkref;
     }
-    if (! -e "$wd/$a/split/split.1"){
-	&log("split to subfiles : $a");
-	$cmd = "perl $0 target=$a,sub=split,a=$a &";
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : commonMethod : $cmd") if $rc;
-    }
-    &monitorWait;
-    if (! -e "$wd/$b/split/split.1"){
-	&log("split to subfiles : $b");
-	$cmd = "perl $0 target=$b,sub=split,a=$a &";
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : commonMethod : $cmd") if $rc;
-    }
-    &join;
-    if($tsd_size != 20){
-	$tsd_size_org = $tsd_size;
-	$tsd_size = 20;
-	&log("making count.20") if &fragmentLength($a) != 20 + $tsd_size;
-	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
-	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
-	&join;
-	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
-	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
 
-	$tsd_size = $tsd_size_org;
-	&log("making count.$tsd_size");
-	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
-	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
-	&join;
-	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
-	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
-    }else{
-	&log("making count.20") if &fragmentLength($a) != 20 + $tsd_size;
-	&count($a) if &fragmentLength($a) != 20 + $tsd_size;
-	&count($b) if &fragmentLength($b) != 20 + $tsd_size;
-	&join;
-	&merge($a) if &fragmentLength($a) != 20 + $tsd_size;
-	&merge($b) if &fragmentLength($b) != 20 + $tsd_size;
+    my $fragment_length = 20 + $tsd_size;
+    if (&fragmentLength($a) != $fragment_length){
+	&count($a);
     }
-    &join;
+    if (&fragmentLength($b) != $fragment_length){
+	&count($b);
+    }
 }
 
 sub junctionMethod{
@@ -1676,99 +1641,157 @@ sub mergeFunc{
     system("rm $wd/$target/count.$tsd_size/$tag.*.gz");
 }
 
+
 sub count{
-    my $target= shift;
-    my ($last, $i, $cmd);
-    &log("count subfiles : $target");
-    opendir(DIR, "$wd/$target/split");
-    foreach (readdir(DIR)){
-	if (/^split/){
-	    $number = (split('\.', $_))[1];
-	    if ($last < $number){
-		$last = $number;
+    my ($a, $b, $c, $d, $e, $aa, $ab, $ac, $ad, $ae, $tag, $count, $lines, $seq, $file, $outfile);
+    my $target = shift;
+    &log("count : $target : making count.$tsd_size");
+
+    $die_comment = "Can not open file.
+Please inclease limit for current session.
+ulimit -n 4096\n";
+
+    if (! -d "$wd/$target/count.$tsd_size"){
+	system("mkdir $wd/$target/count.$tsd_size");
+    }
+    
+    foreach $a (@nuc){
+	foreach $b (@nuc){
+	    foreach $c (@nuc){
+		foreach $d (@nuc){
+		    foreach $e (@nuc){
+			$tag = $a . $b. $c . $d . $e;
+			open($tag, "|gzip > $wd/$target/tmp/$tag");
+		    }
+		}
 	    }
 	}
     }
-    system("mkdir $wd/$target/count.$tsd_size") if ! -d "$wd/$target/count.$tsd_size";
-    foreach ($i = 1; $i <= $last; $i++){
-	&monitorWait;
-	$cmd = "perl $0 target=$target,sub=countFunc,number=$i,a=$a,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
-	&log($cmd);
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : count : $cmd") if $rc;
-    }
-}
-
-sub countFunc{
-    my ($taga, $tagb, $tagc, $tag, $count, $nuc);
-    open(IN, "$wd/$target/split/split.$number");
-    open(SEQ, "|sort -S 1M -T $sort_tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' > $wd/$target/count.$tsd_size/count.$number");
-    while(<IN>){
-	    chomp;
-	    &mkKmer($_);
-	    &mkKmer(&complement($_));
-    }
-    close(IN);
-    close(SEQ);
-    foreach $tag (@tag){
-	$fout = $tag . ".out";
-	open($fout, "|gzip -c > $wd/$target/count.$tsd_size/$tag.$number.gz");
-    }
-    
-    open(IN, "$wd/$target/count.$tsd_size/count.$number");
-    while(<IN>){
-	$tag = substr($_, 0, 3);
-	$fout = $tag . ".out";
-	print $fout "$_";
-    }
-    close(IN);
-    sleep 10;
-    foreach $tag (@tag){
-	$fout = $tag . ".out";
-	close($fout);
-    }
-    system("rm $wd/$target/count.$tsd_size/count.$number");
-}
-
-sub split{
-    my $number = 1;
-    my $command = "cat";
     opendir(DIR, "$wd/$target/read");
-    foreach (sort readdir(DIR)){
-	if (/gz$/){
-	    $command = "zcat";
-	    last;
+    foreach $file (sort readdir(DIR)){
+	next if $file =~ /^\./;
+	$file = "$wd/$target/read/" . $file;
+	if ($file =~ /gz$/){
+	    open(IN, "zcat $file |") || die $die_comment;;
+	}elsif ($file =~ /bz2$/){
+	    open(IN, "bzcat $file |") || die $die_comment;;
+	}elsif ($file =~ /xz$/){
+	    open(IN, "xzcat $file |") || die $die_comment;;
+	}else{
+	    open(IN, $file) || die $die_comment;
 	}
-	if (/bz2$/){
-	    $command = "bzcat";
-	    last;
+	while(<IN>){
+	    $count = 0 if $count++ == 3;
+	    if ($count == 2){
+		$lines ++;
+		if ($lines % 1000000 == 0){
+		    &log("count : $target : $lines reads have been selected");
+		}
+		chomp;
+		$length = length($_);
+		for($i = 0; $i < $length; $i++){
+		    $seq = substr($_, $i, 20 + $tsd_size);
+		    last if length($seq) != 20 + $tsd_size;
+		    next if $seq =~ /N/;
+		    $tag = substr($seq, 0, 5);
+		    print $tag "$seq\n";
+		}
+		$complement = &complement($_);
+		for($i = 0; $i < $length; $i++){
+		    $seq = substr($complement, $i, 20 + $tsd_size);
+		    last if length($seq) != 20 + $tsd_size;
+		    next if $seq =~ /N/;
+		    $tag = substr($seq, 0, 5);
+		    print $tag "$seq\n";
+		}	
+	    }
 	}
-	if (/xz$/){
-	    $command =  "xzcat";
-	    last;
-	}
+	close(IN);
     }
     close(DIR);
-    open(IN, "$command $wd/$target/read/* |");
-    open(OUT, "> $wd/$target/split/split.$number");
-    while(<IN>){
-	$count++;
-	if($count == 2){
-		$lines++;
-		print OUT;
-	}elsif($count == 4){
-	    $count = 0;
-	}
-	if ($lines == 1000000){
-	    close(OUT);
-	    $number++;
-	    open(OUT, "> $target/split/split.$number");
-	    $lines = 0;
+
+    foreach $a (@nuc){
+	foreach $b (@nuc){
+	    foreach $c (@nuc){
+		foreach $d (@nuc){
+		    foreach $e (@nuc){
+			$tag = $a . $b. $c . $d . $e;
+			close($tag);
+		    }
+		}
+	    }
 	}
     }
-    close(IN);
-    close(OUT);
+    
+    foreach $a (@nuc){
+	foreach $b (@nuc){
+	    foreach $c (@nuc){
+		foreach $d (@nuc){
+		    foreach $e (@nuc){
+			$file = $a . $b. $c . $d . $e;
+			foreach $aa (@nuc){
+			    foreach $ab (@nuc){
+				foreach $ac (@nuc){
+				    foreach $ad (@nuc){
+					foreach $ae (@nuc){
+					    $tag = $aa . $ab. $ac . $ad . $ae;
+					    $outfile = $file . $tag;
+					    if ($compress){
+						open($tag, "|gzip > $wd/$target/tmp/$outfile");
+					    }else{
+						open($tag, "> $wd/$target/tmp/$outfile");
+					    }
+					}
+				    }
+				}
+			    }
+			}
+
+			open(IN, "zcat $wd/$target/tmp/$file|");
+			while(<IN>){
+			    $tag = substr($_, 5, 5);
+			    print $tag $_;
+			}
+			close(IN);
+			system("rm $wd/$target/tmp/$file");
+
+			&log("count : $target : counting $file"); 
+			foreach $aa (@nuc){
+			    foreach $ab (@nuc){
+				foreach $ac (@nuc){
+				    foreach $ad (@nuc){
+					foreach $ae (@nuc){
+					    $tag = $aa . $ab. $ac . $ad . $ae;
+					    close($tag);
+					    $outfile = $file . $tag;
+					    if ($compress){
+						$cmd = "zcat $wd/$target/tmp/$outfile |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
+					    }else{
+						$cmd = "sort -S 1M -T $wd/$target/tmp $wd/$target/tmp/$outfile |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
+					    }
+					    $rc = system($cmd);
+					    $rc = $rc >> 8;
+					    &log("ERROR : count : $cmd") if $rc;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		$final = $a . $b . $c;
+		&log("count : $target : output $final.gz");
+		if ($final eq "TTT"){
+		    $cmd = "cat $wd/$target/tmp/$final*.count | gzip > $wd/$target/count.$tsd_size/$final.gz && rm $wd/$target/tmp/$final*.count";
+		}else{
+		    $cmd = "cat $wd/$target/tmp/$final*.count | gzip > $wd/$target/count.$tsd_size/$final.gz && rm $wd/$target/tmp/$final*.count &";
+		}
+		$rc = system($cmd);
+		$rc = $rc >> 8;
+		&log("ERROR : count : $cmd") if $rc;
+	    }
+	}
+    }
 }
 
 sub mkref{

@@ -45,6 +45,11 @@ For Linux, max process is limited to number of CPU core. For other OS, default p
 If you add max_process option, *e.g.* max_process=8, the tef.pl uses 8 cores.  
 perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7,option=clear,sort_tmp=/mnt/ssd/tmp,max_process=8  
 
+Counting function of k-mer is improved. If disk space becomes an issue, add the compress=yes option.  
+
+In addition, if an error is output and the program stops, execute "ulimit -n 4096" before running this program.  
+This will increase the limit on the number of files that can be opened at once.  
+
 ## Getting tef.pl
 ```
 git clone https://github.com/akiomiyao/tef.git   
