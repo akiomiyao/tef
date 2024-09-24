@@ -1654,7 +1654,7 @@ ulimit -n 4096\n";
     if (! -d "$wd/$target/count.$tsd_size"){
 	system("mkdir $wd/$target/count.$tsd_size");
     }
-    
+   
     foreach $a (@nuc){
 	foreach $b (@nuc){
 	    foreach $c (@nuc){
@@ -1782,9 +1782,9 @@ ulimit -n 4096\n";
 		$final = $a . $b . $c;
 		&log("count : $target : output $final.gz");
 		if ($final eq "TTT"){
-		    $cmd = "cat $wd/$target/tmp/$final*.count | gzip > $wd/$target/count.$tsd_size/$final.gz && rm $wd/$target/tmp/$final*.count";
+		    $cmd = "find $wd/$target/tmp/ -name \"$final*.count\" | xargs cat | gzip > $wd/$target/count.$tsd_size/$final.gz && find $wd/$target/tmp/ -name \"$final*.count\" | xargs rm";
 		}else{
-		    $cmd = "cat $wd/$target/tmp/$final*.count | gzip > $wd/$target/count.$tsd_size/$final.gz && rm $wd/$target/tmp/$final*.count &";
+		    $cmd = "find $wd/$target/tmp/ -name \"$final*.count\" | xargs cat | gzip > $wd/$target/count.$tsd_size/$final.gz && find $wd/$target/tmp/ -name \"$final*.count\" | xargs rm &";
 		}
 		$rc = system($cmd);
 		$rc = $rc >> 8;
