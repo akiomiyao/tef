@@ -1643,7 +1643,7 @@ sub mergeFunc{
 
 
 sub count{
-    my ($a, $b, $c, $d, $e, $aa, $ab, $ac, $ad, $ae, $tag, $count, $lines, $seq, $file, $outfile);
+    my ($a, $b, $c, $d, $e, $aa, $ab, $ac, $ad, $ae, $tag, $count, $lines, $seq, $file, $outfile, $count_file);
     my $target = shift;
     &log("count : $target : making count.$tsd_size");
 
@@ -1779,12 +1779,12 @@ ulimit -n 4096\n";
 			}
 		    }
 		}
-		$final = $a . $b . $c;
-		&log("count : $target : output $final.gz");
-		if ($final eq "TTT"){
-		    $cmd = "find $wd/$target/tmp/ -name \"$final*.count\" | xargs cat | gzip > $wd/$target/count.$tsd_size/$final.gz && find $wd/$target/tmp/ -name \"$final*.count\" | xargs rm";
+		$count_file = $a . $b . $c;
+		&log("count : $target : output $count_file.gz");
+		if ($count_file eq "TTT"){
+		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm";
 		}else{
-		    $cmd = "find $wd/$target/tmp/ -name \"$final*.count\" | xargs cat | gzip > $wd/$target/count.$tsd_size/$final.gz && find $wd/$target/tmp/ -name \"$final*.count\" | xargs rm &";
+		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm &";
 		}
 		$rc = system($cmd);
 		$rc = $rc >> 8;
