@@ -90,17 +90,20 @@ Setting
 ulimit -n 4096  
 may be required, before running tef.pl  
 
-## Making reference data set
-At the first run of tef.pl, the empty directory with specified by reference name is created.  
-Save the gz compressed fasta file for the reference into the directory, and then run again tef.pl.  
-After the second run of tef.pl, config file is created in the reference directory.  
-Config file is the list of chromosome names in order to appearance in fasta file.  
-If required, rename and/or change to NOP the chromosome name in the config file.  
-If the sequence is partial contig or extra chromosome and is not required, the chromosome name should be replaced to NOP.  
-In the case of too many partial contigs which should be ignore, make config file with all lines are NOP and then replace disired chromosome names at related positions.  
-At the third run, ped.pl makes reference data set according to the config file and then proceed main routine.  
-Once the reference data set is created, data set will be reused for additional analysis.  
-If the reference data is imcomplete or broken, delete the reference directory and then run again tef.pl.  
+## Making a Reference Data Set
+### First Run:
+When you first run tef.pl, an empty directory specified by the reference name is created.
+Save the gzipped FASTA file for the reference into this directory, and then run tef.pl again.
+### Second Run:
+After the second run of tef.pl, a config file is created in the reference directory.
+The config file contains a list of chromosome names in the order they appear in the FASTA file.
+If necessary, rename or change the chromosome names in the config file to “NOP”.
+For partial contigs or extra chromosomes that are not required, replace the chromosome name with “NOP”.
+If there are too many partial contigs to ignore, create a config file with all lines set to “NOP” and then replace the desired chromosome names at the relevant positions.
+### Third Run:
+On the third run, ped.pl creates the reference data set according to the config file and then proceeds with the main routine.
+Once the reference data set is created, it can be reused for additional analyses.
+If the reference data is incomplete or corrupted, delete the reference directory and run tef.pl again.
 
 ## sliceTE.pl
 Usage
