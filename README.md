@@ -76,13 +76,19 @@ cp somewhere/SRR556173_1.fastq somewhere/SRR556173_2.fastq ttm2/read
 mkdir ttm5  
 mkdir ttm5/read  
 cp somewhere/SRR556174_1.fastq somewhere/SRR556174_2.fastq somewhere/SRR556175_1.fastq somewhere/SRR556175_2.fastq ttm5/read  
+ulimit -n 4096
 perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
 ```
 
 Fastq files should be saved in read directory in targets.  
 Files compressed with gz, bzip2, and xz format can be processed.  
   
-Results are saved in ttm2 directory, specified by 'a'.
+Results are saved in ttm2 directory, specified by 'a'.  
+  
+After the commit of f52457f, tef.pl opens more than 1000 files simalteneously.  
+Setting  
+ulimit -n 4096  
+may be required, before running tef.pl  
 
 ## Making reference data set
 At the first run of tef.pl, the empty directory with specified by reference name is created.  
