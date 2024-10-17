@@ -211,9 +211,7 @@ sub junctionCandidate{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionCandidateFunc,chr=$file,sort_tmp=$sort_tmp &";
 	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : junctionCandidate : $cmd") if $rc;
+	    system($cmd);
 	}
     }
     &join;
@@ -354,9 +352,7 @@ sub junctionCountCandidate{
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSortCandidateFunc,tag=$tag,sort_tmp=$sort_tmp &";
 	&log("$cmd");
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionSortCandidateFunc : $cmd") if $rc;
+	system($cmd);
     }
     &join;
     $processor = $org_processor;
@@ -365,9 +361,7 @@ sub junctionCountCandidate{
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionCountCandidateFunc,tag=$tag,sort_tmp=$sort_tmp &";
 	&log("$cmd");
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionCountCandidate : $cmd") if $rc;
+	system($cmd);
     }
     &join;
 
@@ -676,9 +670,7 @@ $row[1]\ttail\n";
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionTePosFunc,tag=$tag,sort_tmp=$sort_tmp &";
 	&log("$cmd");
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionTePos : $cmd") if $rc;
+	system($cmd);
     }
     &join;
 
@@ -767,22 +759,16 @@ sub junctionSort{
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSortFunc,chr=$file,sort_tmp=$sort_tmp &";
 	&log($cmd);
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionSort : $cmd") if $rc;
+	system($cmd);
     }
     $processor = $org_processor;
 }
 
 sub junctionSortFunc{
     $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.f > $wd/$target/tmp/sorted.$chr.f";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : junctionSortFunc : $cmd") if $rc;
+    system($cmd);
     $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.r > $wd/$target/tmp/sorted.$chr.r";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : junctionSortFunc : $cmd") if $rc;
+    system($cmd);
 }
 
 sub junctionSecondMap{
@@ -792,18 +778,14 @@ sub junctionSecondMap{
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag,sort_tmp=$sort_tmp &";
 	&log("$cmd");
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionSecondMap : $cmd") if $rc;
+	system($cmd);
     }
 }
 
 sub junctionSecondMapFunc{
     system("rm $wd/$target/tmp/map.$tag") if -e "$wd/$target/tmp/map.$tag";
     $cmd = "cat $wd/$target/tmp/first.$tag.* | sort -S 1M -T $sort_tmp > $wd/$target/tmp/second.$tag";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : junctionSecondMapFunc : $cmd") if $rc;
+    system($cmd);
     open(OUT, "> $wd/$target/tmp/map.$tag");
     open(IN, "zcat $wd/$ref/ref20.$tag.gz |join $wd/$target/tmp/second.$tag - |");
     while(<IN>){
@@ -824,9 +806,7 @@ sub junctionFirstMap{
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag,sort_tmp=$sort_tmp &";
 	&log($cmd);
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionFirstMap : $cmd") if $rc;
+	system($cmd);
     }
 }
 
@@ -875,17 +855,13 @@ sub junctionSpecific{
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=junctionSpecificFunc,tsd_size=$tsd_size,tag=$tag,sort_tmp=$sort_tmp &";
 	&log($cmd);
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : junctionSpecific : $cmd") if $rc;
+	system($cmd);
     }
 }
 
 sub junctionSpecificFunc{
     $cmd = "bash -c 'join -v 1 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz) > $wd/$a/tmp/specific.$tag.tmp'";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : $sub : $cmd") if $rc;
+    system($cmd);
     open(IN, "$wd/$a/tmp/specific.$tag.tmp");
     open(OUT, "> $wd/$a/tmp/specific.$tag");
     while(<IN>){
@@ -899,9 +875,7 @@ sub junctionSpecificFunc{
     close(IN);
     close(OUT);
     $cmd = "bash -c 'join -v 2 <(zcat $wd/$a/count.$tsd_size/$tag.gz) <(zcat $wd/$b/count.$tsd_size/$tag.gz)  > $wd/$b/tmp/specific.$tag.tmp'";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : $sub : $cmd") if $rc;
+    system($cmd);
     open(IN, "$wd/$b/tmp/specific.$tag.tmp");
     open(OUT, "> $wd/$b/tmp/specific.$tag");
     while(<IN>){
@@ -950,9 +924,7 @@ sub map{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mapQuery,tag=$tag,sort_tmp=$sort_tmp &";
 	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify : $cmd") if $rc;
+	    system($cmd);
 	}
     }
     &join;
@@ -1073,9 +1045,7 @@ sub map{
 
 sub mapQuery{
     $cmd = "zcat $wd/$ref/ref20.$tag.gz | join - $wd/$a/tmp/mapquery.$tag > $wd/$a/tmp/map.$tag";
-    $rc = system("$cmd");
-    $rc = $rc >> 8;
-    &log("ERROR : verify :$cmd") if $rc;
+    system("$cmd");
 }
 
 sub verify{
@@ -1085,9 +1055,7 @@ sub verify{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$a,sub=verifyFunc,tsd_size=$tsd_size,file=$_,sort_tmp=$sort_tmp &";
 	    &log("$cmd");
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify :$cmd") if $rc;
+	    system($cmd);
 	}
     }
     closedir(DIR);
@@ -1097,9 +1065,7 @@ sub verify{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$b,sub=verifyFunc,tsd_size=$tsd_size,file=$_,sort_tmp=$sort_tmp &";
 	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify : $cmd") if $rc;
+	    system($cmd);
 	}
     }
     closedir(DIR);
@@ -1181,9 +1147,7 @@ sub verify{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=countQuery,tag=$tag,sort_tmp=$sort_tmp &";
 	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify : $cmd") if $rc;
+	    system($cmd);
 	}
     }
     &join;
@@ -1270,14 +1234,10 @@ sub verify{
 
 sub countQuery{
     $cmd = "zcat $wd/$a/count.20/$tag.gz | join - $wd/$a/tmp/query.$tag > $wd/$a/tmp/verify.count.$tag";
-    $rc = system("$cmd");
-    $rc = $rc >> 8;
-    &log("ERROR : verify :$cmd") if $rc;
+    system("$cmd");
     
     $cmd = "zcat $wd/$b/count.20/$tag.gz | join - $wd/$a/tmp/query.$tag > $wd/$b/tmp/verify.count.$tag";
-    $rc = system("$cmd");
-    $rc = $rc >> 8;
-    &log("ERROR : verify : $cmd") if $rc;
+    system("$cmd");
 }
 
 sub verifyFunc{
@@ -1375,9 +1335,7 @@ sub tsdHeadTail{
 		&monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,sub=tsdHeadTailFunc,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
 		&log("tsdHeadTail : $tag : $tsd_size");
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : tsdHeadTail : $cmd") if $rc;
+		system($cmd);
 	    }
 	}
     }
@@ -1591,9 +1549,7 @@ sub merge{
 		&monitorWait;
 		$cmd = "perl $0 target=$target,sub=mergeFunc,tsd_size=$tsd_size,tag=$tag,a=$a,sort_tmp=$sort_tmp &";
 		&log($cmd);
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : merge :$cmd") if $rc;
+		system($cmd);
 	    }
 	}
     }
@@ -1622,9 +1578,7 @@ sub mergeFunc{
 	$fileb = "$tag.$b.gz";
 	$filec = "$tag.$c.gz";
 	$cmd = "bash -c 'join -a 1 -a 2 <(zcat $wd/$target/count.$tsd_size/$filea) <(zcat $wd/$target/count.$tsd_size/$fileb)' | awk '{print \$1 \"\t\" \$2 + \$3}' |gzip -c > $wd/$target/count.$tsd_size/$filec && rm $wd/$target/count.$tsd_size/$filea $wd/$target/count.$tsd_size/$fileb";
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : mergeFunc : $cmd") if $rc;
+	system($cmd);
 	$a += 2;
 	$b += 2;
 	$c ++;
@@ -1765,13 +1719,11 @@ ulimit -n 4096\n";
 					    close($tag);
 					    $outfile = $file . $tag;
 					    if ($compress){
-						$cmd = "zcat $wd/$target/tmp/$outfile |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
+						$cmd = "zcat $wd/$target/tmp/$outfile |sort -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
 					    }else{
-						$cmd = "sort -S 1M -T $wd/$target/tmp $wd/$target/tmp/$outfile |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
+						$cmd = "sort -T $wd/$target/tmp $wd/$target/tmp/$outfile |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
 					    }
-					    $rc = system($cmd);
-					    $rc = $rc >> 8;
-					    &log("ERROR : count : $cmd") if $rc;
+					    system($cmd);
 					}
 				    }
 				}
@@ -1786,9 +1738,7 @@ ulimit -n 4096\n";
 		}else{
 		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm &";
 		}
-		$rc = system($cmd);
-		$rc = $rc >> 8;
-		&log("ERROR : count : $cmd") if $rc;
+		system($cmd);
 	    }
 	}
     }
@@ -1811,9 +1761,7 @@ After saving the gz file, run $0 again with same options.
     if (! -e "config"){
 	&log("making config file of in $ref directory.");
 	$cmd = "zcat *.gz|grep '>' | sed  -e 's/^>//' > config.tmp";
-	$rc = system($cmd);
-	$rc = $rc >> 8;
-	&log("ERROR : mkref : $cmd") if $rc;
+	system($cmd);
 	open(IN, "config.tmp");
 	open(OUT, "> config");
 	while(<IN>){
@@ -1872,9 +1820,7 @@ After saving the gz file, run $0 again with same options.
 
 sub sort20mer{
     $cmd = "sort -S 1M -T $sort_tmp $wd/$ref/tmp/ref20.$tag.* |gzip -c > $wd/$ref/ref20.$tag.gz";
-    $rc = system($cmd);
-    $rc = $rc >> 8;
-    &log("ERROR : sort20mer : $cmd") if $rc;
+    system($cmd);
     system("rm $wd/$ref/tmp/ref20.$tag.*");
 }
 
@@ -1930,9 +1876,7 @@ sub mk20{
 	    &monitorWait;
 	    &log("Processing chr$i");
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i,sort_tmp=$sort_tmp &";
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : mk20 : $cmd") if $rc;
+	    system($cmd);
 	}
 	&join;
     }
@@ -1950,9 +1894,7 @@ sub mk20{
 	    &monitorWait;
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=sort20mer,tag=$tag,sort_tmp=$sort_tmp &";
 	    &log($cmd);
-	    $rc = system($cmd);
-	    $rc = $rc >> 8;
-	    &log("ERROR : verify : $cmd") if $rc;
+	    system($cmd);
 	}
     }
     &join;
