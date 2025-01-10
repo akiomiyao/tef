@@ -140,7 +140,7 @@ Miyao, A., Yamanouchi, U. Transposable element finder (TEF): finding active tran
 
 ## Lisence
 Free of use for academics. For non-academics, license by NARO (same as PED) is required.  
-Patent pending JP 2020-217693.  
+Patent JP 7573862.  
 
 ## Author 
 Akio Miyao miyao@affrc.go.jp
