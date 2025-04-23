@@ -7,59 +7,73 @@
 #
 # License: refer to https://github.com/akiomiyao/tef
 #
-# Author: Akio Miyao <miyao@affrc.go.jp>
+# Author: Akio Miyao
 #
 
 
 if ($ARGV[0] eq ""){
     print "
- tef.pl - transposable element finder
-      A program for detection of active transposable elements from NGS reads.
+tef.pl - Transposable Element Finder
 
- e.g. perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
-      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
-      perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,compress=yes,max_process=8,sort_tmp=/mnt/ssd/tmp
+A program for detecting active transposable elements from NGS reads.
 
- tef.pl requires a pair of NGS reads from different conditions.
+Usage Examples:
+ perl tef.pl a=ttm2,ref=IRGSP1.0
+ perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
+ perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
+ ulimit -n 4096 && perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,max_process=8,sort_tmp=/mnt/ssd/tmp
+
+Update: With the new feature, you can now omit the b parameter. When b is omitted, TEF
+ will use the reference genome specified by ref as the second set of data. This means
+ TEF will compare the NGS reads specified by a directly with the reference genome
+ to detect transpositions.
+
+Requirements: tef.pl requires a pair of NGS reads from different conditions. 
  For example, ttm2 and ttm5 are from regenerated rice individuals from callus.
- Save fastq files into ttm2/read and ttm5/read directory.
+ Save FASTQ files into the ttm2/read and ttm5/read directories.
+ If NGS reads specified by 'b' are omitted, tef.pl compares the reads specified
+ by 'a' with the reference genome sequence.
 
- Options shold be specified with 'name=value' separated by a comma WITHOUT space.
- Default method is the junction method.
- If tsd_size is specified, tef.pl will run with TSD method.
+Options: Options should be specified with 'name=value' separated by a comma WITHOUT spaces.
+ The default method is the junction method.
+ If tsd_size is specified, tef.pl will run with the TSD method.
 
- If ref is specified, gziped fasta file of reference genome should be saved
- into the directory specified with ref. 
- 
- At the first time of run, config file for reference will be made in the
- ref directory. The config has a list of sequence name. If you do not want to
- include unassaigned contig, change the name to NOP and save the contig file,
+Reference Genome: If ref is specified, a gzipped FASTA file of the reference genome
+ should be saved into the directory specified by ref. On the first run, a config
+ file for the reference will be created in the ref directory.
+ The config file contains a list of sequence names. If you do not want to include
+ unassigned contigs, change the name to NOP, save the config file,
  and run tef.pl again.
 
- If ref is not specified, a or b specific transpositions without insertion 
- position on the genome will be detected.
- This function works only by TSD method.
+Detection Methods: If ref is not specified, specific transpositions without
+ insertion positions on the genome will be detected.
+ This function works only with the TSD method.
+ If tsd_size is not specified, detection will proceed using the junction method.
+ If th (threshold) for the TSD method is not specified, the default value of 0.2 will
+ be used. If a lot of noise is detected, try again with a higher value, e.g., th=0.7.
 
- If tsd_size is not specified, detection will be progressed by junction method.
+Temporary Directories: Because temporary directories in targets grow to a huge size,
+ they will be deleted at the end of the analysis. If debug=yes is added to the
+ options, temporary directories will not be deleted. Additionally, to save disk
+ space, the compress=yes option can be used to compress temporary files.
+ sort_tmp=directory_for_sort is the option for specifying a temporary directory
+ for the sort command. If sort_tmp is specified to a fast disk, e.g., SSD,
+ sorting will be accelerated. Setting all directories on an SSD disk is recommended.
 
- If th (threthold) on the TSD method is not specified, default value 0.2 will be used.
- If a lot of noize are detected, try again with higher value e.g. th=0.7  
+Processing: For Linux, max_process is the number of CPU cores. For other OS,
+ the default process number is 4. If you add the max_process option,
+ e.g., max_process=8, tef.pl will use 8 cores.
 
- Because tmp directries in targets grow huge size, tmp directories will be deleted
- at the end of analysis. If debug=yes is added in options, tmp directories will not
- deleted. In addition, to save disk space, the compress=yes option is used to compress
- temporary files.   
+Troubleshooting: If data in split and/or count.tsd_size are truncated, remove the
+ directory in the target and then run again. TEF may open more than 1000 files simultaneously.
+ If a file open error is displayed, please execute ulimit -n 4096 before running tef.pl.
 
- sort_tmp=directory_for_sort is the option for temporary directory for sort command.
- If sort_tmp is specified to fast disk, e.g. SSD, sorting will be accelerated.
+Web Page: https://akiomiyao.github.io/tef/
+Code: https://github.com/akiomiyao/tef
+Paper: https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-05011-3
+Question: https://github.com/akiomiyao/tef/issues
 
- For Linux, max process is number of CPU core. For other OS, defalt process number is 4.
- If you add max_process option, e.g. max_process=8, tef use 8 cores. 
-
- If data in split and/or count.tsd_size are truncated, remove the directory in
- the target and then run again.
-
- Author: Akio Miyao
+Author: Akio Miyao
 
 ";
     exit;
@@ -110,6 +124,7 @@ if ($tsd_size == 20){
 if ($sub eq ""){
     system("rm -rf $wd/$a/child") if -e "$wd/$a/child";
     system("mkdir $wd/$a/tmp") if ! -e "$wd/$a/tmp";
+    $b = $ref if $b eq "";
     system("mkdir $wd/$b/tmp") if ! -e "$wd/$b/tmp";
     system("mkdir $wd/$a/child");
     &log("job start");
@@ -1603,7 +1618,8 @@ sub count{
 
     $die_comment = "Can not open file.
 Please inclease limit for current session.
-ulimit -n 4096\n";
+ulimit -n 4096
+e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 
     if (! -d "$wd/$target/count.$tsd_size"){
 	system("mkdir $wd/$target/count.$tsd_size");
@@ -1615,49 +1631,79 @@ ulimit -n 4096\n";
 		foreach $d (@nuc){
 		    foreach $e (@nuc){
 			$tag = $a . $b. $c . $d . $e;
-			open($tag, "|gzip > $wd/$target/tmp/$tag");
+			open($tag, "|gzip > $wd/$target/tmp/$tag.gz") || die $die_comment;
 		    }
 		}
 	    }
 	}
     }
-    opendir(DIR, "$wd/$target/read");
-    foreach $file (sort readdir(DIR)){
-	next if $file =~ /^\./;
-	$file = "$wd/$target/read/" . $file;
-	if ($file =~ /gz$/){
-	    open(IN, "zcat $file |") || die $die_comment;;
-	}elsif ($file =~ /bz2$/){
-	    open(IN, "bzcat $file |") || die $die_comment;;
-	}elsif ($file =~ /xz$/){
-	    open(IN, "xzcat $file |") || die $die_comment;;
-	}else{
-	    open(IN, $file) || die $die_comment;
+    if ($target eq $ref){
+	opendir(DIR, "$wd/$target");
+	foreach $file (sort readdir(DIR)){
+	    next if $file !~ /^chr/;
+	    open(IN, "$target/$file") || die $die_comment;
+	    while(<IN>){
+		if ($target eq $ref){
+		    &log("count : $target : $file");
+		    chomp;
+		    $length = length($_);
+		    for($i = 0; $i < $length; $i++){
+			$seq = substr($_, $i, 20 + $tsd_size);
+			last if length($seq) != 20 + $tsd_size;
+			next if $seq =~ /N/;
+			$tag = substr($seq, 0, 5);
+			print $tag "$seq\n";
+		    }
+		    $complement = &complement($_);
+		    for($i = 0; $i < $length; $i++){
+			$seq = substr($complement, $i, 20 + $tsd_size);
+			last if length($seq) != 20 + $tsd_size;
+			next if $seq =~ /N/;
+			$tag = substr($seq, 0, 5);
+			print $tag "$seq\n";
+		    }
+		}
+	    }
 	}
-	while(<IN>){
-	    $count = 0 if $count++ == 3;
-	    if ($count == 2){
-		$lines ++;
-		if ($lines % 1000000 == 0){
-		    &log("count : $target : $lines reads have been selected");
+    }else{
+	opendir(DIR, "$wd/$target/read");
+	foreach $file (sort readdir(DIR)){
+	    next if $file =~ /^\./;
+	    $file = "$wd/$target/read/" . $file;
+	    if ($file =~ /gz$/){
+		open(IN, "zcat $file |") || die $die_comment;;
+	    }elsif ($file =~ /bz2$/){
+		open(IN, "bzcat $file |") || die $die_comment;;
+	    }elsif ($file =~ /xz$/){
+		open(IN, "xzcat $file |") || die $die_comment;;
+	    }else{
+		open(IN, $file) || die $die_comment;
+	    }
+	    while(<IN>){
+		$count = 0 if $count++ == 3;
+		if ($count == 2){
+		    $lines ++;
+		    if ($lines % 1000000 == 0){
+			&log("count : $target : $lines reads have been selected");
+		    }
+		    chomp;
+		    $length = length($_);
+		    for($i = 0; $i < $length; $i++){
+			$seq = substr($_, $i, 20 + $tsd_size);
+			last if length($seq) != 20 + $tsd_size;
+			next if $seq =~ /N/;
+			$tag = substr($seq, 0, 5);
+			print $tag "$seq\n";
+		    }
+		    $complement = &complement($_);
+		    for($i = 0; $i < $length; $i++){
+			$seq = substr($complement, $i, 20 + $tsd_size);
+			last if length($seq) != 20 + $tsd_size;
+			next if $seq =~ /N/;
+			$tag = substr($seq, 0, 5);
+			print $tag "$seq\n";
+		    }
 		}
-		chomp;
-		$length = length($_);
-		for($i = 0; $i < $length; $i++){
-		    $seq = substr($_, $i, 20 + $tsd_size);
-		    last if length($seq) != 20 + $tsd_size;
-		    next if $seq =~ /N/;
-		    $tag = substr($seq, 0, 5);
-		    print $tag "$seq\n";
-		}
-		$complement = &complement($_);
-		for($i = 0; $i < $length; $i++){
-		    $seq = substr($complement, $i, 20 + $tsd_size);
-		    last if length($seq) != 20 + $tsd_size;
-		    next if $seq =~ /N/;
-		    $tag = substr($seq, 0, 5);
-		    print $tag "$seq\n";
-		}	
 	    }
 	}
 	close(IN);
@@ -1682,66 +1728,34 @@ ulimit -n 4096\n";
 	    foreach $c (@nuc){
 		foreach $d (@nuc){
 		    foreach $e (@nuc){
-			$file = $a . $b. $c . $d . $e;
-			foreach $aa (@nuc){
-			    foreach $ab (@nuc){
-				foreach $ac (@nuc){
-				    foreach $ad (@nuc){
-					foreach $ae (@nuc){
-					    $tag = $aa . $ab. $ac . $ad . $ae;
-					    $outfile = $file . $tag;
-					    if ($compress){
-						open($tag, "|gzip > $wd/$target/tmp/$outfile");
-					    }else{
-						open($tag, "> $wd/$target/tmp/$outfile");
-					    }
-					}
-				    }
-				}
-			    }
-			}
-
-			open(IN, "zcat $wd/$target/tmp/$file|");
-			while(<IN>){
-			    $tag = substr($_, 5, 5);
-			    print $tag $_;
-			}
-			close(IN);
-			system("rm $wd/$target/tmp/$file");
-
-			&log("count : $target : counting $file"); 
-			foreach $aa (@nuc){
-			    foreach $ab (@nuc){
-				foreach $ac (@nuc){
-				    foreach $ad (@nuc){
-					foreach $ae (@nuc){
-					    $tag = $aa . $ab. $ac . $ad . $ae;
-					    close($tag);
-					    $outfile = $file . $tag;
-					    if ($compress){
-						$cmd = "zcat $wd/$target/tmp/$outfile |sort -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
-					    }else{
-						$cmd = "sort -T $wd/$target/tmp $wd/$target/tmp/$outfile |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$outfile.count && rm $wd/$target/tmp/$outfile";
-					    }
-					    system($cmd);
-					}
-				    }
-				}
-			    }
-			}
+			$tag = $a . $b. $c . $d . $e;
+			&log("count : $target : counting $tag"); 
+			&monitorWait;
+			$cmd = "perl $0 a=$target,sub=countFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
+			system($cmd);
 		    }
 		}
+		&join;
 		$count_file = $a . $b . $c;
 		&log("count : $target : output $count_file.gz");
 		if ($count_file eq "TTT"){
-		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm";
+		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort -S 1M -T $wd/$target/tmp | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm";
 		}else{
-		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm &";
+		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort -S 1M -T $wd/$target/tmp | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm &";
 		}
 		system($cmd);
 	    }
 	}
     }
+}
+
+sub countFunc{
+    if ($target eq $ref){
+	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1 * 50}'> $wd/$target/tmp/$tag.count && rm $wd/$target/tmp/$tag/gz";
+    }else{
+	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$tag.count && rm $wd/$target/tmp/$tag.gz";
+    }
+    system($cmd);
 }
 
 sub mkref{
@@ -1927,7 +1941,7 @@ sub monitorWait{
     while(1){
         my $count = 0;
         $wait_time = 0.1 if $wait_time eq "";
-        select undef, undef, undef, $wait_time;
+        select undef, undef, undef, $wait_time if $sub ne "countFunc";
         opendir(CDIR, "$wd/$a/child");
         foreach(readdir(CDIR)){
             if (/child/){
