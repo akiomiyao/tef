@@ -1735,27 +1735,37 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 			system($cmd);
 		    }
 		}
-		&join;
-		$count_file = $a . $b . $c;
-		&log("count : $target : output $count_file.gz");
-		if ($count_file eq "TTT"){
-		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort -S 1M -T $wd/$target/tmp | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm";
-		}else{
-		    $cmd = "find $wd/$target/tmp/ -name \"$count_file*.count\" |sort -S 1M -T $wd/$target/tmp | xargs cat | gzip > $wd/$target/count.$tsd_size/$count_file.gz && find $wd/$target/tmp/ -name \"$count_file*.count\" | xargs rm &";
-		}
+	    }
+	}
+    }
+    &join;
+    foreach $a (@nuc){
+	foreach $b (@nuc){
+	    foreach $c (@nuc){
+		$tag = $a . $b . $c;
+		&log("count : $target : save $tag.gz into count.$tsd_size");
+		&monitorWait;
+		$cmd = "perl $0 a=$target,sub=countZipFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
 		system($cmd);
 	    }
 	}
     }
+    &join;
 }
 
 sub countFunc{
     if ($target eq $ref){
-	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1 * 50}'> $wd/$target/tmp/$tag.count && rm $wd/$target/tmp/$tag/gz";
+	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1 * 50}'|gzip > $wd/$target/tmp/$tag.count.gz && rm $wd/$target/tmp/$tag.gz";
     }else{
-	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}'> $wd/$target/tmp/$tag.count && rm $wd/$target/tmp/$tag.gz";
+	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' | gzip > $wd/$target/tmp/$tag.count.gz && rm $wd/$target/tmp/$tag.gz";
     }
     system($cmd);
+}
+
+sub countZipFunc{
+    $cmd = "find $wd/$target/tmp/ -name \"$tag*.count.gz\" |sort -S 1M -T $wd/$target/tmp | xargs zcat | gzip > $wd/$target/count.$tsd_size/$tag.gz && find $wd/$target/tmp/ -name \"$tag*.count.gz\" | xargs rm";
+    system($cmd);
+
 }
 
 sub mkref{
