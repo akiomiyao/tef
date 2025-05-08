@@ -1612,7 +1612,7 @@ sub mergeFunc{
 
 
 sub count{
-    my ($a, $b, $c, $d, $e, $aa, $ab, $ac, $ad, $ae, $tag, $count, $lines, $seq, $file, $outfile, $count_file);
+    my ($aa, $ab, $ac, $ad, $ae, $tag, $count, $lines, $seq, $file, $outfile, $count_file);
     my $target = shift;
     &log("count : $target : making count.$tsd_size");
 
@@ -1624,13 +1624,17 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
     if (! -d "$wd/$target/count.$tsd_size"){
 	system("mkdir $wd/$target/count.$tsd_size");
     }
-   
-    foreach $a (@nuc){
-	foreach $b (@nuc){
-	    foreach $c (@nuc){
-		foreach $d (@nuc){
-		    foreach $e (@nuc){
-			$tag = $a . $b. $c . $d . $e;
+
+    if (! -d "$wd/$target/tmp"){
+	system("mkdir $wd/$target/tmp");
+    }
+    
+    foreach $aa (@nuc){
+	foreach $ab (@nuc){
+	    foreach $ac (@nuc){
+		foreach $ad (@nuc){
+		    foreach $ae (@nuc){
+			$tag = $aa . $ab. $ac . $ad . $ae;
 			open($tag, "|gzip > $wd/$target/tmp/$tag.gz") || die $die_comment;
 		    }
 		}
@@ -1710,12 +1714,12 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
     }
     close(DIR);
 
-    foreach $a (@nuc){
-	foreach $b (@nuc){
-	    foreach $c (@nuc){
-		foreach $d (@nuc){
-		    foreach $e (@nuc){
-			$tag = $a . $b. $c . $d . $e;
+    foreach $aa (@nuc){
+	foreach $ab (@nuc){
+	    foreach $ac (@nuc){
+		foreach $ad (@nuc){
+		    foreach $ae (@nuc){
+			$tag = $aa . $ab. $ac . $ad . $ae;
 			close($tag);
 		    }
 		}
@@ -1723,15 +1727,15 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 	}
     }
     
-    foreach $a (@nuc){
-	foreach $b (@nuc){
-	    foreach $c (@nuc){
-		foreach $d (@nuc){
-		    foreach $e (@nuc){
-			$tag = $a . $b. $c . $d . $e;
+    foreach $aa (@nuc){
+	foreach $ab (@nuc){
+	    foreach $ac (@nuc){
+		foreach $ad (@nuc){
+		    foreach $ae (@nuc){
+			$tag = $aa . $ab. $ac . $ad . $ae;
 			&log("count : $target : counting $tag"); 
 			&monitorWait;
-			$cmd = "perl $0 a=$target,sub=countFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
+			$cmd = "perl $0 a=$a,sub=countFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
 			system($cmd);
 		    }
 		}
@@ -1739,13 +1743,13 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 	}
     }
     &join;
-    foreach $a (@nuc){
-	foreach $b (@nuc){
-	    foreach $c (@nuc){
-		$tag = $a . $b . $c;
+    foreach $aa (@nuc){
+	foreach $ab (@nuc){
+	    foreach $ac (@nuc){
+		$tag = $aa . $ab . $ac;
 		&log("count : $target : save $tag.gz into count.$tsd_size");
 		&monitorWait;
-		$cmd = "perl $0 a=$target,sub=countZipFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
+		$cmd = "perl $0 a=$a,sub=countZipFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
 		system($cmd);
 	    }
 	}
@@ -1755,7 +1759,7 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 
 sub countFunc{
     if ($target eq $ref){
-	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1 * 50}'|gzip > $wd/$target/tmp/$tag.count.gz && rm $wd/$target/tmp/$tag.gz";
+	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$a/tmp |uniq -c |awk '{print \$2 \"\t\" \$1 * 50}'|gzip > $wd/$target/tmp/$tag.count.gz && rm $wd/$target/tmp/$tag.gz";
     }else{
 	$cmd = "zcat $wd/$target/tmp/$tag.gz |sort -S 1M -T $wd/$target/tmp |uniq -c |awk '{print \$2 \"\t\" \$1}' | gzip > $wd/$target/tmp/$tag.count.gz && rm $wd/$target/tmp/$tag.gz";
     }
