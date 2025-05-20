@@ -137,4 +137,4 @@ Free of use for academics. For non-academics, license by NARO (same as PED) is r
 Patent JP 7573862.  
 
 ## Author 
-Akio Miyao miyao@affrc.go.jp
+Akio Miyao miyao.akio700@naro.go.jp
