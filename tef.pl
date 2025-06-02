@@ -220,6 +220,7 @@ sub tsdMethod{
 }
 
 sub toVcf{
+    &log("toVcf : output vcf format file : junction_method.$a.$b.vcf");
     $timestamp = `date '+%Y-%m-%d %H:%M:%S %z'`;
     chomp($timestamp);
     $filedate = (split('\ ', $timestamp))[0];
