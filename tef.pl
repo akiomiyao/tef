@@ -109,7 +109,7 @@ while(<IN>){
 }
 close(IN);
 
-$processor = 32 if $processor > 32;
+$processor = 20 if $processor > 20;
 $processor = $max_process if $max_process ne "";
 $processor = 4 if $processor eq "";
 $sort_tmp = "$wd/$a/tmp" if $sort_tmp eq "";
@@ -208,6 +208,7 @@ sub junctionMethod{
     &join;
     &junctionCandidate;
     &junctionCountCandidate;
+    &toVcf;
 }
 
 sub tsdMethod{
@@ -216,6 +217,68 @@ sub tsdMethod{
     if ($ref ne ""){
 	&map;
     }
+}
+
+sub toVcf{
+    $timestamp = `date '+%Y-%m-%d %H:%M:%S %z'`;
+    chomp($timestamp);
+    $filedate = (split('\ ', $timestamp))[0];
+    $filedate =~ y/-//d;
+    open(IN, "$wd/$a/junction_method.genotype.$a.$b");
+    open(OUT, "> $wd/$a/junction_method.$a.$b.vcf");
+    print OUT "##fileformat=VCFv4.3
+##fileDate=$filedate
+##source=<PROGRAM=tif.pl,target=$target,reference=$ref>
+##INFO=<ID=GT,Number=1,Type=String,Description=\"Genotype\">
+##INFO=<ID=AF,Number=.,Type=Float,Description=\"Allele Frequency\">
+##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Approximate read depth\">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">
+##INFO=<ID=MEINFO,Number=9,Type=String,Description=\"Movile element info of the form ME_HEAD_SEQ,ME_TAIL_SEQ,JUNCTION_POS_OF_HEAD,JUNCTION_POS_OF_TAIL,TSD_SIZE,TSD_SEQUENCE,DIRECTION,COUNT_OF_READS_WITH_JUNCTION_OF_HEAD,COUNT_OF_READS_WITH_JUNCTION_OF_TAIL,COUNT_OF_NOINSERTION_READS\">
+##ALT=<ID=INS,Description=\"Insertion of a mobile element\">
+##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">
+##FORMAT=<ID=AD,Number=.,Type=String,Description=\"Allelic depths for the reference and alternate alleles in the order listed\">
+##FORMAT=<ID=DP,Number=1,Type=String,Description=\"Read Depth\">
+##created=<TIMESTAMP=\"$timestamp\">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t$a\t$b\n";
+    while(<IN>){
+	chomp;
+	@row = split;
+	$rnuc = substr($row[7], length($row[7]) - 1, 1);
+	$tsd_size = length($row[8]);
+	if ($row[4] eq "f"){
+	    $direction = "forward";
+	}elsif($row[4] eq "r"){
+	    $diredtion= "reverse";
+	}
+	if ($row[16] eq "H"){
+	    $gt = "1/0";
+	}elsif($row[16] eq "M"){
+	    $gt = "1/1";
+	}
+	if ($row[0] eq $a){
+	    $hcount = $row[10];
+	    $tcount = $row[11];
+	    $wcount = $row[12];
+	    $total = $row[10] + $row[11] + $row[12];
+	    $alt = $row[10] + $row[11];
+	    $wt = $row[12];
+	    $ad = "$wt,$alt";
+	    $af = int($alt * 1000 / $total) / 1000;
+	    print OUT "$row[1]\t$row[2]\t.\t$rnuc\t$rnuc<INS>\t.\t.\tGT=$gt;AF=$af;DP=$total;MEINFO=$row[5],$row[6],$row[2],$row[3],$tsd_size,$row[8],$direction,$hcount,$tcount,$wcount;SVTYPE=INS\tGT:AD:DP\t$gt:$ad:$total\t.\n";
+	}else{
+	    $hcount = $row[13];
+	    $tcount = $row[14];
+	    $wcount = $row[15];
+	    $total = $row[13] + $row[14] + $row[15];
+	    $alt = $row[13] + $row[14];
+	    $wt = $row[15];
+	    $ad = "$wt,$alt";
+	    $af = int($alt * 1000 / $total) / 1000;
+	    print OUT "$row[1]\t$row[2]\t.\t$rnuc\t$rnuc<INS>\t.\t.\tGT=$gt;AF=$af;DP=$total;MEINFO=$row[5],$row[6],$row[2],$row[3],$tsd_size,$row[8],$direction,$hcount,$tcount,$wcount;SVTYPE=INS\tGT:AD:DP\t.\t$gt:$ad:$total\n";
+	}
+    }
+    close(IN);
+    close(OUT);
 }
 
 sub junctionCandidate{
