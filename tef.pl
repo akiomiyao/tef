@@ -220,6 +220,7 @@ sub tsdMethod{
 }
 
 sub toVcf{
+    my ($tsd_size, $rnuc, $direction, $gt, $hcount, $tcount, $wcount, $total, $alt, $wt, $ad, $af);
     &log("toVcf : output vcf format file : junction_method.$a.$b.vcf");
     $timestamp = `date '+%Y-%m-%d %H:%M:%S %z'`;
     chomp($timestamp);
@@ -283,7 +284,6 @@ sub toVcf{
 }
 
 sub junctionCandidate{
-    system("cd $wd/$a/tmp/ && rm chr* first.* map.* second.* specific.* target.* && cd $wd/$b/tmp/ && rm chr* first.* map.* second.* specific.* target.*") if ! $debug;
     opendir(REF, "$wd/$ref");
     foreach $file (sort readdir(REF)){
 	if ($file =~ /^chr/){
@@ -300,7 +300,7 @@ sub junctionCandidateFunc{
     open(CHR, "$wd/$ref/$chr");
     binmode(CHR);
     ($chrnum = $chr)=~ s/^chr//;
-    open(OUT, "> $wd/$a/tmp/candidate.$chr");
+    open(OUT, "| gzip > $wd/$a/tmp/candidate.$chr.gz");
     open(IN, "cat $wd/$a/tmp/sorted.$chr.f $wd/$a/tmp/sorted.$chr.r |");
     while(<IN>){
 	chomp;
@@ -352,6 +352,7 @@ $wt\t$chrnum\t$pos[0]\t$row[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 	}
     }
     close(IN);
+    system("rm $wd/$a/tmp/sorted.$chr.f $wd/$a/tmp/sorted.$chr.r");
     open(IN, "cat $wd/$b/tmp/sorted.$chr.f $wd/$b/tmp/sorted.$chr.r |");
     while(<IN>){
 	chomp;
@@ -403,6 +404,8 @@ $wt\t$chrnum\t$pos[0]\t$row[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 	}
     }
     close(IN);
+    open(IN, "$wd/$b/tmp/sorted.$chr.f $wd/$b/tmp/sorted.$chr.r");
+    close(OUT);
 }
 
 sub junctionCountCandidate{
@@ -416,9 +419,9 @@ sub junctionCountCandidate{
     }
     &log("junctionCountCandidate: $a : sorting candidates");
     foreach $tag (@tag){
-	open($tag, "> $wd/$a/tmp/tmpa.$tag ");
+	open($tag, "|gzip > $wd/$a/tmp/tmpa.$tag.gz ");
     }
-    open(IN, "cat $wd/$a/tmp/candidate.* |");
+    open(IN, "zcat $wd/$a/tmp/candidate.*.gz |");
     while(<IN>){
 	$tag = substr($_, 0, 3);
 	print $tag $_;
@@ -781,14 +784,20 @@ $row[1]\ttail\n";
 }
 
 sub junctionSortCandidateFunc{
-    system ("sort  -S 1M -T $sort_tmp $wd/$a/tmp/tmpa.$tag > $wd/$a/tmp/tmp.$tag");
-    system ("rm $wd/$a/tmp/tmpa.$tag");
+    system ("zcat $wd/$a/tmp/tmpa.$tag |sort  -S 1M -T $sort_tmp |gzip > $wd/$a/tmp/tmp.$tag.gz");
+    system ("rm $wd/$a/tmp/tmpa.$tag.gz");
 }
 
 sub junctionCountCandidateFunc{
-    system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
+    $cmd = "bash -c 'join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 <(zcat $wd/$a/tmp/tmp.$tag.gz) <(zcat $wd/$a/count.20/$tag.gz) > $wd/$a/tmp/tmpa.$tag'";
+    system($cmd);
+#    system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
+
+#    $cmd = "bash -c 'join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 1.12 2.2 -e 0 <(zcat $wd/$a/tmp/tmpa.$tag.gz) <(zcat $wd/$b/count.20/$tag.gz) > $wd/$a/tmp/count.$tag'";
+    system($cmd);
+
     system("zcat $wd/$b/count.20/$tag.gz |join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 1.12 2.2 -e 0 $wd/$a/tmp/tmpa.$tag - > $wd/$a/tmp/count.$tag");
-    system("rm $wd/$a/tmp/tmp.$tag $wd/$a/tmp/tmpa.$tag") if ! $debug;
+    system("rm $wd/$a/tmp/tmp.$tag.gz $wd/$a/tmp/tmpa.$tag") if ! $debug;
 }
 
 sub junctionTePosFunc{
@@ -828,6 +837,7 @@ sub junctionSort{
 	print $tail "$row[5]\tt\t$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\n";
     }
     close(IN);
+    system("rm $wd/$target/tmp/map.*") if ! $debug;
     foreach $file (@chr){
 	close("$file.f");
 	close("$file.r");
@@ -846,8 +856,10 @@ sub junctionSort{
 sub junctionSortFunc{
     $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.f > $wd/$target/tmp/sorted.$chr.f";
     system($cmd);
+    system("rm $wd/$target/tmp/$chr.f") if ! $debug;
     $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.r > $wd/$target/tmp/sorted.$chr.r";
     system($cmd);
+    system("rm $wd/$target/tmp/$chr.r") if ! $debug;
 }
 
 sub junctionSecondMap{
@@ -865,6 +877,7 @@ sub junctionSecondMapFunc{
     system("rm $wd/$target/tmp/map.$tag") if -e "$wd/$target/tmp/map.$tag";
     $cmd = "cat $wd/$target/tmp/first.$tag.* | sort -S 1M -T $sort_tmp > $wd/$target/tmp/second.$tag";
     system($cmd);
+    system("rm $wd/$target/tmp/first.$tag.*") if ! $debug;
     open(OUT, "> $wd/$target/tmp/map.$tag");
     open(IN, "zcat $wd/$ref/ref20.$tag.gz |join $wd/$target/tmp/second.$tag - |");
     while(<IN>){
@@ -876,6 +889,7 @@ sub junctionSecondMapFunc{
 	}
     }
     close(IN);
+    system("rm $wd/$target/tmp/second.$tag") if ! $debug;
 }
 
 sub junctionFirstMap{
@@ -903,6 +917,7 @@ sub junctionFirstMapFunc{
     }
     close(IN);
     close(OUT);
+    system("rm $wd/$target/tmp/specific.$tag") if ! $debug;
     
     open(IN, "zcat $wd/$ref/ref20.$tag.gz |join $wd/$target/tmp/target.$tag - |");
     open(OUT, "> $wd/$target/tmp/first.$tag");
@@ -914,7 +929,8 @@ sub junctionFirstMapFunc{
     }
     close(IN);
     close(OUT);
-
+    system("rm $wd/$target/tmp/target.$tag") if ! $debug;
+    
     foreach $subtag (@tag){
 	open($subtag, "> $wd/$target/tmp/first.$subtag.$tag");
     }
@@ -927,6 +943,7 @@ sub junctionFirstMapFunc{
     foreach $subtag (@tag){
 	close($subtag);
     }
+    system("rm $wd/$target/tmp/first.$tag") if ! $debug;
 }
 
 sub junctionSpecific{
@@ -1709,34 +1726,28 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 	opendir(DIR, "$wd/$target");
 	foreach $file (sort readdir(DIR)){
 	    next if $file !~ /^chr/;
-	    open(IN, "$target/$file") || die $die_comment;
-	    while(<IN>){
-		if ($target eq $ref){
-		    &log("count : $target : $file");
-		    chomp;
-		    $length = length($_);
-		    for($i = 0; $i < $length; $i++){
-			$seq = substr($_, $i, 20 + $tsd_size);
-			last if length($seq) != 20 + $tsd_size;
-			next if $seq =~ /N/;
-			$tag = substr($seq, 0, 5);
-			print $tag "$seq\n";
-		    }
-		    $complement = &complement($_);
-		    for($i = 0; $i < $length; $i++){
-			$seq = substr($complement, $i, 20 + $tsd_size);
-			last if length($seq) != 20 + $tsd_size;
-			next if $seq =~ /N/;
-			$tag = substr($seq, 0, 5);
-			print $tag "$seq\n";
-		    }
-		}
+	    open(CHR, "$target/$file") || die $die_comment;
+	    binmode(CHR);
+	    &log("count : $target : $file");
+	    $pos = 0;
+	    while(1){
+		seek(CHR, $pos++, 0);
+		read(CHR, $seq, 20 + $tsd_size);
+		last if length($seq) !=  20 + $tsd_size;
+		next if $seq =~ /N/;
+		$tag = substr($seq, 0, 5);
+		print $tag "$seq\n";
+		$seq = &complement($seq);
+		$tag = substr($seq, 0, 5);
+		print $tag "$seq\n";
 	    }
+	    close(CHR);
 	}
     }else{
 	opendir(DIR, "$wd/$target/read");
 	foreach $file (sort readdir(DIR)){
 	    next if $file =~ /^\./;
+	    &log("count : $target : $file");
 	    $file = "$wd/$target/read/" . $file;
 	    if ($file =~ /gz$/){
 		open(IN, "zcat $file |") || die $die_comment;;
