@@ -312,7 +312,6 @@ sub junctionCandidateFunc{
 	    @pos = split;
 	    $size = $pos[0] - $row[0];
 	    next if $size > 16;
-	    next if $size == 0;
 	    $size ++;
 	    if ($row[1] eq "h"){
 		if ($pos[1] eq "t"){
@@ -326,6 +325,7 @@ sub junctionCandidateFunc{
 			seek(CHR, $row[0] - 21, 0);
 			read(CHR, $wt, 40);
 			next if $wt =~ /N/;
+			$htsd = "-" if $htsd eq "";
 			print OUT "$row[2]\t$chrnum\t$row[0]\t$pos[0]\tah\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[5]
 $pos[2]\t$chrnum\t$row[0]\t$pos[0]\tat\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[5]
 $wt\t$chrnum\t$row[0]\t$pos[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[5]\n";
@@ -343,6 +343,7 @@ $wt\t$chrnum\t$row[0]\t$pos[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 			seek(CHR, $pos[0] - 21, 0);
 			read(CHR, $wt, 40);
 			next if $wt =~ /N/;
+			$htsd = "-" if $htsd eq "";
 			print OUT "$pos[2]\t$chrnum\t$pos[0]\t$row[0]\tah\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]
 $row[2]\t$chrnum\t$pos[0]\t$row[0]\tat\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]
 $wt\t$chrnum\t$pos[0]\t$row[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]\n";
@@ -364,7 +365,6 @@ $wt\t$chrnum\t$pos[0]\t$row[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 	    @pos = split;
 	    $size = $pos[0] - $row[0];
 	    next if $size > 16;
-	    next if $size == 0;
 	    $size ++;
 	    if ($row[1] eq "h"){
 		if ($pos[1] eq "t"){
@@ -378,6 +378,7 @@ $wt\t$chrnum\t$pos[0]\t$row[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 			seek(CHR, $row[0] - 21, 0);
 			read(CHR, $wt, 40);
 			next if $wt =~ /N/;
+			$htsd = "-" if $htsd eq "";
 			print OUT "$row[2]\t$chrnum\t$row[0]\t$pos[0]\tbh\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[5]
 $pos[2]\t$chrnum\t$row[0]\t$pos[0]\tbt\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[5]
 $wt\t$chrnum\t$row[0]\t$pos[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[5]\n";
@@ -395,6 +396,7 @@ $wt\t$chrnum\t$row[0]\t$pos[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 			seek(CHR, $pos[0] - 21, 0);
 			read(CHR, $wt, 40);
 			next if $wt =~ /N/;
+			$htsd = "-" if $htsd eq "";
 			print OUT "$pos[2]\t$chrnum\t$pos[0]\t$row[0]\tbh\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]
 $row[2]\t$chrnum\t$pos[0]\t$row[0]\tbt\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]
 $wt\t$chrnum\t$pos[0]\t$row[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]\n";
@@ -638,17 +640,19 @@ sub junctionCountCandidate{
 	    $tsd = $ht{"$head $tail"};
 	    @tsd = split("\ ", $tsd);
 	    @std = split('', $tsd[0]);
-	    $similar = 0;
-	    for($i = 1; $i <= $#tsd; $i++){
-		$hit = 0;
-		@tg = split('', $tsd[$i]);
-		for($j = 0; $j <= $#std; $j++){
-		    if ($std[$j] eq $tg[$j]){
-			$hit++;
+	    if ($#std != 0){
+		$similar = 0;
+		for($i = 1; $i <= $#tsd; $i++){
+		    $hit = 0;
+		    @tg = split('', $tsd[$i]);
+		    for($j = 0; $j <= $#std; $j++){
+			if ($std[$j] eq $tg[$j]){
+			    $hit++;
+			}
 		    }
-		}
-		if ($hit / $#std > 0.6){
-		    $similar++;
+		    if ($hit / $#std > 0.6){
+			$similar++;
+		    }
 		}
 	    }
 	    if ($similar / ($#tsd + 1) < 0.5){
