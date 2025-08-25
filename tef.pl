@@ -247,6 +247,7 @@ sub toVcf{
 	@row = split;
 	$rnuc = substr($row[7], length($row[7]) - 1, 1);
 	$tsd_size = length($row[8]);
+	$tsd_size = 0 if $row[8] eq "-";
 	if ($row[4] eq "f"){
 	    $direction = "forward";
 	}elsif($row[4] eq "r"){
@@ -304,6 +305,7 @@ sub junctionCandidateFunc{
     open(IN, "cat $wd/$a/tmp/sorted.$chr.f $wd/$a/tmp/sorted.$chr.r |");
     while(<IN>){
 	chomp;
+	@current = split;
 	push(@dat, $_);
 	next if $i++ < 40;
 	$dat = shift(@dat);
@@ -351,12 +353,26 @@ $wt\t$chrnum\t$pos[0]\t$row[0]\taw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 		}
 	    }
 	}
+	if ($prev[1] eq "h" and $current[1] eq "t" and $current[0] - $prev[0] == 1){
+	    $head = substr($prev[2], 20, 20);
+	    $hflanking = substr($prev[2], 0, 20);
+	    $tail = substr($current[2], 0, 20);
+	    $tflanking = substr($current[2], 20, 20);
+	    seek(CHR, $prev[0] - 21, 0);
+	    read(CHR, $wt, 40);
+	    next if $wt =~ /N/;
+	    print OUT "$prev[2]\t$chrnum\t$prev[0]\t$current[0]\tah\t$head\t$tail\t$hflanking\t-\t$tflanking\t$current[8]
+$current[2]\t$chrnum\t$prev[0]\t$current[0]\tat\t$head\t$tail\t$hflanking\t-\t$tflanking\t$current[8]
+$wt\t$chrnum\t$prev[0]\t$current[0]\taw\t$head\t$tail\t$hflanking\t-\t$tflanking\t$current[8]\n";
+	}
+	@prev = @current;
     }
     close(IN);
-    system("rm $wd/$a/tmp/sorted.$chr.f $wd/$a/tmp/sorted.$chr.r");
+    system("rm $wd/$a/tmp/sorted.$chr.f $wd/$a/tmp/sorted.$chr.r") if ! $debug;
     open(IN, "cat $wd/$b/tmp/sorted.$chr.f $wd/$b/tmp/sorted.$chr.r |");
     while(<IN>){
 	chomp;
+	@current = split;
 	push(@dat, $_);
 	next if $i++ < 40;
 	$dat = shift(@dat);
@@ -396,7 +412,6 @@ $wt\t$chrnum\t$row[0]\t$pos[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 			seek(CHR, $pos[0] - 21, 0);
 			read(CHR, $wt, 40);
 			next if $wt =~ /N/;
-			$htsd = "-" if $htsd eq "";
 			print OUT "$pos[2]\t$chrnum\t$pos[0]\t$row[0]\tbh\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]
 $row[2]\t$chrnum\t$pos[0]\t$row[0]\tbt\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]
 $wt\t$chrnum\t$pos[0]\t$row[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\t$row[8]\n";
@@ -404,9 +419,22 @@ $wt\t$chrnum\t$pos[0]\t$row[0]\tbw\t$head\t$tail\t$hflanking\t$htsd\t$tflanking\
 		}
 	    }
 	}
+	if ($prev[1] eq "h" and $current[1] eq "t" and $current[0] - $prev[0] == 1){
+	    $head = substr($prev[2], 20, 20);
+	    $hflanking = substr($prev[2], 0, 20);
+	    $tail = substr($current[2], 0, 20);
+	    $tflanking = substr($current[2], 20, 20);
+	    seek(CHR, $prev[0] - 21, 0);
+	    read(CHR, $wt, 40);
+	    next if $wt =~ /N/;
+	    print OUT "$prev[2]\t$chrnum\t$prev[0]\t$current[0]\tbh\t$head\t$tail\t$hflanking\t-\t$tflanking\t$current[8]
+$current[2]\t$chrnum\t$prev[0]\t$current[0]\tbt\t$head\t$tail\t$hflanking\t-\t$tflanking\t$current[8]
+$wt\t$chrnum\t$prev[0]\t$current[0]\tbw\t$head\t$tail\t$hflanking\t-\t$tflanking\t$current[8]\n";
+	}
+	@prev = @current;
     }
     close(IN);
-    open(IN, "$wd/$b/tmp/sorted.$chr.f $wd/$b/tmp/sorted.$chr.r");
+    system("rm $wd/$b/tmp/sorted.$chr.f $wd/$b/tmp/sorted.$chr.r") if ! $debug;
     close(OUT);
 }
 
@@ -795,11 +823,6 @@ sub junctionSortCandidateFunc{
 sub junctionCountCandidateFunc{
     $cmd = "bash -c 'join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 <(zcat $wd/$a/tmp/tmp.$tag.gz) <(zcat $wd/$a/count.20/$tag.gz) > $wd/$a/tmp/tmpa.$tag'";
     system($cmd);
-#    system("zcat $wd/$a/count.20/$tag.gz |join -a 1 -o 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 2.2 -e 0 $wd/$a/tmp/tmp.$tag - > $wd/$a/tmp/tmpa.$tag");
-
-#    $cmd = "bash -c 'join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 1.12 2.2 -e 0 <(zcat $wd/$a/tmp/tmpa.$tag.gz) <(zcat $wd/$b/count.20/$tag.gz) > $wd/$a/tmp/count.$tag'";
-    system($cmd);
-
     system("zcat $wd/$b/count.20/$tag.gz |join -a 1 -o 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10 1.11 1.12 2.2 -e 0 $wd/$a/tmp/tmpa.$tag - > $wd/$a/tmp/count.$tag");
     system("rm $wd/$a/tmp/tmp.$tag.gz $wd/$a/tmp/tmpa.$tag") if ! $debug;
 }
@@ -860,10 +883,10 @@ sub junctionSort{
 sub junctionSortFunc{
     $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.f > $wd/$target/tmp/sorted.$chr.f";
     system($cmd);
-    system("rm $wd/$target/tmp/$chr.f") if ! $debug;
+    system("rm $wd/$target/tmp/$chr.f");
     $cmd = "sort -k 1 -n -S 1M -T $sort_tmp $wd/$target/tmp/$chr.r > $wd/$target/tmp/sorted.$chr.r";
     system($cmd);
-    system("rm $wd/$target/tmp/$chr.r") if ! $debug;
+    system("rm $wd/$target/tmp/$chr.r");
 }
 
 sub junctionSecondMap{
@@ -2005,7 +2028,7 @@ sub mk20{
 	}
     }
     &join;
-    system("rm -r $wd/$ref/tmp")
+    system("rm -r $wd/$ref/tmp");
 }
 
 sub complement{
