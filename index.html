@@ -43,7 +43,7 @@ mv Download/SRR823377.fastq.gz SRR823377/read
 mv Download/SRR823382.fastq.gz SRR823382/read
 mkdir dmel
 cd dmel
-curl -O ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_r6.26_FB2019_01/fasta/dmel-all-chromosome-r6.26.fasta.gz
+curl -O https://flybase.org/genomes/Drosophila_melanogaster/dmel_r6.64_FB2025_03/fasta/dmel-all-chromosome-r6.64.fasta.gz
 cd ..
 perl tef.pl a=SRR823377,b=SRR823382,ref=dmel
 </code></pre>
