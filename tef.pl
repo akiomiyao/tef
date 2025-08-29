@@ -184,7 +184,12 @@ sub commonMethod{
     if ($ref ne ""){
 	&mkref;
     }
-
+    $org_tsd_size = $tsd_size;
+    $tsd_size = 20;
+    &count($a);
+    &count($b);
+    $tsd_size = $org_tsd_size;
+    
     my $fragment_length = 20 + $tsd_size;
     if (&fragmentLength($a) != $fragment_length){
 	&count($a);
@@ -1172,7 +1177,20 @@ sub mapQuery{
 }
 
 sub verify{
-    opendir(DIR, "$a/split");
+    if (! -e "$wd/$a/split"){
+	&log("split to subfiles : $a");
+	system("mkdir $wd/$a/split");
+	$cmd = "perl $0 target=$a,sub=split,a=$a &";
+	system($cmd);
+    }
+    if (! -e "$wd/$b/split"){
+	&log("split to subfiles : $b");
+	system("mkdir $wd/$b/split");
+	$cmd = "perl $0 target=$b,sub=split,a=$a &";
+	system($cmd);
+    }
+    &monitorWait;
+    opendir(DIR, "$wd/$a/split");
     foreach (sort readdir(DIR)){
 	if (/^split/){
 	    &monitorWait;
@@ -1182,7 +1200,7 @@ sub verify{
 	}
     }
     closedir(DIR);
-    opendir(DIR, "$b/split");
+    opendir(DIR, "$wd/$b/split");
     foreach (sort readdir(DIR)){
 	if (/^split/){
 	    &monitorWait;
@@ -1274,7 +1292,6 @@ sub verify{
 	}
     }
     &join;
-
     &log("verify : making verify file");
     open(IN, "cat $wd/$a/tmp/verify.count.* |");
     while(<IN>){
@@ -1722,7 +1739,6 @@ sub mergeFunc{
 sub count{
     my ($aa, $ab, $ac, $ad, $ae, $tag, $count, $lines, $seq, $file, $outfile, $count_file);
     my $target = shift;
-    &log("count : $target : making count.$tsd_size");
 
     $die_comment = "Can not open file.
 Please inclease limit for current session.
@@ -1730,7 +1746,10 @@ ulimit -n 4096
 e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 
     if (! -d "$wd/$target/count.$tsd_size"){
+	&log("count : $target : making count.$tsd_size");
 	system("mkdir $wd/$target/count.$tsd_size");
+    }else{
+	return;
     }
 
     if (! -d "$wd/$target/tmp"){
@@ -1871,7 +1890,46 @@ sub countFunc{
 sub countZipFunc{
     $cmd = "find $wd/$target/tmp/ -name \"$tag*.count.gz\" |sort -S 1M -T $wd/$target/tmp | xargs zcat | gzip > $wd/$target/count.$tsd_size/$tag.gz && find $wd/$target/tmp/ -name \"$tag*.count.gz\" | xargs rm";
     system($cmd);
+}
 
+sub split{
+    my $number = 1;
+    my $command = "cat";
+    opendir(DIR, "$wd/$target/read");
+    foreach (sort readdir(DIR)){
+	if (/gz$/){
+	    $command = "zcat";
+	    last;
+	}
+	if (/bz2$/){
+	    $command = "bzcat";
+	    last;
+	}
+	if (/xz$/){
+	    $command =  "xzcat";
+	    last;
+	}
+    }
+    close(DIR);
+    open(IN, "$command $wd/$target/read/* |");
+    open(OUT, "> $wd/$target/split/split.$number");
+    while(<IN>){
+	$count++;
+	if($count == 2){
+	    $lines++;
+	    print OUT;
+	}elsif($count == 4){
+	    $count = 0;
+	}
+	if ($lines == 1000000){
+	    close(OUT);
+	    $number++;
+	    open(OUT, "> $target/split/split.$number");
+	    $lines = 0;
+	}
+    }
+    close(IN);
+    close(OUT);
 }
 
 sub mkref{
