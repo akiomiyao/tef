@@ -127,7 +127,7 @@ if ($sub eq ""){
     $b = $ref if $b eq "";
     system("mkdir $wd/$b/tmp") if ! -e "$wd/$b/tmp";
     system("mkdir $wd/$a/child");
-    &log("job start");
+    &log("Job started.");
     &log("Argument : $ARGV[0]");
     &log("Method : $method");
     &commonMethod;
@@ -226,7 +226,7 @@ sub tsdMethod{
 
 sub toVcf{
     my ($tsd_size, $rnuc, $direction, $gt, $hcount, $tcount, $wcount, $total, $alt, $wt, $ad, $af);
-    &log("toVcf : output vcf format file : junction_method.$a.$b.vcf");
+    &log("toVcf: Generating the VCF format file: junction_method.$a.$b.vcf.");
     $timestamp = `date '+%Y-%m-%d %H:%M:%S %z'`;
     chomp($timestamp);
     $filedate = (split('\ ', $timestamp))[0];
@@ -452,7 +452,7 @@ sub junctionCountCandidate{
 	    push(@chr, $chr);
 	}
     }
-    &log("junctionCountCandidate: $a : sorting candidates");
+    &log("junctionCountCandidate: $a - Sorting candidate entries.");
     foreach $tag (@tag){
 	open($tag, "|gzip > $wd/$a/tmp/tmpa.$tag.gz ");
     }
@@ -499,9 +499,9 @@ sub junctionCountCandidate{
     }
     system("rm $wd/$a/tmp/candidate.*") if ! $debug;
 
-    &log("junctionCountCandidate : making junction_method.summary.$a.$b and junction_method.all.$a.$b");
+    &log("junctionCountCandidate: Generating junction_method.summary.$a.$b and junction_method.all.$a.$b.");
     foreach $chr (@chr){
-	&log("junctionCountCandidate : making junction_method.genotype.$a.$b.$chr");
+	&log("junctionCountCandidate: Generating junction_method.genotype.$a.$b.$chr.");
 	open(OUT, "| sort  -S 1M -T $sort_tmp > $wd/$a/tmp/junction_method.genotype.tmp.$chr");
 	open(IN, "cat $wd/$a/tmp/count.$chr.* | sort  -S 1M -T $sort_tmp | uniq |");
 	while(<IN>){
@@ -558,7 +558,7 @@ sub junctionCountCandidate{
     }
     system("rm $wd/$a/tmp/count.*") if ! $debug;
 
-    &log("junctionCountCandidate : making junction_method.all.$a.$b");
+    &log("junctionCountCandidate: Generating junction_method.all.$a.$b.");
     open(OUT, "> $wd/$a/junction_method.all.$a.$b");
     open(IN, "cat $wd/$a/tmp/junction_method.genotype.tmp.* |sort -S 1M -T $sort_tmp |");
     while(<IN>){
@@ -572,7 +572,7 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
-    &log("junctionCountCandidate : making telist");
+    &log("junctionCountCandidate: Generating the telist file.");
     open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/telist");
     open(IN, "$wd/$a/junction_method.all.$a.$b");
     while(<IN>){
@@ -583,7 +583,7 @@ sub junctionCountCandidate{
     close(IN);
     close(OUT);
 
-    &log("junctionCountCandidate : making telist.count");
+    &log("junctionCountCandidate: Generating the telist.count file.");
     open(OUT, "|uniq -c > $wd/$a/tmp/telist.count");
     open(IN, "$wd/$a/tmp/telist");
     while(<IN>){
@@ -694,7 +694,7 @@ sub junctionCountCandidate{
 	}
     }
 
-    &log("junctionCountCandidate : output junction_method.summary.$a.$b");
+    &log("junctionCountCandidate: Outputting junction_method.summary.$a.$b.");
     $acount = 0;
     $bcount = 0;
     $tea = "";
@@ -749,7 +749,7 @@ sub junctionCountCandidate{
     }
     close(OUT);
     
-    &log("junctionCountCandidate: making junction_method.genotype.$a.$b");
+    &log("junctionCountCandidate: Generating junction_method.genotype.$a.$b.");
     open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
     open(IN, "$wd/$a/junction_method.all.$a.$b");
     while(<IN>){
@@ -840,7 +840,7 @@ sub junctionTePosFunc{
 sub junctionSort{
     my $target = shift;
     my @chr;
-    &log("junctionSort : Sorting filtered data : $target");
+    &log("junctionSort: Sorting filtered data for $target.");
     opendir(REF, "$wd/$ref");
     foreach $file (sort readdir(REF)){
 	if ($file =~ /^chr/){
@@ -896,7 +896,7 @@ sub junctionSortFunc{
 
 sub junctionSecondMap{
     my $target = shift;
-    &log("junctionSecondMap : $target");
+    &log("junctionSecondMap: $target.");
     foreach $tag (@tag){
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionSecondMapFunc,tag=$tag,sort_tmp=$sort_tmp &";
@@ -926,7 +926,7 @@ sub junctionSecondMapFunc{
 
 sub junctionFirstMap{
     my $target = shift;
-    &log("junctionFirstMap : $target");
+    &log("junctionFirstMap: $target.");
     foreach $tag (@tag){
 	&monitorWait;
 	$cmd = "perl $0 a=$a,b=$b,ref=$ref,target=$target,sub=junctionFirstMapFunc,tag=$tag,sort_tmp=$sort_tmp &";
@@ -1178,13 +1178,13 @@ sub mapQuery{
 
 sub verify{
     if (! -e "$wd/$a/split"){
-	&log("split to subfiles : $a");
+	&log("Splitting $a into subfiles.");
 	system("mkdir $wd/$a/split");
 	$cmd = "perl $0 target=$a,sub=split,a=$a &";
 	system($cmd);
     }
     if (! -e "$wd/$b/split"){
-	&log("split to subfiles : $b");
+	&log("Splitting $b into subfiles.");
 	system("mkdir $wd/$b/split");
 	$cmd = "perl $0 target=$b,sub=split,a=$a &";
 	system($cmd);
@@ -1212,7 +1212,7 @@ sub verify{
     closedir(DIR);
     &join;
 
-    &log("verify : making query sequences");
+    &log("verify: Generating query sequences.");
     opendir(DIR, "$a/tmp");
     foreach (sort readdir(DIR)){
 	if (/verify.split/){
@@ -1292,7 +1292,7 @@ sub verify{
 	}
     }
     &join;
-    &log("verify : making verify file");
+    &log("verify: Creating the verification file.");
     open(IN, "cat $wd/$a/tmp/verify.count.* |");
     while(<IN>){
 	chomp;
@@ -1349,7 +1349,7 @@ sub verify{
     close(IN);
     close(OUT);
 
-    &log("verify : making summay file");
+    &log("verify: Generating the summary file.");
     if ($method eq "TSD"){
 	open(OUT, "> $wd/$a/tsd_method.summary.$a.$b.$tsd_size");
     }else{
@@ -1464,7 +1464,7 @@ sub verifyFunc{
 }
 
 sub tsdHeadTail{
-    &log("detect head and tail sequences");
+    &log("Detecting head and tail sequences.");
     foreach $nuc (@nuc){
 	$taga = $nuc;
 	foreach $nuc (@nuc){
@@ -1474,7 +1474,7 @@ sub tsdHeadTail{
 		$tag = $taga . $tagb . $tagc;
 		&monitorWait;
 		$cmd = "perl $0 a=$a,b=$b,sub=tsdHeadTailFunc,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
-		&log("tsdHeadTail : $tag : $tsd_size");
+		&log("tsdHeadTail: $tag, size $tsd_size.");
 		system($cmd);
 	    }
 	}
@@ -1533,7 +1533,7 @@ $row[1]\t$row[0]\t$row[2]\n";
     close(IN);
     close(OUT);
 
-    &log("join head.select tail.select : $a");
+    &log("Joining head.select and tail.select for $a.");
     open(OUT, "|sort -S 1M -T $sort_tmp > $wd/$a/tmp/pair");
     open(IN, "join $wd/$a/tmp/head.select $wd/$a/tmp/tail.select|");
     while(<IN>){
@@ -1543,7 +1543,7 @@ $row[1]\t$row[0]\t$row[2]\n";
     }
     close(IN);
     close(OUT);
-    &log("join head.select tail.select : $b");
+    &log("Joining head.select and tail.select for $b.");
     open(OUT, "|sort -S 1M -T $sort_tmp > $wd/$b/tmp/pair");
     open(IN, "join $wd/$b/tmp/head.select $wd/$b/tmp/tail.select|");
     while(<IN>){
@@ -1554,7 +1554,7 @@ $row[1]\t$row[0]\t$row[2]\n";
     close(IN);
     close(OUT);
     
-    &log("tsdHeadTail : tsd list : $a");
+    &log("tsdHeadTail: tsd list, size $a.");
     open(OUT, "> $wd/$a/tmp/tsd");
     open(IN, "$wd/$a/tmp/pair");
     while(<IN>){
@@ -1573,7 +1573,7 @@ $row[1]\t$row[0]\t$row[2]\n";
     close(IN);
     close(OUT);
     
-    &log("tsdHeadTail : tsd list : $b");
+    &log("tsdHeadTail: tsd list, size $b.");
     open(OUT, "> $wd/$b/tmp/tsd");
     open(IN, "$wd/$b/tmp/pair");
     while(<IN>){
@@ -1678,7 +1678,7 @@ sub fragmentLength{
 
 sub merge{
     my $target = shift;
-    &log("merge subfiles : $target");
+    &log("Merging subfiles for $target.");
     foreach $nuc (@nuc){
 	$taga = $nuc;
 	foreach $nuc (@nuc){
@@ -1746,7 +1746,7 @@ ulimit -n 4096
 e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 
     if (! -d "$wd/$target/count.$tsd_size"){
-	&log("count : $target : making count.$tsd_size");
+	&log("count: $target - Creating count.$tsd_size.");
 	system("mkdir $wd/$target/count.$tsd_size");
     }else{
 	return;
@@ -1774,7 +1774,7 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 	    next if $file !~ /^chr/;
 	    open(CHR, "$target/$file") || die $die_comment;
 	    binmode(CHR);
-	    &log("count : $target : $file");
+	    &log("count: $target - Processing $file.");
 	    $pos = 0;
 	    while(1){
 		seek(CHR, $pos++, 0);
@@ -1793,7 +1793,7 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 	opendir(DIR, "$wd/$target/read");
 	foreach $file (sort readdir(DIR)){
 	    next if $file =~ /^\./;
-	    &log("count : $target : $file");
+	    &log("count: $target - Processing $file.");
 	    $file = "$wd/$target/read/" . $file;
 	    if ($file =~ /gz$/){
 		open(IN, "zcat $file |") || die $die_comment;;
@@ -1809,7 +1809,7 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 		if ($count == 2){
 		    $lines ++;
 		    if ($lines % 1000000 == 0){
-			&log("count : $target : $lines reads have been selected");
+			&log("count: $target - $lines reads have been selected.");
 		    }
 		    chomp;
 		    $length = length($_);
@@ -1854,7 +1854,7 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 		foreach $ad (@nuc){
 		    foreach $ae (@nuc){
 			$tag = $aa . $ab. $ac . $ad . $ae;
-			&log("count : $target : counting $tag"); 
+			&log("count: $target - Processing counting $tag."); 
 			&monitorWait;
 			$cmd = "perl $0 a=$a,sub=countFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
 			system($cmd);
@@ -1868,7 +1868,7 @@ e.g. ulimit -n 4096 && perl tef.pl a=sampleA,b=sampleB,ref=TAIR10\n";
 	foreach $ab (@nuc){
 	    foreach $ac (@nuc){
 		$tag = $aa . $ab . $ac;
-		&log("count : $target : save $tag.gz into count.$tsd_size");
+		&log("count: $target - Processing save $tag.gz into count.$tsd_size.");
 		&monitorWait;
 		$cmd = "perl $0 a=$a,sub=countZipFunc,ref=$ref,target=$target,tag=$tag,tsd_size=$tsd_size,sort_tmp=$sort_tmp &";
 		system($cmd);
@@ -1947,7 +1947,7 @@ After saving the gz file, run $0 again with same options.
     }
     chdir "$wd/$ref";
     if (! -e "config"){
-	&log("making config file of in $ref directory.");
+	&log("Creating the configuration file in the $ref directory.");
 	$cmd = "zcat *.gz|grep '>' | sed  -e 's/^>//' > config.tmp";
 	system($cmd);
 	open(IN, "config.tmp");
@@ -1987,7 +1987,7 @@ After saving the gz file, run $0 again with same options.
 		$chr_name = $chr[$chr -1];
 		close(CHR);
 		if ($chr_name ne "NOP" and $chr_name ne ""){
-		    &log("Making chr$chr_name file");
+		    &log("Creating the chr$chr_name file.");
 		    $chr_name =~ s/^chr//i;
 		    open(CHR, "> chr$chr_name");
 		}
@@ -2058,11 +2058,11 @@ sub mk20mer{
 sub mk20{
     system("mkdir $wd/$ref/tmp") if ! -d "$wd/$ref/tmp";
     if (! -e "$wd/$ref/ref20.TTT.gz"){
-	&log("Making 20mer position file.");
+	&log("Generating the 20-mer position file.");
 	foreach $i (@chr){
 	    next if $i eq "NOP";
 	    &monitorWait;
-	    &log("Processing chr$i");
+	    &log("Processing chr$i.");
 	    $cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mk20mer,chr=$i,sort_tmp=$sort_tmp &";
 	    system($cmd);
 	}
