@@ -1,12 +1,59 @@
 # TEF
 ## Transposable Element Finder - Detection of active transposable elements from NGS data  
-Transposable Element Finder (TEF) is a program for detecting active transposable elements (TEs) by comparing two NGS sequences. TEF does not require prior TE information to detect transposition. Instead, it returns information about transposed transposon ends and their positions on the reference genome.  
+Transposable Element Finder (TEF) is a general‑purpose, organism‑agnostic program
+for detecting active transposable elements (TEs) from next‑generation sequencing (NGS) data
+by comparing two samples, or one sample and reference genome.  
 
-Active TEs transpose on the host genome. Because transposition events are independent, the inserted positions of TEs should differ between two samples. Short read sequences from both samples should contain different fusion fragments of genome and TE sequences. Most TEs create target site duplication (TSD) at the insertion position. TEF detects both ends of the TE and the insertion position on the genome using TSD information from NGS short reads.  
+TEF detects transposition events without requiring prior knowledge of TE families or repeat libraries.
+Instead, it identifies transposed transposon ends and their insertion positions
+on a reference genome using sequence features derived directly from short‑read data.
 
-TEF runs on Unix (Linux and FreeBSD) machines. 8 or 16GB of memory is sufficient. One or more TB of disk space (SSD is better) is required. To analyze NGS data of humans, 4 or more TB of disk space is recommended.  
+## Concept and Method
+Active transposable elements generate new insertions in the host genome.
+Because individual transposition events are independent, the insertion sites of active TEs
+differ between samples.  
 
-Web page : https://akiomiyao.github.io/tef/  
+Short‑read NGS data therefore contain fusion fragments combining genomic sequences
+and transposon ends at newly inserted loci.  
+
+Most transposable elements create target site duplications (TSDs) at the insertion site.
+TEF detects both 5′ and 3′ transposon ends and determines their genomic insertion positions
+by exploiting TSD information present in short‑read sequencing data.  
+
+This comparative strategy enables direct detection of ongoing or recent transposition activity
+without reliance on species‑specific TE annotations.
+
+## Scope and Applicability
+TEF is not species‑specific and can be applied to any organism
+for which NGS data from individuals, accessions,
+or samples are available.  
+
+Typical applications include:  
+- Detection of active transposable elements from paired NGS datasets  
+- Genome‑wide identification of TE insertion polymorphisms  
+- Comparative and population‑scale analysis of TE activity  
+- Pangenome studies and structural variation analyses  
+- Evolutionary and functional genomics across diverse species  
+
+## Example Application: Rice (Oryza sativa)
+TEF has been extensively applied to rice (Oryza sativa),
+where it was used to generate a genome‑wide map of transposable element insertion polymorphisms
+across multiple accessions.
+This rice dataset provides a well‑characterized reference example demonstrating
+how TEF can be used in pangenome analysis, evolutionary genomics,
+and studies of domestication and breeding.
+
+## System Requirements
+TEF runs on Unix‑like systems (Linux and FreeBSD).  
+
+Memory: 8–16 GB RAM (depending on dataset size)  
+Storage: 1 TB or more recommended (SSD strongly recommended)  
+
+For large genomes (e.g. human WGS data), 4 TB or more is recommended  
+
+## Resources
+Project web page:  
+https://akiomiyao.github.io/tef/
 
 ## Usage
 
