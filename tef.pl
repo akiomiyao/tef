@@ -444,7 +444,7 @@ $wt\t$chrnum\t$prev[0]\t$current[0]\tbw\t$head\t$tail\t$hflanking\t-\t$tflanking
 }
 
 sub junctionCountCandidate{
-    my (@chr, $chr);
+    my (@chr, $chr, $hcount, $tcount);
     opendir(DIR, "$wd/$ref");
     foreach (sort readdir(DIR)){
 	if (/^chr/){
@@ -567,7 +567,45 @@ sub junctionCountCandidate{
 	$row[1] =~ s/^0*// ;
 	$row[2] += 0;
 	$row[3] += 0;
-	print OUT join("\t", @row) . "\n";
+	if ($row[1] ne $pre){
+	    open(CHR, "$ref/chr$row[1]");
+	    binmode(CHR);
+	}
+	if ($row[4] eq "f"){
+	    seek(CHR, $row[2] - 20, 0);
+	    read(CHR, $hf, 20);
+	    seek(CHR, $row[2], 0);
+	    read(CHR, $hs, 20);
+	    $hcount = &matchCount($row[5], $hs);
+#       print "$row[7] $row[5]\n$hf $hs $hcount\n\n";
+	    seek(CHR, $row[3] - 21, 0);
+	    read(CHR, $ts, 20);
+	    seek(CHR, $row[3] - 1, 0);
+	    read(CHR, $tf, 20);
+	    $tcount = &matchCount($row[6], $ts);
+#       print "$row[6] $row[9]\n$ts $tf $tcount\n\n";
+	}else{
+	    seek(CHR, $row[2] - 1, 0);
+	    read(CHR, $hf, 20);
+	    $hf = &complement($hf);
+	    seek(CHR, $row[2] - 21, 0);
+	    read(CHR, $hs, 20);
+	    $hs = &complement($hs);
+	    $hcount = &matchCount($row[5], $hs);
+#       print "$row[7] $row[5]\n$hf $hs $hcount\n\n";
+	    seek(CHR, $row[3], 0);
+	    read(CHR, $ts, 20);
+	    $ts = &complement($ts);
+	    seek(CHR, $row[3] - 20, 0);
+	    read(CHR, $tf, 20);
+	    $tf = &complement($tf);
+	    $tcount = &matchCount($row[6], $ts);
+#       print "$row[6] $row[9]\n$ts $tf $tcount\n\n";
+	}
+	if ($hcount <= 7 and $tcount <= 7){
+	    print OUT join("\t", @row) . "\n";
+	}
+	$pre = $row[1];
     }
     close(IN);
     close(OUT);
@@ -818,6 +856,21 @@ $row[1]\ttail\n";
     }
     close(IN);
     close(OUT);
+}
+
+sub matchCount{
+    my ($ref, $target) = @_;
+    my ($seq, $i, $count, %ref, %target);
+    for ($i = 0; $i < 16; $i++){
+        $seq = substr($ref, $i, 4);
+        $ref{$seq} ++;
+        $tseq = substr($target, $i, 4);
+        $target{$tseq} ++;
+    }
+    foreach (keys %ref){
+        $count += $target{$_};
+    }
+    return $count;
 }
 
 sub junctionSortCandidateFunc{
