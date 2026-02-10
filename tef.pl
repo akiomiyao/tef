@@ -18,21 +18,25 @@ tef.pl - Transposable Element Finder
 A program for detecting active transposable elements from NGS reads.
 
 Usage Examples:
- perl tef.pl a=ttm2,ref=IRGSP1.0
- perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
- perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
- ulimit -n 4096 && perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,max_process=8,sort_tmp=/mnt/ssd/tmp
+ ulimit -n 4096 && perl tef.pl a=ttm2,ref=IRGSP1.0
+ ulimit -n 4096 && perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0
+ ulimit -n 4096 && perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7
+ ulimit -n 4096 && perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,debug=yes,max_process=8,sort_tmp=/mnt/ssd/tmp,align_limit=90
 
-Update: With the new feature, you can now omit the b parameter. When b is omitted, TEF
- will use the reference genome specified by ref as the second set of data. This means
- TEF will compare the NGS reads specified by a directly with the reference genome
- to detect transpositions.
+Update: 
+ - You can now omit the b parameter. When b is omitted, TEF will use the reference
+   genome specified by ref as the second set of data. This means TEF will compare
+   the NGS reads specified by a directly with the reference genome to detect transpositions.
+ - TEF now outputs read alignments to the genomic sequences corresponding to transposition
+   sites derived from the detected genotypes.
+   Only cases in which both head- and tail-side alignments of a TE insertion are detected
+   are written to junction_method.verify.
 
-Requirements: tef.pl requires a pair of NGS reads from different conditions. 
+Requirements: TEF requires NGS reads from at least one condition (a).
+ Optionally, a second condition (b) can be provided for comparison.
+ If b is omitted, the reference genome specified by ref is used instead.
  For example, ttm2 and ttm5 are from regenerated rice individuals from callus.
  Save FASTQ files into the ttm2/read and ttm5/read directories.
- If NGS reads specified by 'b' are omitted, tef.pl compares the reads specified
- by 'a' with the reference genome sequence.
 
 Options: Options should be specified with 'name=value' separated by a comma WITHOUT spaces.
  The default method is the junction method.
@@ -42,20 +46,56 @@ Reference Genome: If ref is specified, a gzipped FASTA file of the reference gen
  should be saved into the directory specified by ref. On the first run, a config
  file for the reference will be created in the ref directory.
  The config file contains a list of sequence names. If you do not want to include
- unassigned contigs, change the name to NOP, save the config file,
- and run tef.pl again.
+ unassigned contigs, change the name to NOP, save the config file, and run tef.pl again.
 
-Detection Methods: If ref is not specified, specific transpositions without
+Detection Methods:
+
+TEF supports two detection methods:
+
+ - Junction method (default):
+   Detects transposition sites using junction reads.
+   Requires a reference genome (ref).
+
+ - TSD method:
+   Detects transpositions based on target site duplications.
+   Can be used with or without a reference genome.
+
+ If ref is not specified, specific transpositions without
  insertion positions on the genome will be detected.
  This function works only with the TSD method.
+ 
  If tsd_size is not specified, detection will proceed using the junction method.
  If th (threshold) for the TSD method is not specified, the default value of 0.2 will
  be used. If a lot of noise is detected, try again with a higher value, e.g., th=0.7.
 
+Output Files:
+ alignment.a.b
+ count.20/
+ junction_method.a.b.vcf
+ junction_method.genotype.a.b
+ junction_method.log
+ junction_method.summary.a.b
+ junction_method.tepos.a.b
+ junction_method.verify.a.b
+ read/
+ reads_containing_junction.a.b
+
+Result files are output into a directory specified by 'a' and 'b'.
+Files in the count.20 directory contain count data used to detect junctions.
+If additional analysis is required, keep this directory.
+
+The summary, tepos, verify, and VCF files are generated from the genotype file.
+The reads_containing_junction and alignment files are generated to create the verify file.
+
+The verify file contains insertion events supported by both head-
+and tail-side alignments of the transposable element.
+
+Result files for the TSD method are the same as those for the junction method,
+except that file names begin with tsd_method.
+
 Temporary Directories: Because temporary directories in targets grow to a huge size,
  they will be deleted at the end of the analysis. If debug=yes is added to the
- options, temporary directories will not be deleted. Additionally, to save disk
- space, the compress=yes option can be used to compress temporary files.
+ options, temporary directories will not be deleted. 
  sort_tmp=directory_for_sort is the option for specifying a temporary directory
  for the sort command. If sort_tmp is specified to a fast disk, e.g., SSD,
  sorting will be accelerated. Setting all directories on an SSD disk is recommended.
@@ -103,6 +143,8 @@ foreach (split(',', $ARGV[0])){
     $$name = $val;
 }
 
+$align_limit = 90 if $align_limit eq "";
+
 open(IN, "/proc/cpuinfo");
 while(<IN>){
     $processor ++  if /processor/;
@@ -117,8 +159,10 @@ $th = 0.2 if $th eq "";
 $tsd_size = 20 if $tsd_size eq "";
 if ($tsd_size == 20){
     $method = "Junction";
+    $method_name = "junction_method";
 }else{
     $method = "TSD";
+    $method_name = "tsd_method_" . $tsd_size;
 }
 
 if ($sub eq ""){
@@ -137,8 +181,9 @@ if ($sub eq ""){
 	&tsdMethod;
     }
     &join;
-    system("rm -r $wd/$a/child $wd/$a/tmp $wd/$b/tmp") if ! $debug;
-    system("rm $wd/$a/junction_method.all.$a.$b") if ! $debug;
+    system("rm -r $wd/$a/child");
+    system("rm -r $wd/$a/tmp $wd/$b/tmp") if ! $debug;
+    system("rm $wd/$a/$method_name.all.$a.$b") if ! $debug;
     $end_time = time;
     $elapsed_time = $end_time - $start_time;
     $hour = int($elapsed_time / 3600);
@@ -214,6 +259,7 @@ sub junctionMethod{
     &junctionCandidate;
     &junctionCountCandidate;
     &toVcf;
+    &mkAlignment;
 }
 
 sub tsdMethod{
@@ -221,18 +267,189 @@ sub tsdMethod{
     &verify;
     if ($ref ne ""){
 	&map;
+	&mkAlignment;
     }
+}
+
+sub mkAlignment{
+    my ($junction, %junction, $hj, $tj, %hj, %tj, $count, $name, $length, $lines, %genotype, $key);
+    open(IN, "$wd/$a/$method_name.genotype.$a.$b");
+    while(<IN>){
+	chomp;
+	@row = split;
+	$hj = $row[7] . $row[5];
+	$tj = $row[6] . $row[9];
+	$key = "$row[1] $row[2] $row[3] $row[4]";
+	$hj{$key} = $row[7] . $row[5];
+	$tj{$key} = $row[6] . $row[9];
+	$genotype{$key} = $_;
+	$junction{$hj} = 1;
+	$junction{$tj} = 1;
+    }
+
+    if ($tsd_size == 20){
+	open(OUT, "> $wd/$a/reads_containing_junction.$a.$b");
+    }else{
+	my $fname = "$wd/$a/reads_containing_junction_" . $tsd_size . ".$a.$b";
+	open(OUT, "> $fname");
+    }
+    opendir(DIR, "$wd/$a/read");
+    foreach $file (sort readdir(DIR)){
+	next if $file =~ /^\./;
+	&log("mkAlignment: $a - Processing $file.");
+	$file = "$wd/$a/read/" . $file;
+	if ($file =~ /gz$/){
+	    open(IN, "zcat $file |") || die $die_comment;;
+	}elsif ($file =~ /bz2$/){
+	    open(IN, "bzcat $file |") || die $die_comment;;
+	}elsif ($file =~ /xz$/){
+	    open(IN, "xzcat $file |") || die $die_comment;;
+	}else{
+	    open(IN, $file) || die $die_comment;
+	}
+	while(<IN>){
+	    $count = 0 if $count++ == 3;
+	    if ($count == 1){
+		$name = (split(' ', $_))[0];
+	    }elsif ($count == 2){
+		$lines ++;
+		if ($lines % 1000000 == 0){
+		    &log("mkAlignment: $a - $lines reads have been scanned.");
+		}
+		chomp;
+		$length = length($_);
+		for($i = 0; $i <= $length - 40; $i++){
+		    my $leaf = substr($_, $i, 40);
+		    if ($junction{$leaf}){
+			print OUT "$leaf $_ $name\n";
+		    }
+		}
+		my $complement = &complement($_);
+		for($i = 0; $i <= $length - 40; $i++){
+		    my $leaf = substr($complement, $i, 40);
+		    if ($junction{$leaf}){
+			print OUT "$leaf $complement $name\n";
+		    }
+		}
+	    }
+	}
+    }
+    closedir(DIR);
+    close(OUT);
+
+    if ($tsd_size == 20){
+	open(OUT, "> $wd/$a/alignment.$a.$b");
+    }else{
+	my $fname = "$wd/$a/alignment_" . $tsd_size . ".$a.$b";
+	open(OUT, "> $fname");
+    }
+    open(VER, "> $wd/$a/$method_name.verify.$a.$b");
+    for ($i = 0; $i < $length; $i++){
+	$ref_space .= " ";
+    }
+    foreach (sort keys %hj){
+	my $hverify = 0;
+	my $tverify = 0;
+	($chr, $hpos, $tpos, $direction) = split;
+	$key = $_;
+	$hj = $hj{$_};
+	$tj = $tj{$_};
+	open(CHR, "TAIR10/chr$chr");
+	binmode(CHR);
+	if ($direction eq "f"){
+	    seek(CHR, $hpos - $length - 1, 0);
+	    read(CHR, $hchr, $length * 2);
+	    seek(CHR, $tpos - $length - 1, 0);
+	    read(CHR, $tchr, $length * 2);
+	    $offset = $length - 19;
+	    $toffset = $length - 20;
+	}else{
+	    seek(CHR, $hpos - $length, 0);
+	    read(CHR, $hchr, $length * 2);
+	    seek(CHR, $tpos - $length, 0);
+	    read(CHR, $tchr, $length * 2);
+	    $offset = $length - 19;
+	    $toffset = $length -20;
+	    $hchr = complement($hchr);
+	    $tchr = complement($tchr);
+	}
+	print OUT "$chr $hpos $tpos $direction $hj head_junction\n$ref_space$hpos\n$ref_space|\n$hchr\n";
+	open(IN, "grep $hj $wd/$a/reads_containing_junction.$a.$b|");
+	while(<IN>){
+	    $out = "";
+	    @row = split;
+	    $pos = index($row[1], $hj);
+	    $hflanking = substr($row[1], 0, $pos);
+	    $hgenome = substr($hchr, $offset - $pos, length($hflanking));
+	    $score = &score($hgenome, $hflanking);
+	    if ($pos > -1){
+		for ($i =0; $i < $offset - $pos; $i++){
+		    $out .= " ";
+		}
+		$out .= "$row[1] $row[2]";
+		if ($score >= $align_limit){
+		    print OUT "$out\n";
+		    $hverify ++;
+		}
+#		print "$out\n";
+	    }
+	}
+	print OUT "
+$chr $hpos $tpos $direction $tj tail_junction\n$ref_space$tpos\n$ref_space|\n$tchr\n";
+	open(IN, "grep $tj $wd/$a/reads_containing_junction.$a.$b|");
+	while(<IN>){
+	    $out = "";
+	    @row = split;
+	    $pos = index($row[1], $tj);
+	    $tflanking = substr($row[1], $pos + 20);
+	    $tgenome = substr($tchr, $toffset + 20, length($tflanking));
+	    $score = &score($tgenome, $tflanking);
+	    if ($pos > -1){
+		for ($i =0; $i < $toffset - $pos; $i++){
+		    $out .= " ";
+		}
+		$out .= "$row[1] $row[2]";
+		if ($score >= $align_limit){
+		    print OUT "$out\n";
+		    $tverify ++;
+		}
+#		print "$out\n";
+	    }
+	}
+	print OUT "----------\n";
+	if ($hverify > 0 and $tverify > 0){
+	    print VER "$genotype{$key}\t$hverify\t$tverify\n";
+	}
+    }
+    close(OUT);
+    close(VER);
+}
+
+sub score{
+    my ($sa, $sb)  = @_;
+    my $length = length($sa);
+    return 0 if $length == 0;
+    my @sa = split('', $sa);
+    my @sb = split('', $sb);
+    my ($hit, $i, $percent);
+    for($i = 0; $i < $length; $i++){
+	if ($sa[$i] eq $sb[$i]){
+	    $hit++;
+	}
+    }
+    my $percent = int ($hit * 100 /$length);
+    return $percent;
 }
 
 sub toVcf{
     my ($tsd_size, $rnuc, $direction, $gt, $hcount, $tcount, $wcount, $total, $alt, $wt, $ad, $af);
-    &log("toVcf: Generating the VCF format file: junction_method.$a.$b.vcf.");
+    &log("toVcf: Generating the VCF format file: $method_name.$a.$b.vcf.");
     $timestamp = `date '+%Y-%m-%d %H:%M:%S %z'`;
     chomp($timestamp);
     $filedate = (split('\ ', $timestamp))[0];
     $filedate =~ y/-//d;
-    open(IN, "$wd/$a/junction_method.genotype.$a.$b");
-    open(OUT, "> $wd/$a/junction_method.$a.$b.vcf");
+    open(IN, "$wd/$a/$method_name.genotype.$a.$b");
+    open(OUT, "> $wd/$a/$method_name.$a.$b.vcf");
     print OUT "##fileformat=VCFv4.3
 ##fileDate=$filedate
 ##source=<PROGRAM=tif.pl,target=$target,reference=$ref>
@@ -499,10 +716,10 @@ sub junctionCountCandidate{
     }
     system("rm $wd/$a/tmp/candidate.*") if ! $debug;
 
-    &log("junctionCountCandidate: Generating junction_method.summary.$a.$b and junction_method.all.$a.$b.");
+    &log("junctionCountCandidate: Generating $method_name.summary.$a.$b and $method_name.all.$a.$b.");
     foreach $chr (@chr){
-	&log("junctionCountCandidate: Generating junction_method.genotype.$a.$b.$chr.");
-	open(OUT, "| sort  -S 1M -T $sort_tmp > $wd/$a/tmp/junction_method.genotype.tmp.$chr");
+	&log("junctionCountCandidate: Generating $method_name.genotype.$a.$b.$chr.");
+	open(OUT, "| sort  -S 1M -T $sort_tmp > $wd/$a/tmp/$method_name.genotype.tmp.$chr");
 	open(IN, "cat $wd/$a/tmp/count.$chr.* | sort  -S 1M -T $sort_tmp | uniq |");
 	while(<IN>){
 	    chomp;
@@ -558,9 +775,9 @@ sub junctionCountCandidate{
     }
     system("rm $wd/$a/tmp/count.*") if ! $debug;
 
-    &log("junctionCountCandidate: Generating junction_method.all.$a.$b.");
-    open(OUT, "> $wd/$a/junction_method.all.$a.$b");
-    open(IN, "cat $wd/$a/tmp/junction_method.genotype.tmp.* |sort -S 1M -T $sort_tmp |");
+    &log("junctionCountCandidate: Generating $method_name.all.$a.$b.");
+    open(OUT, "> $wd/$a/$method_name.all.$a.$b");
+    open(IN, "cat $wd/$a/tmp/$method_name.genotype.tmp.* |sort -S 1M -T $sort_tmp |");
     while(<IN>){
 	chomp;
 	@row = split;
@@ -612,7 +829,7 @@ sub junctionCountCandidate{
 
     &log("junctionCountCandidate: Generating the telist file.");
     open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/telist");
-    open(IN, "$wd/$a/junction_method.all.$a.$b");
+    open(IN, "$wd/$a/$method_name.all.$a.$b");
     while(<IN>){
 	@row = split;
 	next if length($row[8]) > 10;
@@ -732,12 +949,12 @@ sub junctionCountCandidate{
 	}
     }
 
-    &log("junctionCountCandidate: Outputting junction_method.summary.$a.$b.");
+    &log("junctionCountCandidate: Outputting $method_name.summary.$a.$b.");
     $acount = 0;
     $bcount = 0;
     $tea = "";
     $teb = "";
-    open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
+    open(OUT, "> $wd/$a/$method_name.summary.$a.$b");
     open(IN, "$wd/$a/tmp/telist");
     while(<IN>){
 	chomp;
@@ -787,9 +1004,9 @@ sub junctionCountCandidate{
     }
     close(OUT);
     
-    &log("junctionCountCandidate: Generating junction_method.genotype.$a.$b.");
-    open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
-    open(IN, "$wd/$a/junction_method.all.$a.$b");
+    &log("junctionCountCandidate: Generating $method_name.genotype.$a.$b.");
+    open(OUT, "> $wd/$a/$method_name.genotype.$a.$b");
+    open(IN, "$wd/$a/$method_name.all.$a.$b");
     while(<IN>){
 	@row = split;
 	if ($final{$row[5]} eq $row[6]){
@@ -800,7 +1017,7 @@ sub junctionCountCandidate{
     close(OUT);
 
     open(OUT, "|sort  -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/te.list");
-    open(IN, "$wd/$a/junction_method.summary.$a.$b");
+    open(IN, "$wd/$a/$method_name.summary.$a.$b");
     while(<IN>){
 	@row = split;
 	next if $row[0] eq "Head";
@@ -845,7 +1062,7 @@ $row[1]\ttail\n";
     close(IN);
     close(OUT);
 
-    open(OUT, "> $wd/$a/junction_method.tepos.$a.$b");
+    open(OUT, "> $wd/$a/$method_name.tepos.$a.$b");
     open(IN, "$wd/$a/tmp/tmp.tepos");
     while(<IN>){
 	chomp;
@@ -860,7 +1077,7 @@ $row[1]\ttail\n";
 
 sub matchCount{
     my ($ref, $target) = @_;
-    my ($seq, $i, $count, %ref, %target);
+    my ($seq, $tseq, $i, $count, %ref, %target);
     for ($i = 0; $i < 16; $i++){
         $seq = substr($ref, $i, 4);
         $ref{$seq} ++;
@@ -1077,11 +1294,7 @@ sub map{
     foreach $tag (@tag){
 	open($tag, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/mapquery.$tag")
     }
-    if ($method eq "TSD"){
-	open(IN, "$wd/$a/tsd_method.verify.$a.$b.$tsd_size");
-    }else{
-	open(IN, "$wd/$a/junction_method.verify.$a.$b");
-    }
+    open(IN, "$wd/$a/$method_name.verify.$a.$b");
     while(<IN>){
 	@row = split;
 	$tag = substr($row[0], 0, 3);
@@ -1118,11 +1331,7 @@ sub map{
 	$s->{map}{$row[0]}{$row[1]}{$row[2]} = $row[3];
     }
     close(IN);
-    if ($method eq "TSD"){
-	open(IN, "$wd/$a/tsd_method.verify.$a.$b.$tsd_size");
-    }else{
-	open(IN, "$wd/$a/junction_method.verify.$a.$b");
-    }
+    open(IN, "$wd/$a/$method_name.verify.$a.$b");
     open(OUT, "| sort -S 1M -T $sort_tmp > $wd/$a/tmp/mapped.tmp");
     while(<IN>){
 	chomp;
@@ -1174,11 +1383,7 @@ sub map{
     }
     close(IN);
     close(OUT);
-    if ($method eq "TSD"){
-	open(OUT, "> $wd/$a/tsd_method.genotype.$a.$b.$tsd_size");
-    }else{
-	open(OUT, "> $wd/$a/junction_method.genotype.$a.$b");
-    }
+    open(OUT, "> $wd/$a/$method_name.genotype.$a.$b");
     open(IN, "$wd/$a/tmp/mapped.tmp");
     while(<IN>){
 	chomp;
@@ -1208,11 +1413,7 @@ sub map{
     }
     close(OUT);
 
-    if ($method eq "TSD"){
-	open(OUT, "> $wd/$a/tsd_method.tepos.$a.$b.$tsd_size");
-    }else{
-	open(OUT, "> $wd/$a/junction_method.tepos.$a.$b");
-    }
+    open(OUT, "> $wd/$a/$method_name.tepos.$a.$b");
     open(IN, "$wd/$a/tmp/temap");
     while(<IN>){
 	@row = split;
@@ -1293,7 +1494,7 @@ sub verify{
 
     open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tmp/query");
     if ($method eq "TSD"){
-	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+	open(IN, "$wd/$a/$method_name.pair.$a.$b.$tsd_size");
     }else{
 	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
     }
@@ -1361,11 +1562,11 @@ sub verify{
     }
 
     if ($method eq "TSD"){
-	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
-	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/tsd_method.verify.$a.$b.$tsd_size");
+	open(IN, "$wd/$a/$method_name.pair.$a.$b.$tsd_size");
+	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/$method_name.verify.$a.$b.$tsd_size");
     }else{
 	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
-	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/junction_method.verify.$a.$b");
+	open(OUT, "|sort -S 1M -T $sort_tmp |uniq > $wd/$a/$method_name.verify.$a.$b");
     }
     while(<IN>){
 	next if /ACACACACACAC/;
@@ -1403,11 +1604,7 @@ sub verify{
     close(OUT);
 
     &log("verify: Generating the summary file.");
-    if ($method eq "TSD"){
-	open(OUT, "> $wd/$a/tsd_method.summary.$a.$b.$tsd_size");
-    }else{
-	open(OUT, "> $wd/$a/junction_method.summary.$a.$b");
-    }
+    open(OUT, "> $wd/$a/$method_name.summary.$a.$b");
     print OUT "Head\tTail\t$a\t$b\n";
     foreach $te (sort keys %{$s->{tecount}}){
 	$totala = $s->{tecount}{$te}{$a};
@@ -1436,7 +1633,7 @@ sub countQuery{
 sub verifyFunc{
     my (@row, $tsdsize, %seq, %tsdsize, $length, $seq, $tsd, $upstream, $downstream);
     if ($method eq "TSD"){
-	open(IN, "$wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+	open(IN, "$wd/$a/$method_name.pair.$a.$b.$tsd_size");
     }else{
 	open(IN, "cat $wd/$a/tmp/te.candidate $wd/$b/tmp/te.candidate |");
     }
@@ -1644,7 +1841,7 @@ $row[1]\t$row[0]\t$row[2]\n";
     print OUT "$prev\t$tsd" . "ptsd" if $tsd ne "";
     close(IN);
     close(OUT);
-    open(OUT, "> $wd/$a/tsd_method.pair.$a.$b.$tsd_size");
+    open(OUT, "> $wd/$a/$method_name.pair.$a.$b.$tsd_size");
     open(IN, "join $wd/$a/tmp/tsd $wd/$b/tmp/tsd|");
     while(<IN>){
 	chomp;
@@ -2250,11 +2447,7 @@ sub log{
     $message =~ s/\&$//;
     $message = "$now : $message\n";
     $| = 1;
-    if ($tsd_size == 20){
-	open(LOG, ">> $wd/$a/junction_method.log");
-    }else{
-	open(LOG, ">> $wd/$a/tsd_method.log.$tsd_size");
-    }
+    open(LOG, ">> $wd/$a/$method_name.log");
     flock(LOG,2);
     print $message;
     print LOG $message;
