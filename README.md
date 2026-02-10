@@ -23,6 +23,35 @@ by exploiting TSD information present in short‑read sequencing data.
 This comparative strategy enables direct detection of ongoing or recent transposition activity
 without reliance on species‑specific TE annotations.
 
+## Detection Methods
+
+TEF supports two detection methods.
+
+### Junction method (default)
+
+- Detects transposition sites using junction reads.
+- Requires a reference genome.
+- Outputs genomic insertion positions.
+- Generates verification files based on head- and tail-side alignments.
+
+### TSD method
+
+- Detects transpositions based on target site duplications (TSDs).
+- Can be used with or without a reference genome.
+- When no reference genome is provided, insertion positions on the genome
+  are not determined.
+
+Result files for the TSD method are the same as those for the junction method,
+except that file names begin with `tsd_method`.
+### Verification of insertion events
+
+TEF extracts candidate insertion events based on junction reads and generates genotypes for each event.
+From these genotypes, TEF performs read alignments to the genomic sequences
+corresponding to the predicted transposition sites.
+
+Only insertion events supported by both head- and tail-side alignments of the
+transposable element are written to `junction_method.verify.a.b`.
+
 ## Scope and Applicability
 TEF is not species‑specific and can be applied to any organism
 for which NGS data from individuals, accessions,
@@ -33,7 +62,7 @@ Typical applications include:
 - Genome‑wide identification of TE insertion polymorphisms  
 - Comparative and population‑scale analysis of TE activity  
 - Pangenome studies and structural variation analyses  
-- Evolutionary and functional genomics across diverse species  
+- Evolutionary and functional genomics across diverse species
 
 ## Example Application: Rice (Oryza sativa)
 TEF has been extensively applied to rice (Oryza sativa),
@@ -91,6 +120,53 @@ For Linux, the max_process is limited to the number of CPU cores. For other OS, 
 perl tef.pl a=ttm2,b=ttm5,ref=IRGSP1.0,tsd_size=5,th=0.7,option=clear,sort_tmp=/mnt/ssd/tmp,max_process=8
 ```
 Additionally, if an error occurs and the program stops, execute ulimit -n 4096 before running this program. This will increase the limit on the number of files that can be opened at once.
+
+## Input Files
+
+- `read/`  
+  Input FASTQ files (uncompressed or compressed: `.gz`, `.bz2`, `.xz`).  
+  Both paired-end and single-end reads are supported.
+  
+## Output Files (Junction Method)
+
+Result files are output into a directory specified by `a` and `b`.
+
+### Main files
+
+- `junction_method.genotype.a.b`  
+  Intermediate genotype file. This is the central file for the junction method,
+  and most other result files are generated from this file.
+
+- `junction_method.summary.a.b`  
+  Summary of detected transposition events.
+
+- `junction_method.tepos.a.b`  
+  Estimated genomic positions of transposable element insertions.
+
+- `junction_method.a.b.vcf`  
+  Detected insertion events in VCF format.
+
+- `junction_method.verify.a.b`  
+  Verified insertion events supported by both head- and tail-side alignments
+  of the transposable element.  
+  This file is intended for manual or downstream verification of insertion events.
+
+- `junction_method.log`  
+  Log file for the junction method.
+
+### Supporting files and directories
+
+- `count.20/`  
+  Count data used to detect junctions.
+  If additional analysis is required, keep this directory.
+
+- `reads_containing_junction.a.b`  
+  Reads containing junction sequences used for verification.
+
+- `alignment.a.b`  
+  Read alignment files generated to create the verify file.
+
+
 
 ## Getting tef.pl
 Clone the repository:
@@ -169,6 +245,7 @@ perl sliceRef.pl IRGSP1.0/chr7 26694795 26698908
 The chromosome sequence should be the output of tef.pl.
 
 ## Update
+- 1.6 TEF now outputs read alignments to the genomic sequences corresponding to transposition sites derived from the detected genotypes. 2026-02-10
 - 1.5 Now possible to detect transpositions by comparing a single set of read data with a reference genome sequence. 2025-04-23
 - 1.4 Improved accuracy of TE detection. 2023-12-14
 - 1.3 Insertion direction of TE is shown with same format of version 1.0. 2023-10-09
