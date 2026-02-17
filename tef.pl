@@ -354,7 +354,7 @@ sub mkAlignment{
 	$key = $_;
 	$hj = $hj{$_};
 	$tj = $tj{$_};
-	open(CHR, "TAIR10/chr$chr");
+	open(CHR, "$wd/$ref/chr$chr");
 	binmode(CHR);
 	if ($direction eq "f"){
 	    seek(CHR, $hpos - $length - 1, 0);
