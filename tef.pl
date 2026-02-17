@@ -277,6 +277,7 @@ sub mkAlignment{
     while(<IN>){
 	chomp;
 	@row = split;
+	next if $row[0] ne $a;
 	$hj = $row[7] . $row[5];
 	$tj = $row[6] . $row[9];
 	$key = "$row[1] $row[2] $row[3] $row[4]";
@@ -286,7 +287,6 @@ sub mkAlignment{
 	$junction{$hj} = 1;
 	$junction{$tj} = 1;
     }
-
     if ($tsd_size == 20){
 	open(OUT, "> $wd/$a/reads_containing_junction.$a.$b");
     }else{
@@ -336,7 +336,6 @@ sub mkAlignment{
     }
     closedir(DIR);
     close(OUT);
-
     if ($tsd_size == 20){
 	open(OUT, "> $wd/$a/alignment.$a.$b");
     }else{
