@@ -64,8 +64,8 @@ Typical applications include:
 - Pangenome studies and structural variation analyses  
 - Evolutionary and functional genomics across diverse species
 
-## Example Application: Rice (Oryza sativa)
-TEF has been extensively applied to rice (Oryza sativa),
+## Example Application: Rice (*Oryza sativa*)
+TEF has been extensively applied to rice (*Oryza sativa*),
 where it was used to generate a genome‑wide map of transposable element insertion polymorphisms
 across multiple accessions.
 This rice dataset provides a well‑characterized reference example demonstrating
@@ -78,7 +78,7 @@ TEF runs on Unix‑like systems (Linux and FreeBSD).
 Memory: 8–16 GB RAM (depending on dataset size)  
 Storage: 1 TB or more recommended (SSD strongly recommended)  
 
-For large genomes (e.g. human WGS data), 4 TB or more is recommended  
+For large genomes (*e.g.* human WGS data), 4 TB or more is recommended  
 
 ## Resources
 Project web page:  
@@ -258,7 +258,7 @@ Miyao, A., Yamanouchi, U. Transposable element finder (TEF): finding active tran
 
 ## Lisence
 Free of use for academics. For non-academics, license by NARO (same as PED) is required.  
-Patent JP 7573862.  
+Patent JP 7573862 and 7819961.  
 
 ## Author 
 Akio Miyao miyao.akio700@naro.go.jp
