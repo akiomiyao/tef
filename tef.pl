@@ -272,6 +272,192 @@ sub tsdMethod{
 }
 
 sub mkAlignment{
+    my ($junction, %junction, $hj, $tj, %hj, %tj, $count, $name, $length, $lines, %genotype, $key, $fname, $oname, $ref_space, $hverify, $tverify, $offset, $toffset, $hchr, $tchr, $out, $pos, $hflanking, $hgenome, $score, $tflanking, $tgenome, %verify);
+    open(IN, "$wd/$a/$method_name.genotype.$a.$b");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if $row[0] ne $a;
+	$hj = $row[7] . $row[5];
+	$tj = $row[6] . $row[9];
+	$key = "$row[1] $row[2] $row[3] $row[4]";
+	$hj{$key} = $row[7] . $row[5];
+	$tj{$key} = $row[6] . $row[9];
+	$genotype{$key} = $_;
+	$junction{$hj} = 1;
+	$junction{$tj} = 1;
+    }
+    opendir(DIR, "$wd/$a/read");
+    foreach $file (sort readdir(DIR)){
+	next if $file =~ /^\./;
+	&monitorWait;
+	$cmd = "perl $0 a=$a,b=$b,ref=$ref,sub=mkAlignmentFunc,fastq=$file,sort_tmp=$sort_tmp &";
+	&log($cmd);
+	system($cmd);
+    }
+    &join;
+    
+    if ($tsd_size == 20){
+	$fname = "$wd/$a/reads_containing_junction.$a.$b";
+	open(OUT, "> $wd/$a/alignment.$a.$b");
+    }else{
+	$fname = "$wd/$a/reads_containing_junction_" . $tsd_size . ".$a.$b";
+	$oname = "$wd/$a/alignment_" . $tsd_size . ".$a.$b";
+	open(OUT, "> $oname");
+    }
+    system("cat $wd/$a/tmp/reads_containing_junction.* > $fname");
+    open(IN, $fname);
+    while(<IN>){
+	@row = split;
+	$length = length($row[1]);
+	last;
+    }
+    close(IN);
+    for ($i = 0; $i < $length; $i++){
+	$ref_space .= " ";
+    }
+    foreach (sort keys %hj){
+	$hverify = 0;
+	$tverify = 0;
+	my ($chr, $hpos, $tpos, $direction) = split;
+	$key = $_;
+	$hj = $hj{$_};
+	$tj = $tj{$_};
+	open(CHR, "$wd/$ref/chr$chr");
+	binmode(CHR);
+	if ($direction eq "f"){
+	    seek(CHR, $hpos - $length - 1, 0);
+	    read(CHR, $hchr, $length * 2);
+	    seek(CHR, $tpos - $length - 1, 0);
+	    read(CHR, $tchr, $length * 2);
+	    $offset = $length - 19;
+	    $toffset = $length - 20;
+	}else{
+	    seek(CHR, $hpos - $length, 0);
+	    read(CHR, $hchr, $length * 2);
+	    seek(CHR, $tpos - $length, 0);
+	    read(CHR, $tchr, $length * 2);
+	    $offset = $length - 19;
+	    $toffset = $length -20;
+	    $hchr = complement($hchr);
+	    $tchr = complement($tchr);
+	}
+	print OUT "$chr $hpos $tpos $direction $hj head_junction\n$ref_space$hpos\n$ref_space|\n$hchr\n";
+	open(IN, "grep $hj $wd/$a/reads_containing_junction.$a.$b|");
+	while(<IN>){
+	    $out = "";
+	    @row = split;
+	    $pos = index($row[1], $hj);
+	    $hflanking = substr($row[1], 0, $pos);
+	    $hgenome = substr($hchr, $offset - $pos, length($hflanking));
+	    $score = &score($hgenome, $hflanking);
+	    if ($pos > -1){
+		for ($i =0; $i < $offset - $pos; $i++){
+		    $out .= " ";
+		}
+		$out .= "$row[1] $row[2]";
+		if ($score >= $align_limit){
+		    print OUT "$out\n";
+		    $hverify ++;
+		}
+	    }
+	}
+	print OUT "
+$chr $hpos $tpos $direction $tj tail_junction\n$ref_space$tpos\n$ref_space|\n$tchr\n";
+	open(IN, "grep $tj $wd/$a/reads_containing_junction.$a.$b|");
+	while(<IN>){
+	    $out = "";
+	    @row = split;
+	    $pos = index($row[1], $tj);
+	    $tflanking = substr($row[1], $pos + 20);
+	    $tgenome = substr($tchr, $toffset + 20, length($tflanking));
+	    $score = &score($tgenome, $tflanking);
+	    if ($pos > -1){
+		for ($i =0; $i < $toffset - $pos; $i++){
+		    $out .= " ";
+		}
+		$out .= "$row[1] $row[2]";
+		if ($score >= $align_limit){
+		    print OUT "$out\n";
+		    $tverify ++;
+		}
+	    }
+	}
+	print OUT "----------\n";
+	if ($hverify > 0 and $tverify > 0){
+	    $verify{$key} = "\t$hverify\t$tverify\n";
+	}
+    }
+    close(OUT);
+    open(VER, "> $wd/$a/$method_name.verify.$a.$b");
+    open(IN, "$wd/$a/$method_name.genotype.$a.$b");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if $row[0] ne $a;
+	$key = "$row[1] $row[2] $row[3] $row[4]";
+	if ($verify{$key}){
+	    print VER $_ . $verify{$key};
+	}
+    }
+    close(IN);
+    close(VER);
+}
+
+
+sub mkAlignmentFunc{
+    my ($leaf, %junction, $hj, $tj,  $count, $name, $length, $lines, $file);
+    open(IN, "$wd/$a/$method_name.genotype.$a.$b");
+    while(<IN>){
+	chomp;
+	@row = split;
+	next if $row[0] ne $a;
+	$hj = $row[7] . $row[5];
+	$tj = $row[6] . $row[9];
+	$junction{$hj} = 1;
+	$junction{$tj} = 1;
+    }
+    open(OUT, "> $wd/$a/tmp/reads_containing_junction.$fastq");
+    $file = "$wd/$a/read/" . $fastq;
+    if ($file =~ /gz$/){
+	open(IN, "zcat $file |") || die $die_comment;;
+    }elsif ($file =~ /bz2$/){
+	open(IN, "bzcat $file |") || die $die_comment;;
+    }elsif ($file =~ /xz$/){
+	open(IN, "xzcat $file |") || die $die_comment;;
+    }else{
+	open(IN, $file) || die $die_comment;
+    }
+    while(<IN>){
+	$count = 0 if $count++ == 3;
+	if ($count == 1){
+	    $name = (split(' ', $_))[0];
+	}elsif ($count == 2){
+	    $lines ++;
+	    if ($lines % 1000000 == 0){
+		&log("mkAlignment: $fastq - $lines reads have been scanned.");
+	    }
+	    chomp;
+	    $length = length($_);
+	    for($i = 0; $i <= $length - 40; $i++){
+		my $leaf = substr($_, $i, 40);
+		if ($junction{$leaf}){
+		    print OUT "$leaf $_ $name\n";
+		}
+	    }
+	    my $complement = &complement($_);
+	    for($i = 0; $i <= $length - 40; $i++){
+		my $leaf = substr($complement, $i, 40);
+		if ($junction{$leaf}){
+		    print OUT "$leaf $complement $name\n";
+		}
+	    }
+	}
+    }
+    close(OUT);
+}
+
+sub mkAlignmentOld{
     my ($junction, %junction, $hj, $tj, %hj, %tj, $count, $name, $length, $lines, %genotype, $key);
     open(IN, "$wd/$a/$method_name.genotype.$a.$b");
     while(<IN>){
